@@ -1,0 +1,272 @@
+{
+  "brand": {
+    "sharedLab": "Shared Lab",
+    "bookingSystem": "Booking System"
+  },
+  "language": {
+    "vi": "VI",
+    "en": "EN"
+  },
+  "common": {
+    "loading": "Đang tải…",
+    "retry": "Thử lại",
+    "error": "Đã có lỗi xảy ra",
+    "notFound": "Không tìm thấy trang",
+    "backHome": "Về trang chủ",
+    "backLogin": "Quay lại đăng nhập",
+    "closeTab": "Đóng tab này",
+    "goLogin": "Về trang đăng nhập"
+  },
+  "auth": {
+    "login": {
+      "welcome": "Chào mừng trở lại",
+      "title": "Đăng nhập tài khoản",
+      "subtitle": "Sử dụng email do quản trị viên cấp để truy cập hệ thống.",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "forgot": "Quên mật khẩu?",
+      "remember": "Ghi nhớ đăng nhập trên thiết bị này",
+      "submit": "Đăng nhập",
+      "submitting": "Đang xác thực...",
+      "home": "Về trang chủ",
+      "smartSpace": "Không gian nghiên cứu thông minh",
+      "hero1": "Đặt phòng lab.",
+      "hero2": "Quản lý thiết bị.",
+      "hero3": "Tối ưu nghiên cứu.",
+      "heroText": "Một nền tảng thống nhất giúp sinh viên, giảng viên và quản lý vận hành tài nguyên phòng thí nghiệm hiệu quả hơn mỗi ngày.",
+      "emailPlaceholder": "name@university.edu.vn",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "resetSuccessTitle": "Mật khẩu đã được cập nhật.",
+      "resetSuccessText": "Bạn có thể đăng nhập ngay bằng mật khẩu mới.",
+      "adminNote": "Tài khoản được quản lý tập trung bởi Admin. Liên hệ quản trị viên nếu bạn chưa được cấp tài khoản.",
+      "show": "Hiện mật khẩu",
+      "hide": "Ẩn mật khẩu",
+      "stats": {
+        "access": "Truy cập lịch",
+        "central": "Quản lý tập trung",
+        "realtime": "Cập nhật trạng thái"
+      }
+    },
+    "forgot": {
+      "title": "Quên mật khẩu?",
+      "subtitle": "Nhập email của bạn. Hệ thống sẽ gửi một liên kết đặt lại mật khẩu có hiệu lực trong 1 giờ.",
+      "email": "Email tài khoản",
+      "submit": "Gửi liên kết đặt lại",
+      "submitting": "Đang gửi...",
+      "security": "Vì lý do bảo mật, hệ thống không tiết lộ email có tồn tại hay không.",
+      "sentTitle": "Kiểm tra hộp thư của bạn",
+      "sentText": "Nếu email tồn tại trong hệ thống, liên kết đặt lại mật khẩu đã được gửi tới",
+      "another": "Gửi lại với email khác",
+      "completedTitle": "Mật khẩu đã được thay đổi",
+      "completedText": "Yêu cầu đặt lại mật khẩu đã hoàn tất ở tab khác. Tab này không còn phải chờ xử lý.",
+      "closeHint": "Gmail hoặc trình duyệt có thể mở liên kết trong tab mới. Đây là hành vi của trình duyệt, không phải một màn hình thừa của hệ thống.",
+      "timeout": "Yêu cầu đã được tiếp nhận. Hãy kiểm tra hộp thư trong ít phút tới.",
+      "connectionError": "Không thể kết nối tới máy chủ. Vui lòng kiểm tra backend và thử lại.",
+      "openGmail": "Mở Gmail trong tab này",
+      "gmailSameTabHint": "Bấm Mở Gmail để thay thế trang này bằng hộp thư. Như vậy sẽ không còn tab xác nhận bị thừa.",
+      "processing": "Đang xử lý yêu cầu..."
+    },
+    "reset": {
+      "title": "Tạo mật khẩu mới",
+      "subtitle": "Chọn mật khẩu đủ mạnh và khác với mật khẩu bạn đã dùng trước đây.",
+      "email": "Email",
+      "newPassword": "Mật khẩu mới",
+      "confirm": "Nhập lại mật khẩu",
+      "placeholder": "Tối thiểu 8 ký tự",
+      "strengthHint": "Nên có chữ hoa, chữ thường, số và ký tự đặc biệt.",
+      "mismatch": "Mật khẩu nhập lại chưa khớp.",
+      "submit": "Xác nhận mật khẩu mới",
+      "submitting": "Đang cập nhật...",
+      "missingToken": "Đường dẫn đặt lại mật khẩu thiếu token. Hãy mở đúng liên kết trong email.",
+      "successTitle": "Đặt lại thành công",
+      "successText": "Mật khẩu mới đã được cập nhật. Phiên đăng nhập cũ đã được xóa trên trình duyệt này để bạn đăng nhập lại an toàn.",
+      "redirect": "Đang chuyển về trang đăng nhập...",
+      "requestError": "Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại."
+    }
+  },
+  "layout": {
+    "workspace": "Shared Lab Workspace",
+    "subtitle": "Quản lý phòng thí nghiệm & thiết bị dùng chung",
+    "quickBooking": "Tạo booking nhanh",
+    "viewCalendar": "Xem lịch",
+    "notifications": "Thông báo",
+    "connected": "Đã kết nối",
+    "logout": "Đăng xuất",
+    "groups": {
+      "overview": "Tổng quan",
+      "resources": "Tài nguyên",
+      "personal": "Cá nhân",
+      "management": "Nghiệp vụ quản lý",
+      "admin": "Quản trị hệ thống"
+    },
+    "items": {
+      "home": "Trang chủ",
+      "dashboard": "Dashboard",
+      "calendar": "Lịch tài nguyên",
+      "labs": "Phòng thí nghiệm",
+      "equipments": "Thiết bị",
+      "maintenance": "Lịch bảo trì",
+      "myBookings": "Booking của tôi",
+      "myWaitlists": "Hàng chờ của tôi",
+      "myViolations": "Vi phạm & điểm phạt",
+      "profile": "Tài khoản cá nhân",
+      "pending": "Booking cần duyệt",
+      "bookings": "Quản lý booking",
+      "manageMaintenance": "Quản lý bảo trì",
+      "usageLogs": "Nhật ký sử dụng",
+      "incidents": "Duyệt sự cố",
+      "waitlists": "Quản lý hàng chờ",
+      "violations": "Quản lý vi phạm",
+      "reports": "Trung tâm báo cáo",
+      "users": "Người dùng",
+      "departments": "Khoa/phòng ban",
+      "priority": "Quy tắc ưu tiên",
+      "sendNotification": "Gửi thông báo",
+      "audit": "Audit log",
+      "roles": "Danh sách vai trò",
+      "systemMaintenance": "Bảo trì hệ thống"
+    },
+    "roles": {
+      "admin": "Quản trị viên",
+      "manager": "Quản lý phòng lab",
+      "requester": "Người đặt lịch"
+    }
+  },
+  "landing": {
+    "features": "Tính năng",
+    "workflow": "Quy trình",
+    "resources": "Tài nguyên",
+    "login": "Đăng nhập",
+    "enter": "Vào hệ thống",
+    "badge": "Nền tảng vận hành phòng lab thông minh",
+    "hero1": "Đặt lịch nhanh.",
+    "hero2": "Vận hành chính xác.",
+    "subtitle": "Một không gian thống nhất để sinh viên, giảng viên và quản lý theo dõi phòng thí nghiệm, thiết bị, booking, bảo trì và mức sử dụng theo thời gian thực.",
+    "start": "Bắt đầu đăng nhập",
+    "open": "Mở workspace",
+    "explore": "Khám phá hệ thống",
+    "stats": {
+      "access": "Truy cập lịch tài nguyên",
+      "roles": "Phân quyền rõ ràng",
+      "live": "Theo dõi trạng thái"
+    },
+    "preview": {
+      "eyebrow": "Workspace preview",
+      "today": "Vận hành hôm nay",
+      "online": "Trực tuyến",
+      "monthBookings": "Booking tháng này",
+      "activeEquipment": "Thiết bị hoạt động",
+      "labs": "Phòng lab",
+      "utilization": "Mức sử dụng tài nguyên",
+      "utilizationHint": "Cập nhật theo booking và usage log",
+      "controlled": "Booking có kiểm soát",
+      "controlledHint": "Ưu tiên, xung đột, hàng chờ",
+      "maintenance": "Bảo trì chủ động",
+      "maintenanceHint": "Theo dõi lịch và chi phí"
+    },
+    "featureSection": {
+      "eyebrow": "Một hệ thống, toàn bộ quy trình",
+      "title": "Đủ công cụ để vận hành lab hiệu quả",
+      "subtitle": "Giao diện được thiết kế theo vai trò, giảm thao tác thừa và giữ dữ liệu quan trọng luôn dễ nhìn."
+    },
+    "featureItems": {
+      "booking": {
+        "title": "Booking thông minh",
+        "description": "Kiểm tra xung đột, ưu tiên yêu cầu và đề xuất khung giờ phù hợp."
+      },
+      "resources": {
+        "title": "Quản lý tài nguyên",
+        "description": "Theo dõi phòng lab, thiết bị, trạng thái và lịch sử sử dụng tập trung."
+      },
+      "maintenance": {
+        "title": "Bảo trì chủ động",
+        "description": "Lập lịch bảo trì đơn lẻ hoặc định kỳ và kiểm soát chi phí."
+      },
+      "dashboard": {
+        "title": "Dashboard trực quan",
+        "description": "Nắm KPI, tỷ lệ sử dụng, no-show và xu hướng vận hành theo kỳ."
+      }
+    },
+    "workflowSection": {
+      "eyebrow": "Quy trình rõ ràng",
+      "title": "Từ yêu cầu đến hoàn thành chỉ trong một luồng",
+      "subtitle": "Trạng thái, thời gian và người xử lý được thể hiện xuyên suốt để hạn chế nhầm lẫn trong vận hành."
+    },
+    "workflowItems": {
+      "resource": {
+        "title": "Chọn tài nguyên",
+        "description": "Tìm phòng hoặc thiết bị theo trạng thái và nhu cầu."
+      },
+      "time": {
+        "title": "Chọn thời gian",
+        "description": "Kiểm tra lịch rảnh và gửi yêu cầu booking."
+      },
+      "approval": {
+        "title": "Duyệt & thông báo",
+        "description": "LabManager xử lý theo phạm vi và mức ưu tiên."
+      },
+      "usage": {
+        "title": "Sử dụng & theo dõi",
+        "description": "Check-in, check-out, sự cố và báo cáo được liên kết."
+      }
+    },
+    "cta": {
+      "eyebrow": "Sẵn sàng vận hành",
+      "title": "Truy cập workspace của Shared Lab",
+      "subtitle": "Đăng nhập bằng tài khoản do quản trị viên cấp để xem lịch, đặt tài nguyên hoặc quản lý toàn bộ hệ thống.",
+      "button": "Đăng nhập ngay"
+    },
+    "footer": "Thiết kế cho vận hành phòng thí nghiệm dùng chung"
+  },
+  "systemMaintenance": {
+    "title": "System Maintenance",
+    "subtitle": "Điều khiển chế độ bảo trì toàn hệ thống và nội dung thông báo hiển thị cho người dùng.",
+    "status": {
+      "on": "Maintenance Mode đang bật",
+      "off": "Hệ thống đang hoạt động bình thường"
+    },
+    "control": {
+      "eyebrow": "Điều khiển hệ thống",
+      "title": "Maintenance Mode"
+    },
+    "fields": {
+      "start": "Bắt đầu dự kiến",
+      "end": "Kết thúc dự kiến",
+      "message": "Thông báo cho người dùng",
+      "placeholder": "Ví dụ: Hệ thống tạm dừng để nâng cấp từ 22:00 đến 23:00. Vui lòng hoàn tất công việc trước thời gian trên."
+    },
+    "actions": {
+      "save": "Lưu cấu hình",
+      "saving": "Đang lưu..."
+    },
+    "savedLocally": "Cấu hình được đồng bộ ngay trên giao diện hiện tại.",
+    "preview": {
+      "eyebrow": "Xem trước thông báo",
+      "title": "Nội dung người dùng sẽ nhìn thấy",
+      "activeTitle": "Hệ thống đang trong thời gian bảo trì",
+      "normalTitle": "Hệ thống hoạt động bình thường",
+      "defaultMessage": "Hệ thống đang được bảo trì. Vui lòng quay lại sau thời gian dự kiến.",
+      "normalMessage": "Mọi chức năng đang sẵn sàng để sử dụng."
+    },
+    "note": {
+      "title": "Phạm vi của giao diện",
+      "text": "Trang này quản lý trạng thái và thông báo System Maintenance ở frontend. Để khóa truy cập trên mọi thiết bị, backend cần bổ sung API cấu hình hệ thống dùng chung."
+    },
+    "lastUpdated": "Cập nhật gần nhất:",
+    "banner": {
+      "title": "Thông báo bảo trì hệ thống"
+    },
+    "validation": {
+      "timeRequired": "Vui lòng nhập đầy đủ thời gian bắt đầu và kết thúc dự kiến.",
+      "timeOrder": "Thời gian kết thúc phải sau thời gian bắt đầu.",
+      "messageRequired": "Vui lòng nhập thông báo hiển thị cho người dùng."
+    },
+    "toast": {
+      "invalidTitle": "Chưa thể lưu cấu hình",
+      "enabledTitle": "Đã bật Maintenance Mode",
+      "enabledText": "Thông báo bảo trì đã được cập nhật trên giao diện.",
+      "disabledTitle": "Đã tắt Maintenance Mode",
+      "disabledText": "Hệ thống đã trở về trạng thái vận hành bình thường."
+    }
+  }
+}
