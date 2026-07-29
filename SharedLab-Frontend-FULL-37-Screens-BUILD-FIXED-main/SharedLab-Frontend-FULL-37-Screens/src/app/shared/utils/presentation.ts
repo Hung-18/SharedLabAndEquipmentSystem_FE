@@ -1,21 +1,94 @@
 import type { ApiEnum } from '../../core/api/system.models'
 
 const maps: Record<string, Record<string, string>> = {
-  user: { '1': 'Đang hoạt động', '2': 'Ngừng hoạt động', '3': 'Bị hạn chế', '4': 'Bị khóa', Active: 'Đang hoạt động', Inactive: 'Ngừng hoạt động', Restricted: 'Bị hạn chế', Locked: 'Bị khóa' },
-  department: { '1': 'Đang hoạt động', '2': 'Ngừng hoạt động', Active: 'Đang hoạt động', Inactive: 'Ngừng hoạt động' },
-  booking: { Pending: 'Chờ duyệt', Approved: 'Đã duyệt', Rejected: 'Bị từ chối', Cancelled: 'Đã hủy', Completed: 'Hoàn thành', NoShow: 'Không đến' },
-  lab: { Available: 'Có thể sử dụng', Unavailable: 'Tạm không khả dụng', Maintenance: 'Đang bảo trì', Inactive: 'Ngừng hoạt động' },
-  equipment: { Available: 'Sẵn sàng', InUse: 'Đang sử dụng', Maintenance: 'Đang bảo trì', Broken: 'Bị hỏng', Retired: 'Ngừng sử dụng' },
-  maintenance: { Scheduled: 'Đã lên lịch', InProgress: 'Đang thực hiện', Completed: 'Hoàn thành', Cancelled: 'Đã hủy' },
-  waitlist: { Waiting: 'Đang chờ', Notified: 'Đã thông báo', Booked: 'Đã tạo booking', Cancelled: 'Đã hủy', Expired: 'Hết hạn' },
+  user: {
+    '1': 'Đang hoạt động',
+    '2': 'Ngừng hoạt động',
+    '3': 'Bị hạn chế',
+    '4': 'Bị khóa',
+    Active: 'Đang hoạt động',
+    Inactive: 'Ngừng hoạt động',
+    Restricted: 'Bị hạn chế',
+    Locked: 'Bị khóa',
+  },
+  department: {
+    '1': 'Đang hoạt động',
+    '2': 'Ngừng hoạt động',
+    Active: 'Đang hoạt động',
+    Inactive: 'Ngừng hoạt động',
+  },
+  booking: {
+    Pending: 'Chờ duyệt',
+    Approved: 'Đã duyệt',
+    Rejected: 'Bị từ chối',
+    Cancelled: 'Đã hủy',
+    Completed: 'Hoàn thành',
+    NoShow: 'Không đến',
+  },
+  lab: {
+    Available: 'Có thể sử dụng',
+    Unavailable: 'Tạm không khả dụng',
+    Maintenance: 'Đang bảo trì',
+    Inactive: 'Ngừng hoạt động',
+  },
+  equipment: {
+    Available: 'Sẵn sàng',
+    InUse: 'Đang sử dụng',
+    Maintenance: 'Đang bảo trì',
+    Broken: 'Bị hỏng',
+    Retired: 'Ngừng sử dụng',
+  },
+  maintenance: {
+    Scheduled: 'Đã lên lịch',
+    InProgress: 'Đang thực hiện',
+    Completed: 'Hoàn thành',
+    Cancelled: 'Đã hủy',
+  },
+  waitlist: {
+    Waiting: 'Đang chờ',
+    Notified: 'Đã thông báo',
+    Booked: 'Đã tạo booking',
+    Cancelled: 'Đã hủy',
+    Expired: 'Hết hạn',
+  },
   violation: { Active: 'Đang hiệu lực', Resolved: 'Đã xử lý', Cancelled: 'Đã hủy' },
-  incident: { NotRequired: 'Không cần duyệt', Pending: 'Chờ duyệt', Confirmed: 'Đã xác nhận', Rejected: 'Đã từ chối' },
-  purpose: { ResearchProject: 'Dự án nghiên cứu', CoursePractice: 'Thực hành môn học', SelfStudy: 'Tự học', Other: 'Khác' },
+  incident: {
+    NotRequired: 'Không cần duyệt',
+    Pending: 'Chờ duyệt',
+    Confirmed: 'Đã xác nhận',
+    Rejected: 'Đã từ chối',
+  },
+  purpose: {
+    ResearchProject: 'Dự án nghiên cứu',
+    CoursePractice: 'Thực hành môn học',
+    SelfStudy: 'Tự học',
+    Other: 'Khác',
+  },
   resource: { LabRoom: 'Phòng lab', Equipment: 'Thiết bị' },
   recurrence: { None: 'Không lặp', Daily: 'Hằng ngày', Weekly: 'Hằng tuần', Monthly: 'Hằng tháng' },
-  violationType: { NoShow: 'Không đến', LateCheckout: 'Trả muộn', DamageEquipment: 'Làm hỏng thiết bị', MisuseEquipment: 'Sử dụng sai', UnauthorizedUse: 'Sử dụng trái phép' },
-  incidentType: { None: 'Không có', DamageReported: 'Báo hư hỏng', LateCheckout: 'Trả muộn', MissingEquipment: 'Thiếu thiết bị', Other: 'Khác' },
-  notification: { BookingApproved: 'Booking được duyệt', BookingRejected: 'Booking bị từ chối', BookingReminder: 'Nhắc lịch booking', WaitlistAvailable: 'Có chỗ từ hàng chờ', Maintenance: 'Bảo trì', Violation: 'Vi phạm', System: 'Hệ thống' },
+  violationType: {
+    NoShow: 'Không đến',
+    LateCheckout: 'Trả muộn',
+    DamageEquipment: 'Làm hỏng thiết bị',
+    MisuseEquipment: 'Sử dụng sai',
+    UnauthorizedUse: 'Sử dụng trái phép',
+  },
+  incidentType: {
+    None: 'Không có',
+    DamageReported: 'Báo hư hỏng',
+    LateCheckout: 'Trả muộn',
+    MissingEquipment: 'Thiếu thiết bị',
+    Other: 'Khác',
+  },
+  notification: {
+    BookingApproved: 'Booking được duyệt',
+    BookingRejected: 'Booking bị từ chối',
+    BookingReminder: 'Nhắc lịch booking',
+    WaitlistAvailable: 'Có chỗ từ hàng chờ',
+    Maintenance: 'Bảo trì',
+    Violation: 'Vi phạm',
+    System: 'Hệ thống',
+  },
 }
 
 export function labelOf(domain: string, value: ApiEnum | null | undefined): string {
@@ -27,19 +100,51 @@ export function labelOf(domain: string, value: ApiEnum | null | undefined): stri
 export function toneOf(domain: string, value: ApiEnum | null | undefined): string {
   const key = String(value ?? '')
   const tones: Record<string, Record<string, string>> = {
-    user: { '1': 'emerald', '2': 'rose', '3': 'amber', '4': 'rose', Active: 'emerald', Inactive: 'rose', Restricted: 'amber', Locked: 'rose' },
+    user: {
+      '1': 'emerald',
+      '2': 'rose',
+      '3': 'amber',
+      '4': 'rose',
+      Active: 'emerald',
+      Inactive: 'rose',
+      Restricted: 'amber',
+      Locked: 'rose',
+    },
     department: { '1': 'emerald', '2': 'rose', Active: 'emerald', Inactive: 'rose' },
-    booking: { Pending: 'amber', Approved: 'emerald', Rejected: 'rose', Cancelled: 'rose', Completed: 'emerald', NoShow: 'rose' },
+    booking: {
+      Pending: 'amber',
+      Approved: 'emerald',
+      Rejected: 'rose',
+      Cancelled: 'rose',
+      Completed: 'emerald',
+      NoShow: 'rose',
+    },
     lab: { Available: 'emerald', Unavailable: 'rose', Maintenance: 'indigo', Inactive: 'rose' },
-    equipment: { Available: 'emerald', InUse: 'indigo', Maintenance: 'indigo', Broken: 'rose', Retired: 'rose' },
-    maintenance: { Scheduled: 'amber', InProgress: 'indigo', Completed: 'emerald', Cancelled: 'rose' },
-    waitlist: { Waiting: 'amber', Notified: 'indigo', Booked: 'emerald', Cancelled: 'rose', Expired: 'rose' },
+    equipment: {
+      Available: 'emerald',
+      InUse: 'indigo',
+      Maintenance: 'indigo',
+      Broken: 'rose',
+      Retired: 'rose',
+    },
+    maintenance: {
+      Scheduled: 'amber',
+      InProgress: 'indigo',
+      Completed: 'emerald',
+      Cancelled: 'rose',
+    },
+    waitlist: {
+      Waiting: 'amber',
+      Notified: 'indigo',
+      Booked: 'emerald',
+      Cancelled: 'rose',
+      Expired: 'rose',
+    },
     violation: { Active: 'rose', Resolved: 'emerald', Cancelled: 'slate' },
     incident: { NotRequired: 'slate', Pending: 'amber', Confirmed: 'rose', Rejected: 'slate' },
   }
   return tones[domain]?.[key] ?? 'slate'
 }
-
 
 export function toIso(localValue: string): string {
   return localValue ? new Date(localValue).toISOString() : ''
@@ -59,5 +164,9 @@ export function toLocalDateTimeInput(value: string | Date): string {
 }
 
 export function formatMoney(value: number): string {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value || 0)
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(value || 0)
 }

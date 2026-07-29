@@ -1,13 +1,14 @@
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http'
 import { inject } from '@angular/core'
 import { Router } from '@angular/router'
-import { catchError, switchMap, throwError } from 'rxjs'
+import { Observable, catchError, finalize, shareReplay, switchMap, tap, throwError } from 'rxjs'
 import { TokenStorage } from '../auth/token-storage'
 import type { AuthTokens } from '../auth/auth.types'
 import { env } from '../config/env'
 import { ApiError } from './api-error'
 
 const USER_KEY = 'auth.user'
+let refreshInFlight$: Observable<AuthTokens> | null = null
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router)
@@ -16,32 +17,40 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      const isAuthEndpoint = /\/Auth\/(login|refresh|forgot-password|reset-password)$/i.test(req.url)
+      const isAuthEndpoint = /\/Auth\/(login|refresh|forgot-password|reset-password)$/i.test(
+        req.url,
+      )
       const refreshToken = tokens.refresh
 
       if (error.status === 401 && refreshToken && !isAuthEndpoint) {
-        return http
-          .post<AuthTokens>(`${env.apiBaseUrl}/Auth/refresh`, { refreshToken })
-          .pipe(
-            switchMap((fresh) => {
-              tokens.set(fresh.accessToken, fresh.refreshToken)
-              return next(
-                req.clone({ setHeaders: { Authorization: `Bearer ${fresh.accessToken}` } }),
-              )
-            }),
-            catchError((refreshError: HttpErrorResponse) => {
-              clearSession(tokens)
-              void router.navigate(['/login'])
-              return throwError(() => normalize(refreshError))
-            }),
-          )
+        if (!refreshInFlight$) {
+          refreshInFlight$ = http
+            .post<AuthTokens>(`${env.apiBaseUrl}/Auth/refresh`, { refreshToken })
+            .pipe(
+              tap((fresh) => tokens.set(fresh.accessToken, fresh.refreshToken)),
+              shareReplay({ bufferSize: 1, refCount: false }),
+              finalize(() => {
+                refreshInFlight$ = null
+              }),
+            )
+        }
+
+        return refreshInFlight$.pipe(
+          switchMap((fresh) =>
+            next(req.clone({ setHeaders: { Authorization: `Bearer ${fresh.accessToken}` } })),
+          ),
+          catchError((refreshError: HttpErrorResponse) => {
+            clearSession(tokens)
+            void router.navigate(['/login'], { queryParams: { reason: 'session-expired' } })
+            return throwError(() => normalize(refreshError))
+          }),
+        )
       }
 
       if (error.status === 401 && !isAuthEndpoint) {
         clearSession(tokens)
-        void router.navigate(['/login'])
+        void router.navigate(['/login'], { queryParams: { reason: 'session-expired' } })
       }
-      if (error.status === 403) void router.navigate(['/403'])
 
       return throwError(() => normalize(error))
     }),
@@ -62,7 +71,7 @@ function normalize(error: HttpErrorResponse): ApiError {
   const message =
     typeof body === 'string'
       ? body
-      : body?.message ?? body?.title ?? error.message ?? 'Đã xảy ra lỗi kết nối.'
+      : (body?.message ?? body?.title ?? error.message ?? 'Đã xảy ra lỗi kết nối.')
   return new ApiError(
     error.status,
     message,

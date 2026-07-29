@@ -31,18 +31,14 @@ export class WorkspaceService {
   }
 
   notifications(userId: number, pageNumber = 1, pageSize = 20): Observable<NotificationResponse[]> {
-    const params = new HttpParams()
-      .set('pageNumber', pageNumber)
-      .set('pageSize', pageSize)
+    const params = new HttpParams().set('pageNumber', pageNumber).set('pageSize', pageSize)
     return this.http.get<NotificationResponse[]>(`${this.base}/Notifications/user/${userId}`, {
       params,
     })
   }
 
   unreadNotifications(userId: number): Observable<NotificationResponse[]> {
-    return this.http.get<NotificationResponse[]>(
-      `${this.base}/Notifications/user/${userId}/unread`,
-    )
+    return this.http.get<NotificationResponse[]>(`${this.base}/Notifications/user/${userId}/unread`)
   }
 
   unreadCount(userId: number): Observable<UnreadNotificationCountResponse> {

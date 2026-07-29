@@ -1,5 +1,5 @@
 import { DatePipe, NgClass } from '@angular/common'
-import { Component, OnInit, computed, inject, signal } from '@angular/core'
+import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
 import { SystemService } from '../../core/api/system.service'
@@ -11,21 +11,361 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf } from '../../shared/utils/presentation'
+import { apiErrorMessage } from '../../core/http/api-error'
 
-@Component({selector:'app-violations-management-page',imports:[DatePipe,NgClass,FormsModule,RouterLink,PageHeaderComponent,IconComponent,ModalComponent,StatusBadgeComponent,DataStateComponent],template:`<section class="space-y-6"><app-page-header title="Quản lý vi phạm" subtitle="Tạo, xử lý hoặc hủy vi phạm; theo dõi điểm phạt phát sinh từ booking và sự cố."><button class="btn-primary" (click)="openCreate()"><app-icon name="plus" [size]="17"/> Tạo vi phạm</button></app-page-header>
-<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">@for(tab of tabs;track tab.value){<button class="kpi-card text-left transition hover:-translate-y-1" (click)="status=tab.value"><p class="text-xs font-bold text-slate-400">{{tab.label}}</p><p class="mt-2 text-3xl font-black" [ngClass]="tab.className">{{count(tab.value)}}</p></button>}</div>
-<div class="filter-bar md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_auto]"><div><label class="field-label">Tìm kiếm</label><input class="input-shell" [(ngModel)]="keyword" placeholder="Violation ID, User ID, Booking ID..."/></div><div><label class="field-label">Loại vi phạm</label><select class="input-shell" [(ngModel)]="type"><option value="">Tất cả</option>@for(item of violationTypes;track item.key){<option [value]="item.key">{{item.label}}</option>}</select></div><div><label class="field-label">Trạng thái</label><select class="input-shell" [(ngModel)]="status"><option value="">Tất cả</option><option value="Active">Đang hiệu lực</option><option value="Resolved">Đã xử lý</option><option value="Cancelled">Đã hủy</option></select></div><div class="flex items-end"><button class="btn-secondary w-full" (click)="reset()"><app-icon name="refresh" [size]="17"/> Đặt lại</button></div></div>
-<article class="card-surface overflow-hidden">@if(loading()){<div class="p-6"><div class="skeleton h-80 rounded-2xl"></div></div>}@else if(filtered().length===0){<div class="p-6"><app-data-state title="Không có vi phạm" message="Không có bản ghi phù hợp với bộ lọc." icon="shield"/></div>}@else{<div class="overflow-x-auto"><table class="table-shell"><thead><tr><th>Vi phạm</th><th>Người dùng</th><th>Booking</th><th>Loại</th><th>Điểm</th><th>Ngày ghi nhận</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>@for(item of filtered();track item.violationId){<tr><td class="font-black text-slate-900">#VP-{{item.violationId}}</td><td><a [routerLink]="['/app/admin/users',item.userId]" class="font-black text-violet-700">User #{{item.userId}}</a></td><td><a [routerLink]="['/app/bookings',item.bookingId]" class="font-black text-indigo-700">#BK-{{item.bookingId}}</a></td><td>{{labelOf('violationType',item.violationType)}}</td><td><span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-700">+{{item.penaltyPointsAdded}}</span></td><td>{{item.loggedAt|date:'HH:mm dd/MM/yyyy'}}</td><td><app-status-badge [value]="item.status" domain="violation"/></td><td>@if(item.status==='Active'){<div class="flex gap-2"><button class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700" title="Resolve" (click)="action(item,'resolve')"><app-icon name="check" [size]="16"/></button><button class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700" title="Cancel" (click)="action(item,'cancel')"><app-icon name="x" [size]="16"/></button></div>}</td></tr>}</tbody></table></div>}</article>
-<app-modal [open]="createOpen()" title="Tạo vi phạm thủ công" subtitle="Điểm phạt sẽ do backend xác định theo loại vi phạm." (close)="createOpen.set(false)"><form class="grid gap-4" (ngSubmit)="create()"><div><label class="field-label">Người dùng *</label><select class="input-shell" required [(ngModel)]="form.userId" name="userId"><option [ngValue]="null">Chọn người dùng</option>@for(user of users();track user.userId){<option [ngValue]="user.userId">{{user.fullName}} · {{user.email}}</option>}</select></div><div><label class="field-label">Booking ID *</label><input class="input-shell" type="number" min="1" required [(ngModel)]="form.bookingId" name="bookingId"/></div><div><label class="field-label">Loại vi phạm *</label><select class="input-shell" [(ngModel)]="form.violationType" name="violationType">@for(item of violationTypes;track item.value){<option [ngValue]="item.value">{{item.label}}</option>}</select></div><div class="flex justify-end gap-2"><button type="button" class="btn-secondary" (click)="createOpen.set(false)">Hủy</button><button class="btn-primary" [disabled]="saving()">{{saving()?'Đang tạo...':'Tạo vi phạm'}}</button></div></form></app-modal></section>`})
-export class ViolationsManagementPage implements OnInit{
-private readonly api=inject(SystemService);private readonly toast=inject(ToastService);protected readonly items=signal<ViolationResponse[]>([]);protected readonly users=signal<UserManagementResponse[]>([]);protected readonly loading=signal(true);protected readonly saving=signal(false);protected readonly createOpen=signal(false);protected keyword='';protected status='';protected type='';protected form={userId:null as number|null,bookingId:null as number|null,violationType:1};protected readonly labelOf=labelOf
-protected readonly tabs=[{value:'',label:'Tất cả',className:'text-slate-950'},{value:'Active',label:'Đang hiệu lực',className:'text-rose-600'},{value:'Resolved',label:'Đã xử lý',className:'text-emerald-600'},{value:'Cancelled',label:'Đã hủy',className:'text-slate-500'}];protected readonly violationTypes=[{value:1,key:'NoShow',label:'Không đến'},{value:2,key:'LateCheckout',label:'Trả muộn'},{value:3,key:'DamageEquipment',label:'Làm hỏng thiết bị'},{value:4,key:'MisuseEquipment',label:'Sử dụng sai'},{value:5,key:'UnauthorizedUse',label:'Sử dụng trái phép'}]
-protected readonly filtered=computed(()=>{const n=this.keyword.trim();return this.items().filter(x=>(!this.status||x.status===this.status)&&(!this.type||x.violationType===this.type)&&(!n||String(x.violationId).includes(n)||String(x.userId).includes(n)||String(x.bookingId).includes(n))).sort((a,b)=>+new Date(b.loggedAt)-+new Date(a.loggedAt))})
-ngOnInit():void{this.load()}
-protected count(status:string):number{return status?this.items().filter(x=>x.status===status).length:this.items().length}
-protected reset():void{this.keyword='';this.status='';this.type=''}
-protected openCreate():void{this.form={userId:null,bookingId:null,violationType:1};this.createOpen.set(true);if(!this.users().length)this.api.users({pageSize:100}).subscribe(x=>this.users.set(x.items))}
-protected create():void{if(!this.form.userId||!this.form.bookingId){this.toast.info('Hãy chọn người dùng và nhập Booking ID');return}this.saving.set(true);this.api.createViolation({userId:this.form.userId,bookingId:this.form.bookingId,violationType:this.form.violationType}).subscribe({next:()=>{this.saving.set(false);this.createOpen.set(false);this.toast.success('Đã tạo vi phạm');this.load()},error:()=>{this.saving.set(false);this.toast.error('Không thể tạo vi phạm')}})}
-protected action(item:ViolationResponse,action:'resolve'|'cancel'):void{if(!confirm(`${action==='resolve'?'Xử lý':'Hủy'} vi phạm #${item.violationId}?`))return;const req=action==='resolve'?this.api.resolveViolation(item.violationId):this.api.cancelViolation(item.violationId);req.subscribe({next:()=>{this.toast.success('Đã cập nhật vi phạm');this.load()},error:()=>this.toast.error('Không thể cập nhật vi phạm')})}
-private load():void{this.loading.set(true);this.api.violations().subscribe({next:x=>{this.items.set(x);this.loading.set(false)},error:()=>{this.loading.set(false);this.toast.error('Không tải được vi phạm')}})}
+@Component({
+  selector: 'app-violations-management-page',
+  imports: [
+    DatePipe,
+    NgClass,
+    FormsModule,
+    RouterLink,
+    PageHeaderComponent,
+    IconComponent,
+    ModalComponent,
+    StatusBadgeComponent,
+    DataStateComponent,
+  ],
+  template: `<section class="space-y-6">
+    <app-page-header
+      title="Quản lý vi phạm"
+      subtitle="Tạo, xử lý hoặc hủy vi phạm; theo dõi điểm phạt phát sinh từ booking và sự cố."
+      ><button class="btn-primary" (click)="openCreate()">
+        <app-icon name="plus" [size]="17" /> Tạo vi phạm
+      </button></app-page-header
+    >
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      @for (tab of tabs; track tab.value) {
+        <button
+          class="kpi-card text-left transition hover:-translate-y-1"
+          (click)="status = tab.value"
+        >
+          <p class="text-xs font-bold text-slate-400">{{ tab.label }}</p>
+          <p class="mt-2 text-3xl font-black" [ngClass]="tab.className">{{ count(tab.value) }}</p>
+        </button>
+      }
+    </div>
+    <div class="filter-bar md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_auto]">
+      <div>
+        <label class="field-label">Tìm kiếm</label
+        ><input
+          class="input-shell"
+          [(ngModel)]="keyword"
+          placeholder="Violation ID, User ID, Booking ID..."
+        />
+      </div>
+      <div>
+        <label class="field-label">Loại vi phạm</label
+        ><select class="input-shell" [(ngModel)]="type">
+          <option value="">Tất cả</option>
+          @for (item of violationTypes; track item.key) {
+            <option [value]="item.key">{{ item.label }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Trạng thái</label
+        ><select class="input-shell" [(ngModel)]="status">
+          <option value="">Tất cả</option>
+          <option value="Active">Đang hiệu lực</option>
+          <option value="Resolved">Đã xử lý</option>
+          <option value="Cancelled">Đã hủy</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button class="btn-secondary w-full" (click)="reset()">
+          <app-icon name="refresh" [size]="17" /> Đặt lại
+        </button>
+      </div>
+    </div>
+    <article class="card-surface overflow-hidden">
+      @if (loading()) {
+        <div class="p-6"><div class="skeleton h-80 rounded-2xl"></div></div>
+      } @else if (filtered().length === 0) {
+        <div class="p-6">
+          <app-data-state
+            title="Không có vi phạm"
+            message="Không có bản ghi phù hợp với bộ lọc."
+            icon="shield"
+          />
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table-shell">
+            <thead>
+              <tr>
+                <th>Vi phạm</th>
+                <th>Người dùng</th>
+                <th>Booking</th>
+                <th>Loại</th>
+                <th>Điểm</th>
+                <th>Ngày ghi nhận</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of filtered(); track item.violationId) {
+                <tr>
+                  <td class="font-black text-slate-900">#VP-{{ item.violationId }}</td>
+                  <td>
+                    <a
+                      [routerLink]="['/app/admin/users', item.userId]"
+                      class="font-black text-violet-700"
+                      >User #{{ item.userId }}</a
+                    >
+                  </td>
+                  <td>
+                    <a
+                      [routerLink]="['/app/bookings', item.bookingId]"
+                      class="font-black text-indigo-700"
+                      >#BK-{{ item.bookingId }}</a
+                    >
+                  </td>
+                  <td>{{ labelOf('violationType', item.violationType) }}</td>
+                  <td>
+                    <span
+                      class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-700"
+                      >+{{ item.penaltyPointsAdded }}</span
+                    >
+                  </td>
+                  <td>{{ item.loggedAt | date: 'HH:mm dd/MM/yyyy' }}</td>
+                  <td><app-status-badge [value]="item.status" domain="violation" /></td>
+                  <td>
+                    @if (item.status === 'Active') {
+                      <div class="flex gap-2">
+                        <button
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700"
+                          title="Resolve"
+                          (click)="action(item, 'resolve')"
+                        >
+                          <app-icon name="check" [size]="16" /></button
+                        ><button
+                          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700"
+                          title="Cancel"
+                          (click)="action(item, 'cancel')"
+                        >
+                          <app-icon name="x" [size]="16" />
+                        </button>
+                      </div>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+    <app-modal
+      [open]="createOpen()"
+      title="Tạo vi phạm thủ công"
+      subtitle="Điểm phạt được tính tự động theo loại vi phạm."
+      (close)="createOpen.set(false)"
+      ><form class="grid gap-4" (ngSubmit)="create()">
+        <div>
+          <label class="field-label">Tìm người dùng</label>
+          <input
+            class="input-shell mb-3"
+            [(ngModel)]="userSearch"
+            name="userSearch"
+            placeholder="Tên, username hoặc email..."
+            (ngModelChange)="scheduleUserSearch()"
+          />
+          <label class="field-label">Người dùng *</label
+          ><select class="input-shell" required [(ngModel)]="form.userId" name="userId">
+            <option [ngValue]="null">
+              {{ usersLoading() ? 'Đang tải...' : 'Chọn người dùng' }}
+            </option>
+            @for (user of users(); track user.userId) {
+              <option [ngValue]="user.userId">{{ user.fullName }} · {{ user.email }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Booking ID *</label
+          ><input
+            class="input-shell"
+            type="number"
+            min="1"
+            required
+            [(ngModel)]="form.bookingId"
+            name="bookingId"
+          />
+        </div>
+        <div>
+          <label class="field-label">Loại vi phạm *</label
+          ><select class="input-shell" [(ngModel)]="form.violationType" name="violationType">
+            @for (item of violationTypes; track item.value) {
+              <option [ngValue]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="btn-secondary" (click)="createOpen.set(false)">Hủy</button
+          ><button class="btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Đang tạo...' : 'Tạo vi phạm' }}
+          </button>
+        </div>
+      </form></app-modal
+    >
+  </section>`,
+})
+export class ViolationsManagementPage implements OnInit {
+  private readonly api = inject(SystemService)
+  private readonly toast = inject(ToastService)
+  protected readonly items = signal<ViolationResponse[]>([])
+  protected readonly users = signal<UserManagementResponse[]>([])
+  protected readonly loading = signal(true)
+  protected readonly saving = signal(false)
+  protected readonly createOpen = signal(false)
+  protected readonly usersLoading = signal(false)
+  protected keyword = ''
+  protected status = ''
+  protected type = ''
+  protected userSearch = ''
+  private userSearchTimer: ReturnType<typeof setTimeout> | null = null
+  protected form = {
+    userId: null as number | null,
+    bookingId: null as number | null,
+    violationType: 1,
+  }
+  protected readonly labelOf = labelOf
+  protected readonly tabs = [
+    { value: '', label: 'Tất cả', className: 'text-slate-950' },
+    { value: 'Active', label: 'Đang hiệu lực', className: 'text-rose-600' },
+    { value: 'Resolved', label: 'Đã xử lý', className: 'text-emerald-600' },
+    { value: 'Cancelled', label: 'Đã hủy', className: 'text-slate-500' },
+  ]
+  protected readonly violationTypes = [
+    { value: 1, key: 'NoShow', label: 'Không đến' },
+    { value: 2, key: 'LateCheckout', label: 'Trả muộn' },
+    { value: 3, key: 'DamageEquipment', label: 'Làm hỏng thiết bị' },
+    { value: 4, key: 'MisuseEquipment', label: 'Sử dụng sai' },
+    { value: 5, key: 'UnauthorizedUse', label: 'Sử dụng trái phép' },
+  ]
+  protected filtered(): ViolationResponse[] {
+    const needle = this.keyword.trim()
+    return this.items()
+      .filter(
+        (item) =>
+          (!this.status || item.status === this.status) &&
+          (!this.type || item.violationType === this.type) &&
+          (!needle ||
+            String(item.violationId).includes(needle) ||
+            String(item.userId).includes(needle) ||
+            String(item.bookingId).includes(needle)),
+      )
+      .sort((a, b) => +new Date(b.loggedAt) - +new Date(a.loggedAt))
+  }
+  ngOnInit(): void {
+    this.load()
+  }
+  protected count(status: string): number {
+    return status ? this.items().filter((x) => x.status === status).length : this.items().length
+  }
+  protected reset(): void {
+    this.keyword = ''
+    this.status = ''
+    this.type = ''
+  }
+  protected openCreate(): void {
+    this.form = { userId: null, bookingId: null, violationType: 1 }
+    this.userSearch = ''
+    this.createOpen.set(true)
+    this.loadUsers()
+  }
+
+  protected scheduleUserSearch(): void {
+    if (this.userSearchTimer) clearTimeout(this.userSearchTimer)
+    this.userSearchTimer = setTimeout(() => this.loadUsers(), 250)
+  }
+
+  private loadUsers(): void {
+    this.usersLoading.set(true)
+    this.api
+      .users({
+        keyword: this.userSearch.trim() || undefined,
+        pageNumber: 1,
+        pageSize: 50,
+      })
+      .subscribe({
+        next: (response) => {
+          this.users.set(response.items)
+          this.usersLoading.set(false)
+        },
+        error: (error: unknown) => {
+          this.usersLoading.set(false)
+          this.toast.error('Không tải được người dùng', apiErrorMessage(error))
+        },
+      })
+  }
+  protected create(): void {
+    if (!this.form.userId || !this.form.bookingId) {
+      this.toast.info('Hãy chọn người dùng và nhập Booking ID')
+      return
+    }
+    this.saving.set(true)
+    const userId = this.form.userId
+    const bookingId = this.form.bookingId
+    this.api.booking(bookingId).subscribe({
+      next: (booking) => {
+        if (booking.userId !== userId) {
+          this.saving.set(false)
+          this.toast.info('Booking không thuộc người dùng đã chọn')
+          return
+        }
+        this.api
+          .createViolation({
+            userId,
+            bookingId,
+            violationType: this.form.violationType,
+          })
+          .subscribe({
+            next: () => {
+              this.saving.set(false)
+              this.createOpen.set(false)
+              this.toast.success('Đã tạo vi phạm')
+              this.load()
+            },
+            error: (error: unknown) => {
+              this.saving.set(false)
+              this.toast.error('Không thể tạo vi phạm', apiErrorMessage(error))
+            },
+          })
+      },
+      error: (error: unknown) => {
+        this.saving.set(false)
+        this.toast.error('Không xác minh được booking', apiErrorMessage(error))
+      },
+    })
+  }
+  protected action(item: ViolationResponse, action: 'resolve' | 'cancel'): void {
+    if (!confirm(`${action === 'resolve' ? 'Xử lý' : 'Hủy'} vi phạm #${item.violationId}?`)) return
+    const req =
+      action === 'resolve'
+        ? this.api.resolveViolation(item.violationId)
+        : this.api.cancelViolation(item.violationId)
+    req.subscribe({
+      next: () => {
+        this.toast.success('Đã cập nhật vi phạm')
+        this.load()
+      },
+      error: (error: unknown) =>
+        this.toast.error('Không thể cập nhật vi phạm', apiErrorMessage(error)),
+    })
+  }
+  private load(): void {
+    this.loading.set(true)
+    this.api.violations().subscribe({
+      next: (x) => {
+        this.items.set(x)
+        this.loading.set(false)
+      },
+      error: () => {
+        this.loading.set(false)
+        this.toast.error('Không tải được vi phạm')
+      },
+    })
+  }
 }
