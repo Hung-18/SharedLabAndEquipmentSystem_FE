@@ -1,12 +1,24 @@
 import { NgClass } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import { AuthStore } from '../../core/auth/auth.store'
-import type { UserManagementResponse } from '../../core/api/system.models'
+import type { BookingDetailResponse } from '../../core/api/system.models'
 import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
+import { ApiError, apiErrorMessage } from '../../core/http/api-error'
+
+interface NotificationRecipient {
+  userId: number
+  fullName: string
+  username: string
+  email: string
+  roleName: string
+  departmentName: string
+  status: string | number
+}
 
 @Component({
   selector: 'app-send-notification-page',
@@ -32,7 +44,7 @@ import { ToastService } from '../../shared/ui/toast.service'
               <div>
                 <h2 class="font-black text-slate-950">Nội dung thông báo</h2>
                 <p class="mt-1 text-xs text-slate-500">
-                  Dữ liệu được gửi tới POST /api/Notifications/send.
+                  Soạn nội dung rõ ràng và chọn đúng người nhận trước khi gửi.
                 </p>
               </div>
             </div>
@@ -54,43 +66,62 @@ import { ToastService } from '../../shared/ui/toast.service'
               <div
                 class="mt-3 max-h-56 overflow-auto rounded-2xl border border-slate-100 bg-slate-50/60 p-2"
               >
-                @for (user of filteredUsers(); track user.userId) {
-                  <button
-                    type="button"
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition"
-                    [ngClass]="
-                      selectedUserId === user.userId
-                        ? 'bg-violet-600 text-white shadow-lg shadow-violet-200'
-                        : 'hover:bg-white'
-                    "
-                    (click)="selectedUserId = user.userId"
+                @if (usersLoading()) {
+                  <div
+                    class="flex items-center justify-center gap-2 px-3 py-8 text-sm font-semibold text-slate-400"
                   >
                     <span
-                      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black"
+                      class="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-violet-600"
+                    ></span>
+                    Đang tìm người dùng...
+                  </div>
+                } @else {
+                  @for (user of filteredUsers(); track user.userId) {
+                    <button
+                      type="button"
+                      class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition"
                       [ngClass]="
                         selectedUserId === user.userId
-                          ? 'bg-white/15 text-white'
-                          : 'bg-white text-violet-700 shadow-sm'
+                          ? 'bg-violet-600 text-white shadow-lg shadow-violet-200'
+                          : 'hover:bg-white'
                       "
-                      >{{ initials(user.fullName) }}</span
-                    ><span class="min-w-0 flex-1"
-                      ><span class="block truncate text-sm font-black">{{ user.fullName }}</span
-                      ><span
-                        class="mt-0.5 block truncate text-[11px]"
-                        [ngClass]="
-                          selectedUserId === user.userId ? 'text-white/65' : 'text-slate-400'
-                        "
-                        >{{ user.email }} · {{ user.departmentName }}</span
-                      ></span
+                      (click)="selectedUserId = user.userId"
                     >
-                    @if (selectedUserId === user.userId) {
-                      <app-icon name="check" [size]="18" />
-                    }
-                  </button>
-                } @empty {
-                  <div class="px-3 py-8 text-center text-sm font-semibold text-slate-400">
-                    Không tìm thấy người dùng.
-                  </div>
+                      <span
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black"
+                        [ngClass]="
+                          selectedUserId === user.userId
+                            ? 'bg-white/15 text-white'
+                            : 'bg-white text-violet-700 shadow-sm'
+                        "
+                        >{{ initials(user.fullName) }}</span
+                      ><span class="min-w-0 flex-1"
+                        ><span class="block truncate text-sm font-black">{{ user.fullName }}</span
+                        ><span
+                          class="mt-0.5 block truncate text-[11px]"
+                          [ngClass]="
+                            selectedUserId === user.userId ? 'text-white/65' : 'text-slate-400'
+                          "
+                        >
+                          @if (user.email) {
+                            {{ user.email }}
+                          } @else {
+                            Mã người dùng #{{ user.userId }}
+                          }
+                          @if (user.departmentName) {
+                            · {{ user.departmentName }}
+                          }
+                        </span></span
+                      >
+                      @if (selectedUserId === user.userId) {
+                        <app-icon name="check" [size]="18" />
+                      }
+                    </button>
+                  } @empty {
+                    <div class="px-3 py-8 text-center text-sm font-semibold text-slate-400">
+                      Không tìm thấy người dùng phù hợp.
+                    </div>
+                  }
                 }
               </div>
             </div>
@@ -200,21 +231,6 @@ import { ToastService } from '../../shared/ui/toast.service'
               </div>
             </div>
           </article>
-          <article class="rounded-[28px] border border-amber-200 bg-amber-50 p-6">
-            <div class="flex items-start gap-4">
-              <span
-                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"
-                ><app-icon name="lightbulb" [size]="20"
-              /></span>
-              <div>
-                <h3 class="font-black text-amber-900">Giới hạn API hiện tại</h3>
-                <p class="mt-2 text-sm leading-6 text-amber-800">
-                  Mỗi request chỉ gửi cho một UserId. Trang này cố ý không lặp request hàng loạt để
-                  tránh gửi thiếu, gửi trùng hoặc làm nghẽn backend.
-                </p>
-              </div>
-            </div>
-          </article>
           @if (selectedUser(); as recipient) {
             <article class="card-surface p-6">
               <p class="text-xs font-black tracking-[.18em] text-slate-400 uppercase">
@@ -228,9 +244,16 @@ import { ToastService } from '../../shared/ui/toast.service'
                 </div>
                 <div>
                   <p class="font-black text-slate-900">{{ recipient.fullName }}</p>
-                  <p class="mt-1 text-xs text-slate-400">{{ recipient.email }}</p>
+                  @if (recipient.email) {
+                    <p class="mt-1 text-xs text-slate-400">{{ recipient.email }}</p>
+                  } @else {
+                    <p class="mt-1 text-xs text-slate-400">Mã người dùng #{{ recipient.userId }}</p>
+                  }
                   <p class="mt-1 text-xs font-bold text-violet-600">
-                    {{ recipient.roleName }} · {{ recipient.departmentName }}
+                    {{ recipient.roleName }}
+                    @if (recipient.departmentName) {
+                      · {{ recipient.departmentName }}
+                    }
                   </p>
                 </div>
               </div>
@@ -245,11 +268,12 @@ export class SendNotificationPage implements OnInit {
   private readonly api = inject(SystemService)
   private readonly toast = inject(ToastService)
   private readonly store = inject(AuthStore)
-  protected readonly users = signal<UserManagementResponse[]>([])
+  protected readonly users = signal<NotificationRecipient[]>([])
   protected readonly sending = signal(false)
   protected readonly usersLoading = signal(false)
   protected userSearch = ''
   private userSearchTimer: ReturnType<typeof setTimeout> | null = null
+  private userSearchRequestId = 0
   protected selectedUserId: number | null = null
   protected notificationType = 7
   protected title = ''
@@ -312,10 +336,10 @@ export class SendNotificationPage implements OnInit {
   protected pageSubtitle(): string {
     return this.store.isManager()
       ? 'Gửi thông báo thực địa hằng ngày tới người dùng trong quá trình vận hành phòng lab.'
-      : 'Soạn thông báo trực tiếp cho một người dùng. Backend hiện chưa hỗ trợ gửi hàng loạt theo vai trò hoặc khoa.'
+      : 'Soạn và gửi thông báo trực tiếp tới người dùng trong hệ thống.'
   }
 
-  protected filteredUsers(): UserManagementResponse[] {
+  protected filteredUsers(): NotificationRecipient[] {
     const query = this.userSearch.trim().toLowerCase()
     return this.users()
       .filter(
@@ -325,7 +349,7 @@ export class SendNotificationPage implements OnInit {
       .slice(0, 20)
   }
 
-  protected selectedUser(): UserManagementResponse | null {
+  protected selectedUser(): NotificationRecipient | null {
     return this.users().find((user) => user.userId === this.selectedUserId) ?? null
   }
 
@@ -342,28 +366,112 @@ export class SendNotificationPage implements OnInit {
 
   protected scheduleUserSearch(): void {
     if (this.userSearchTimer) clearTimeout(this.userSearchTimer)
-    this.userSearchTimer = setTimeout(() => this.loadUsers(), 250)
+
+    // Admin can search the full user directory. Lab Managers search locally
+    // within requesters who have bookings in their management scope.
+    if (!this.store.isAdmin()) return
+
+    this.userSearchTimer = setTimeout(() => this.loadUsers(), 300)
   }
 
   private loadUsers(): void {
     this.usersLoading.set(true)
+
+    if (this.store.isAdmin()) {
+      const requestId = ++this.userSearchRequestId
+      this.api
+        .users({
+          keyword: this.userSearch.trim() || undefined,
+          pageNumber: 1,
+          pageSize: 50,
+        })
+        .subscribe({
+          next: (response) => {
+            if (requestId !== this.userSearchRequestId) return
+            this.users.set(
+              response.items
+                .filter((user) => this.canReceiveNotification(user.status))
+                .map((user) => ({
+                  userId: user.userId,
+                  fullName: user.fullName,
+                  username: user.username,
+                  email: user.email,
+                  roleName: user.roleName,
+                  departmentName: user.departmentName,
+                  status: user.status,
+                })),
+            )
+            this.usersLoading.set(false)
+          },
+          error: () => {
+            if (requestId !== this.userSearchRequestId) return
+            this.users.set([])
+            this.usersLoading.set(false)
+            this.toast.error('Không tải được danh sách người nhận', 'Vui lòng thử lại sau.')
+          },
+        })
+      return
+    }
+
+    this.loadManagerRecipients()
+  }
+
+  private loadManagerRecipients(): void {
     this.api
-      .users({
-        keyword: this.userSearch.trim() || undefined,
-        pageNumber: 1,
-        pageSize: 50,
-      })
+      .bookings()
+      .pipe(
+        switchMap((bookings) => {
+          const firstBookingByUser = new Map<number, number>()
+          for (const booking of bookings) {
+            if (!firstBookingByUser.has(booking.userId)) {
+              firstBookingByUser.set(booking.userId, booking.bookingId)
+            }
+          }
+
+          const requests = [...firstBookingByUser.values()]
+            .slice(0, 50)
+            .map((bookingId) => this.api.booking(bookingId).pipe(catchError(() => of(null))))
+
+          return requests.length ? forkJoin(requests) : of([])
+        }),
+        map((details) => this.toRecipients(details)),
+      )
       .subscribe({
-        next: (response) => {
-          this.users.set(response.items)
+        next: (recipients) => {
+          this.users.set(recipients)
           this.usersLoading.set(false)
         },
         error: () => {
+          this.users.set([])
           this.usersLoading.set(false)
-          this.toast.error('Không tải được danh sách người nhận')
+          this.toast.error('Không tải được danh sách người nhận', 'Vui lòng thử lại sau.')
         },
       })
   }
+
+  private toRecipients(details: Array<BookingDetailResponse | null>): NotificationRecipient[] {
+    const recipients = new Map<number, NotificationRecipient>()
+
+    for (const detail of details) {
+      if (!detail || recipients.has(detail.userId)) continue
+      recipients.set(detail.userId, {
+        userId: detail.userId,
+        fullName: detail.userName?.trim() || `Người dùng #${detail.userId}`,
+        username: '',
+        email: '',
+        roleName: 'Requester',
+        departmentName: '',
+        status: 'Active',
+      })
+    }
+
+    return [...recipients.values()].sort((a, b) => a.fullName.localeCompare(b.fullName, 'vi'))
+  }
+  private canReceiveNotification(status: string | number): boolean {
+    const normalized = String(status).trim().toLowerCase()
+    return !['2', '4', 'inactive', 'locked'].includes(normalized)
+  }
+
   protected initials(name: string): string {
     return name
       .trim()
@@ -383,6 +491,7 @@ export class SendNotificationPage implements OnInit {
     this.notificationType = 7
     this.title = ''
     this.message = ''
+    this.loadUsers()
   }
 
   protected send(): void {
@@ -408,9 +517,13 @@ export class SendNotificationPage implements OnInit {
           this.title = ''
           this.message = ''
         },
-        error: () => {
+        error: (error: unknown) => {
           this.sending.set(false)
-          this.toast.error('Không thể gửi thông báo')
+          const fallback =
+            error instanceof ApiError && error.status === 403
+              ? 'Tài khoản hiện tại chưa được cấp quyền gửi thông báo.'
+              : 'Không thể gửi thông báo. Vui lòng thử lại.'
+          this.toast.error('Không thể gửi thông báo', apiErrorMessage(error, fallback))
         },
       })
   }

@@ -173,7 +173,7 @@ import { labelOf, toDateInput, toIso, toLocalDateTimeInput } from '../../shared/
     <app-modal
       [open]="checkoutOpen()"
       title="Check-out thay người dùng"
-      subtitle="Để trống thời gian nếu muốn backend dùng thời điểm hiện tại."
+      subtitle="Để trống thời gian để sử dụng thời điểm hiện tại."
       (close)="checkoutOpen.set(false)"
       ><label class="field-label">Thời gian checkout lịch sử</label
       ><input

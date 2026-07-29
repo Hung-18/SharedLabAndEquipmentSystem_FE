@@ -32,22 +32,20 @@ import { ToastService } from '../../shared/ui/toast.service'
           </p>
         </div>
         <div class="flex flex-wrap gap-3">
-          <button
-            type="button"
+          <a
+            routerLink="/app/calendar"
             class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            (click)="comingSoon('Lịch tài nguyên')"
           >
             <app-icon name="calendar" [size]="18" />
             Xem lịch tài nguyên
-          </button>
-          <button
-            type="button"
+          </a>
+          <a
+            routerLink="/app/bookings/new"
             class="inline-flex h-11 items-center gap-2 rounded-2xl bg-linear-to-r from-indigo-600 to-violet-600 px-4 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 hover:shadow-xl"
-            (click)="comingSoon('Tạo booking')"
           >
             <span class="text-lg leading-none">+</span>
             Tạo booking nhanh
-          </button>
+          </a>
         </div>
       </header>
 
@@ -90,6 +88,7 @@ import { ToastService } from '../../shared/ui/toast.service'
                 [class.bg-cyan-200]="card.tone === 'cyan'"
                 [class.bg-amber-200]="card.tone === 'amber'"
                 [class.bg-rose-200]="card.tone === 'rose'"
+                [class.bg-emerald-200]="card.tone === 'emerald'"
               ></div>
               <div class="relative flex items-start justify-between gap-4">
                 <div>
@@ -109,6 +108,8 @@ import { ToastService } from '../../shared/ui/toast.service'
                   [class.text-amber-600]="card.tone === 'amber'"
                   [class.bg-rose-50]="card.tone === 'rose'"
                   [class.text-rose-600]="card.tone === 'rose'"
+                  [class.bg-emerald-50]="card.tone === 'emerald'"
+                  [class.text-emerald-600]="card.tone === 'emerald'"
                 >
                   <app-icon [name]="card.icon" [size]="21" />
                 </div>
@@ -128,13 +129,12 @@ import { ToastService } from '../../shared/ui/toast.service'
                   Các lịch đã được duyệt và chuẩn bị diễn ra
                 </p>
               </div>
-              <button
-                type="button"
+              <a
+                routerLink="/app/bookings/my"
                 class="text-xs font-bold text-indigo-600 hover:text-indigo-800"
-                (click)="comingSoon('Danh sách booking')"
               >
                 Xem tất cả
-              </button>
+              </a>
             </div>
 
             @if (upcomingBookings().length === 0) {
@@ -152,10 +152,9 @@ import { ToastService } from '../../shared/ui/toast.service'
             } @else {
               <div class="divide-y divide-slate-100">
                 @for (booking of upcomingBookings().slice(0, 4); track booking.bookingId) {
-                  <button
-                    type="button"
+                  <a
+                    [routerLink]="['/app/bookings', booking.bookingId]"
                     class="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-slate-50 sm:px-6"
-                    (click)="bookingDetail(booking)"
                   >
                     <div
                       class="flex w-14 shrink-0 flex-col items-center rounded-2xl bg-[#111a3a] py-2 text-white"
@@ -184,7 +183,7 @@ import { ToastService } from '../../shared/ui/toast.service'
                       </p>
                     </div>
                     <span class="text-slate-300"><app-icon name="arrow-right" [size]="18" /></span>
-                  </button>
+                  </a>
                 }
               </div>
             }
@@ -491,9 +490,9 @@ export class RequesterHomePage implements OnInit {
     {
       label: 'Thông báo chưa đọc',
       value: this.unreadCount(),
-      note: 'Cập nhật mới cần xem',
+      note: this.unreadCount() > 0 ? 'Cập nhật mới cần xem' : 'Bạn đã đọc hết thông báo',
       icon: 'bell',
-      tone: 'rose',
+      tone: this.unreadCount() > 0 ? 'rose' : 'emerald',
     },
   ])
 
@@ -537,10 +536,7 @@ export class RequesterHomePage implements OnInit {
       },
       error: () => {
         this.loading.set(false)
-        this.toast.error(
-          'Không tải được trang chủ',
-          'Hãy kiểm tra backend đang chạy tại cổng 5253.',
-        )
+        this.toast.error('Không tải được trang chủ', 'Vui lòng kiểm tra kết nối và thử lại.')
       },
     })
   }
@@ -595,19 +591,5 @@ export class RequesterHomePage implements OnInit {
     if (tone === 'rose') return 'alert'
     if (tone === 'amber') return 'clock'
     return 'bell'
-  }
-
-  protected bookingDetail(booking: BookingResponse): void {
-    this.toast.info(
-      `Booking #${booking.bookingId}`,
-      `${this.purposeLabel(booking.purposeType)} • ${new Date(booking.startTime).toLocaleString('vi-VN')}`,
-    )
-  }
-
-  protected comingSoon(name: string): void {
-    this.toast.info(
-      `${name} chưa nằm trong 9 màn hình`,
-      'Nút đã được chuẩn bị sẵn để nối route trong giai đoạn tiếp theo.',
-    )
   }
 }

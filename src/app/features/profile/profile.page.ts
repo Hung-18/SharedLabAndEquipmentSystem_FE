@@ -80,8 +80,7 @@ import { IconComponent } from '../../shared/ui/icon'
               </div>
               <h3 class="mt-5 text-lg font-bold">Bảo mật tài khoản</h3>
               <p class="mt-2 text-sm leading-6 text-white/55">
-                Backend hiện chưa có API đổi mật khẩu khi đang đăng nhập. Bạn có thể dùng luồng đặt
-                lại qua email.
+                Đặt lại mật khẩu qua email để bảo vệ tài khoản và duy trì quyền truy cập an toàn.
               </p>
               <a
                 routerLink="/forgot-password"
@@ -201,34 +200,18 @@ import { IconComponent } from '../../shared/ui/icon'
                       {{ user.restrictionUntil | date: 'dd/MM/yyyy' }}
                     </p>
                     <p class="mt-3 text-xs leading-5 text-slate-400">
-                      Sau thời điểm này, backend sẽ tự mở hạn chế nếu không có điều kiện chặn khác.
+                      Sau thời điểm này, quyền đặt lịch sẽ được khôi phục nếu tài khoản đủ điều kiện.
                     </p>
                   } @else {
                     <p class="text-lg font-bold text-slate-800">Không có thời hạn hạn chế</p>
                     <p class="mt-2 text-xs leading-5 text-slate-400">
-                      Tài khoản hiện không lưu RestrictionUntil.
+                      Tài khoản hiện không bị giới hạn thời gian đặt lịch.
                     </p>
                   }
                 </div>
               </article>
             </div>
 
-            <article
-              class="flex flex-col gap-4 rounded-3xl border border-indigo-100 bg-linear-to-r from-indigo-50 to-violet-50 p-5 sm:flex-row sm:items-center sm:p-6"
-            >
-              <div
-                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm"
-              >
-                <app-icon name="mail" [size]="22" />
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="font-bold text-indigo-950">Cần cập nhật thông tin?</p>
-                <p class="mt-1 text-sm leading-6 text-indigo-700/70">
-                  Hiện chưa có API tự sửa hồ sơ. Hãy liên hệ Admin để thay đổi họ tên, email,
-                  khoa/phòng ban hoặc vai trò.
-                </p>
-              </div>
-            </article>
           </div>
         </div>
       }

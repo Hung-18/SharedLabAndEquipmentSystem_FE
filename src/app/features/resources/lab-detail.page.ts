@@ -272,7 +272,7 @@ import { ToastService } from '../../shared/ui/toast.service'
         <app-modal
           [open]="editOpen()"
           title="Chỉnh sửa phòng lab"
-          subtitle="RoomCode không thể sửa bằng API hiện tại."
+          subtitle="Cập nhật thông tin hiển thị của phòng thí nghiệm."
           (close)="editOpen.set(false)"
         >
           <form class="grid gap-4 sm:grid-cols-2" (ngSubmit)="save()">

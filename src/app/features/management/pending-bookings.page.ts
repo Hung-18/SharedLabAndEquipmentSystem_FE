@@ -25,7 +25,7 @@ import { labelOf } from '../../shared/utils/presentation'
   template: `<section class="space-y-6">
     <app-page-header
       title="Hàng đợi booking cần duyệt"
-      subtitle="Danh sách được sắp theo PriorityLevel tăng dần, sau đó theo thời điểm tạo sớm nhất."
+      subtitle="Danh sách được sắp theo mức ưu tiên và thời điểm gửi yêu cầu."
       ><a routerLink="/app/management/bookings" class="btn-secondary"
         ><app-icon name="list" [size]="17" /> Tất cả booking</a
       ></app-page-header
@@ -42,8 +42,7 @@ import { labelOf } from '../../shared/utils/presentation'
         <div class="flex-1">
           <p class="font-black text-slate-900">Nguyên tắc xử lý ưu tiên</p>
           <p class="mt-1 text-sm leading-6 text-slate-600">
-            Số ưu tiên càng nhỏ càng được xét trước. Khi duyệt, backend kiểm tra lại xung đột trong
-            transaction; lỗi 409 nghĩa là slot vừa bị booking khác khóa.
+            Số ưu tiên càng nhỏ càng được xét trước. Các yêu cầu cùng mức ưu tiên được xử lý theo thời gian gửi.
           </p>
         </div>
         <span

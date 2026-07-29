@@ -61,7 +61,7 @@
       "completedText": "Yêu cầu đặt lại mật khẩu đã hoàn tất ở tab khác. Tab này không còn phải chờ xử lý.",
       "closeHint": "Gmail hoặc trình duyệt có thể mở liên kết trong tab mới. Đây là hành vi của trình duyệt, không phải một màn hình thừa của hệ thống.",
       "timeout": "Yêu cầu đã được tiếp nhận. Hãy kiểm tra hộp thư trong ít phút tới.",
-      "connectionError": "Không thể kết nối tới máy chủ. Vui lòng kiểm tra backend và thử lại.",
+      "connectionError": "Không thể kết nối tới máy chủ. Vui lòng thử lại.",
       "openGmail": "Mở Gmail trong tab này",
       "gmailSameTabHint": "Bấm Mở Gmail để thay thế trang này bằng hộp thư. Như vậy sẽ không còn tab xác nhận bị thừa.",
       "processing": "Đang xử lý yêu cầu..."
@@ -239,7 +239,7 @@
       "save": "Lưu cấu hình",
       "saving": "Đang lưu..."
     },
-    "savedLocally": "Cấu hình được đồng bộ ngay trên giao diện hiện tại.",
+    "savedLocally": "Cấu hình được cập nhật ngay sau khi lưu.",
     "preview": {
       "eyebrow": "Xem trước thông báo",
       "title": "Nội dung người dùng sẽ nhìn thấy",
@@ -249,8 +249,8 @@
       "normalMessage": "Mọi chức năng đang sẵn sàng để sử dụng."
     },
     "note": {
-      "title": "Phạm vi của giao diện",
-      "text": "Trang này quản lý trạng thái và thông báo System Maintenance ở frontend. Để khóa truy cập trên mọi thiết bị, backend cần bổ sung API cấu hình hệ thống dùng chung."
+      "title": "Lưu ý vận hành",
+      "text": "Hãy đặt thời gian bảo trì rõ ràng và chuẩn bị thông báo ngắn gọn để người dùng chủ động sắp xếp công việc."
     },
     "lastUpdated": "Cập nhật gần nhất:",
     "banner": {

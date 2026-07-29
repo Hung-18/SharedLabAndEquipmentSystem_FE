@@ -704,7 +704,7 @@ export class ReportsPage implements OnInit {
         if (failedRequests > 0) {
           this.toast.info(
             'Một phần báo cáo chưa tải được',
-            `${failedRequests} API báo cáo gặp lỗi; các phần còn lại vẫn được hiển thị.`,
+            `${failedRequests} nhóm dữ liệu chưa tải được; các phần còn lại vẫn được hiển thị.`,
           )
         }
       },

@@ -61,7 +61,7 @@
       "completedText": "The password reset was completed in another tab. This tab is no longer waiting for the request.",
       "closeHint": "Gmail or your browser may open the link in a new tab. That is browser behavior, not an extra application screen.",
       "timeout": "Your request has been accepted. Please check your inbox in a few minutes.",
-      "connectionError": "Could not connect to the server. Check the backend and try again.",
+      "connectionError": "Could not connect to the server. Please try again.",
       "openGmail": "Open Gmail in this tab",
       "gmailSameTabHint": "Open Gmail to replace this confirmation page with your inbox, so no extra confirmation tab is left open.",
       "processing": "Processing your request..."
@@ -239,7 +239,7 @@
       "save": "Save settings",
       "saving": "Saving..."
     },
-    "savedLocally": "The settings are reflected immediately in the current frontend.",
+    "savedLocally": "The settings are updated immediately after saving.",
     "preview": {
       "eyebrow": "Notice preview",
       "title": "What users will see",
@@ -249,8 +249,8 @@
       "normalMessage": "All features are ready to use."
     },
     "note": {
-      "title": "Frontend scope",
-      "text": "This page manages System Maintenance state and notices in the frontend. A shared backend configuration API is required to lock access consistently across all devices."
+      "title": "Operational note",
+      "text": "Set a clear maintenance window and prepare a concise notice so users can plan their work."
     },
     "lastUpdated": "Last updated:",
     "banner": {

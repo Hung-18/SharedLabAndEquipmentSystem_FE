@@ -32,7 +32,7 @@ import { toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
           <div>
             <h2 class="text-xl font-black text-slate-950">Tài nguyên & thời gian</h2>
             <p class="mt-1 text-sm text-slate-500">
-              Backend sẽ kiểm tra xung đột với booking và maintenance khác.
+              Hệ thống sẽ kiểm tra lịch trùng trước khi lưu.
             </p>
           </div>
         </div>

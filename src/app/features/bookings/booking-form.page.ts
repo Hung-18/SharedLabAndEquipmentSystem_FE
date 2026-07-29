@@ -265,7 +265,7 @@ interface SelectedResource {
                 <div>
                   <h2 class="text-xl font-black text-slate-950">Chọn thời gian</h2>
                   <p class="mt-1 text-sm text-slate-500">
-                    Thời gian sẽ được chuyển sang UTC trước khi gửi backend.
+                    Kiểm tra kỹ thời gian bắt đầu và kết thúc trước khi tiếp tục.
                   </p>
                 </div>
               </div>
@@ -365,7 +365,7 @@ interface SelectedResource {
                 <div>
                   <h2 class="text-xl font-black text-slate-950">Mục đích & ưu tiên</h2>
                   <p class="mt-1 text-sm text-slate-500">
-                    Mức ưu tiên được đọc từ quy tắc đang Active trong backend.
+                    Mức ưu tiên được áp dụng theo quy tắc hiện hành.
                   </p>
                 </div>
               </div>

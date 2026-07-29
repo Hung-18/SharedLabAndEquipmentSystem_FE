@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# SharedLabAndEquipmentSystem_FE
-=======
 # Shared Lab & Equipment Booking System — Full Frontend
 
 Frontend Angular hoàn chỉnh cho backend **SharedLabAndEquipmentBookingSystem(22)**. Project được mở rộng trực tiếp từ cây thư mục `angular-base-starter-main`, giữ nguyên kiến trúc standalone component và bổ sung đầy đủ **37 màn hình nghiệp vụ** theo ba vai trò Requester, LabManager và Admin, cùng **homepage công khai mới** tại route `/`.
@@ -142,4 +139,3 @@ npm run build
 ```
 
 Output mặc định nằm trong `dist/`. Khi deploy production, web server cần proxy `/api` tới backend và fallback mọi route Angular về `index.html`.
->>>>>>> ad2cc31ac4977e2ce1a21376c1f7a64cc9384924

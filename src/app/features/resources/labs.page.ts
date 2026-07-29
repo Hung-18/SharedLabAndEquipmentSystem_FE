@@ -253,7 +253,7 @@ interface LabForm {
       <app-modal
         [open]="createOpen()"
         title="Thêm phòng thí nghiệm"
-        subtitle="Thông tin được gửi trực tiếp tới POST /api/LabRooms."
+        subtitle="Nhập thông tin phòng thí nghiệm và người phụ trách."
         (close)="createOpen.set(false)"
       >
         <form class="grid gap-4 sm:grid-cols-2" (ngSubmit)="create()">
