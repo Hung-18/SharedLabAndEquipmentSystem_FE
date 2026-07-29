@@ -267,13 +267,6 @@ export const routes: Routes = [
         redirectTo: 'notifications/send',
       },
       {
-        path: 'admin/system-maintenance',
-        canActivate: [roleGuard(['Admin'])],
-        title: 'System Maintenance',
-        loadComponent: () =>
-          import('./features/admin/system-maintenance.page').then((m) => m.SystemMaintenancePage),
-      },
-      {
         path: 'admin/audit-logs',
         canActivate: [roleGuard(['Admin'])],
         title: 'Audit log',

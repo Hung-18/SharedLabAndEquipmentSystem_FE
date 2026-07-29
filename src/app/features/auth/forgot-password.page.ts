@@ -253,7 +253,7 @@ export class ForgotPasswordPage {
           const message =
             error instanceof ApiError && error.status > 0
               ? error.message
-              : 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra backend và thử lại.'
+              : 'Không thể kết nối tới máy chủ. Vui lòng thử lại.'
 
           if (this.sent()) {
             // The request may have reached SMTP before the connection failed. Keep

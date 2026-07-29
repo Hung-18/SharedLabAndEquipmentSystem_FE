@@ -52,8 +52,7 @@ import { labelOf } from '../../shared/utils/presentation'
               PriorityLevel ↑ cao hơn khi con số ↓ nhỏ hơn
             </h2>
             <p class="mt-3 max-w-3xl text-sm leading-6 text-white/60">
-              Booking Pending được sắp xếp theo PriorityLevel tăng dần, sau đó theo thời điểm tạo
-              tăng dần. Backend vẫn kiểm tra xung đột lại trong transaction khi duyệt.
+              Yêu cầu chờ duyệt được sắp theo mức ưu tiên từ cao đến thấp; nếu cùng mức ưu tiên, yêu cầu gửi sớm hơn sẽ được xét trước.
             </p>
           </div>
           <div
@@ -182,7 +181,7 @@ import { labelOf } from '../../shared/utils/presentation'
       <app-modal
         [open]="formOpen()"
         [title]="editingId() ? 'Chỉnh sửa quy tắc ưu tiên' : 'Thêm quy tắc ưu tiên'"
-        subtitle="Không nên hardcode mức ưu tiên ở frontend; dữ liệu sẽ được lấy từ API active."
+        subtitle="Thiết lập mức ưu tiên áp dụng cho từng mục đích sử dụng."
         (close)="formOpen.set(false)"
       >
         <form class="space-y-4" (ngSubmit)="save()">

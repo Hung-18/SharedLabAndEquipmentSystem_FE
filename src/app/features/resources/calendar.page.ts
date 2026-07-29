@@ -333,7 +333,7 @@ export class CalendarPage implements OnInit {
         error: () => {
           this.events.set([])
           this.loading.set(false)
-          this.toast.error('Không tải được lịch', 'Kiểm tra backend hoặc quyền truy cập.')
+          this.toast.error('Không tải được lịch', 'Vui lòng kiểm tra kết nối hoặc quyền truy cập.')
         },
       })
   }

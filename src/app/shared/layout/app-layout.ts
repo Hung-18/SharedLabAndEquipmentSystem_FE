@@ -6,7 +6,6 @@ import { catchError, of } from 'rxjs'
 import { NotificationBadgeService } from '../../core/api/notification-badge.service'
 import { WorkspaceService } from '../../core/api/workspace.service'
 import { AuthStore } from '../../core/auth/auth.store'
-import { SystemMaintenanceService } from '../../core/system-maintenance.service'
 import { IconComponent } from '../ui/icon'
 import { LanguageSwitcherComponent } from '../ui/language-switcher'
 
@@ -213,42 +212,6 @@ interface NavGroup {
           </a>
         </header>
 
-        @if (maintenance.state().enabled) {
-          <div
-            class="border-b border-amber-200 bg-linear-to-r from-amber-50 via-orange-50 to-rose-50 px-4 py-3 sm:px-6 lg:px-8"
-          >
-            <div
-              class="mx-auto flex w-full max-w-[1580px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div class="flex items-start gap-3">
-                <span
-                  class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700"
-                >
-                  <app-icon name="wrench" [size]="18" />
-                </span>
-                <div>
-                  <p class="text-xs font-black text-amber-950">
-                    {{ 'systemMaintenance.banner.title' | translate }}
-                  </p>
-                  <p class="mt-1 text-xs font-semibold text-amber-800">
-                    {{
-                      maintenance.state().message ||
-                        ('systemMaintenance.preview.defaultMessage' | translate)
-                    }}
-                  </p>
-                </div>
-              </div>
-              @if (maintenanceWindow()) {
-                <span
-                  class="inline-flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-[11px] font-black text-amber-800 ring-1 ring-amber-200"
-                >
-                  <app-icon name="clock" [size]="15" /> {{ maintenanceWindow() }}
-                </span>
-              }
-            </div>
-          </div>
-        }
-
         <main class="mx-auto w-full max-w-[1580px] p-4 sm:p-6 lg:p-8"><router-outlet /></main>
       </div>
     </div>
@@ -259,7 +222,6 @@ export class AppLayoutComponent implements OnInit {
   private readonly workspace = inject(WorkspaceService)
   protected readonly badge = inject(NotificationBadgeService)
   private readonly router = inject(Router)
-  protected readonly maintenance = inject(SystemMaintenanceService)
   protected readonly mobileOpen = signal(false)
 
   private readonly groups: readonly NavGroup[] = [
@@ -286,12 +248,6 @@ export class AppLayoutComponent implements OnInit {
           icon: 'wrench',
           route: '/app/management/maintenances',
           roles: ['Requester', 'LabManager'],
-        },
-        {
-          labelKey: 'layout.items.systemMaintenance',
-          icon: 'settings',
-          route: '/app/admin/system-maintenance',
-          roles: ['Admin'],
         },
       ],
     },
@@ -418,22 +374,6 @@ export class AppLayoutComponent implements OnInit {
         ? 'layout.roles.manager'
         : 'layout.roles.requester'
   }
-  protected maintenanceWindow(): string {
-    const state = this.maintenance.state()
-    const locale = document.documentElement.lang === 'en' ? 'en-GB' : 'vi-VN'
-    const format = (value: string): string => {
-      if (!value) return ''
-      const date = new Date(value)
-      if (Number.isNaN(date.getTime())) return value
-      return new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(
-        date,
-      )
-    }
-    const start = format(state.expectedStart)
-    const end = format(state.expectedEnd)
-    return start && end ? `${start} → ${end}` : start || end
-  }
-
   protected async logout(): Promise<void> {
     await this.store.logout()
     void this.router.navigate(['/login'])

@@ -19,7 +19,7 @@ type NotificationTab = 'all' | 'unread'
       <header class="flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
         <div>
           <div class="flex items-center gap-2 text-sm font-semibold text-indigo-600">
-            <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
             Cập nhật theo thời gian thực
           </div>
           <h1 class="mt-2 text-3xl font-bold tracking-[-0.035em] text-slate-950 sm:text-4xl">
@@ -69,10 +69,12 @@ type NotificationTab = 'all' | 'unread'
                   (click)="changeTab('unread')"
                 >
                   Chưa đọc
-                  <span
-                    class="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white"
-                    >{{ unreadCount() }}</span
-                  >
+                  @if (unreadCount() > 0) {
+                    <span
+                      class="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white"
+                      >{{ unreadCount() }}</span
+                    >
+                  }
                 </button>
               </div>
 
@@ -244,9 +246,16 @@ type NotificationTab = 'all' | 'unread'
               >
                 <app-icon name="bell" [size]="23" />
               </div>
-              <span class="rounded-full bg-rose-500 px-3 py-1 text-xs font-bold"
-                >{{ unreadCount() }} chưa đọc</span
-              >
+              @if (unreadCount() > 0) {
+                <span class="rounded-full bg-rose-500 px-3 py-1 text-xs font-bold"
+                  >{{ unreadCount() }} chưa đọc</span
+                >
+              } @else {
+                <span
+                  class="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-200"
+                  >Đã đọc hết</span
+                >
+              }
             </div>
             <h2 class="mt-6 text-xl font-bold">Tổng quan hộp thư</h2>
             <p class="mt-2 text-sm leading-6 text-white/55">
@@ -378,8 +387,8 @@ type NotificationTab = 'all' | 'unread'
             <div
               class="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-700"
             >
-              <strong>Hàng chờ đã được cập nhật.</strong><br />Hãy tạo booking trong thời gian
-              backend cho phép giữ chỗ.
+              <strong>Hàng chờ đã được cập nhật.</strong><br />Hãy tạo booking trước khi thời gian
+              giữ chỗ kết thúc.
             </div>
           }
           @if (notification.notificationType.toLowerCase().includes('violation')) {

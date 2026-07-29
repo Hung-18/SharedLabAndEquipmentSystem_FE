@@ -160,7 +160,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
     <app-modal
       [open]="createOpen()"
       title="Tạo vi phạm thủ công"
-      subtitle="Điểm phạt sẽ do backend xác định theo loại vi phạm."
+      subtitle="Điểm phạt được tính tự động theo loại vi phạm."
       (close)="createOpen.set(false)"
       ><form class="grid gap-4" (ngSubmit)="create()">
         <div>

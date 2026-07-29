@@ -13,7 +13,7 @@ import { ToastService } from '../../shared/ui/toast.service'
     <section class="space-y-6">
       <app-page-header
         title="Danh sách vai trò"
-        subtitle="Trang tham chiếu quyền read-only. Backend hiện không hỗ trợ tạo, sửa hoặc xóa role."
+        subtitle="Danh sách vai trò và phạm vi quyền trong hệ thống."
       />
 
       @if (loading()) {
@@ -26,7 +26,7 @@ import { ToastService } from '../../shared/ui/toast.service'
         <app-data-state
           icon="shield"
           title="Chưa có dữ liệu vai trò"
-          message="API Roles chưa trả về bản ghi nào."
+          message="Chưa có dữ liệu vai trò."
         />
       } @else {
         <div class="grid gap-5 lg:grid-cols-3">
@@ -87,7 +87,7 @@ import { ToastService } from '../../shared/ui/toast.service'
         <header class="border-b border-slate-100 px-6 py-5">
           <h2 class="font-black text-slate-950">Ma trận truy cập tổng quát</h2>
           <p class="mt-1 text-xs text-slate-400">
-            Route guard trên frontend và [Authorize] ở backend cùng kiểm soát quyền.
+            Mỗi vai trò chỉ được truy cập các chức năng phù hợp với phạm vi được phân công.
           </p>
         </header>
         <div class="overflow-x-auto">
