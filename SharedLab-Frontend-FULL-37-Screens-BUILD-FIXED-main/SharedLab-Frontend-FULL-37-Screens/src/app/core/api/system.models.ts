@@ -15,6 +15,7 @@ export interface LabRoomResponse {
   location: string
   capacity: number
   status: string
+  imageUrl?: string | null
 }
 
 export interface LabRoomDetailResponse extends LabRoomResponse {
@@ -29,6 +30,7 @@ export interface EquipmentResponse {
   labId: number
   equipmentName: string
   status: string
+  imageUrl?: string | null
 }
 
 export interface EquipmentDetailResponse extends EquipmentResponse {

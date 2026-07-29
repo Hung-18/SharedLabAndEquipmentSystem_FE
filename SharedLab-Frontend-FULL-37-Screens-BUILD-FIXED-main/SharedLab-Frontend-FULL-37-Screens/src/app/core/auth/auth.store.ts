@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core'
-import { firstValueFrom } from 'rxjs'
+import { firstValueFrom, timeout } from 'rxjs'
 import { ApiError } from '../http/api-error'
 import { AuthService } from './auth.service'
 import { TokenStorage } from './token-storage'
@@ -30,9 +30,9 @@ export class AuthStore {
     this._error.set(null)
 
     try {
-      const tokens = await firstValueFrom(this.auth.login(payload))
+      const tokens = await firstValueFrom(this.auth.login(payload).pipe(timeout(15000)))
       this.tokens.set(tokens.accessToken, tokens.refreshToken, remember)
-      const user = await firstValueFrom(this.auth.me())
+      const user = await firstValueFrom(this.auth.me().pipe(timeout(10000)))
       this.setUser(user, remember)
       this._status.set('idle')
       return user
@@ -47,7 +47,7 @@ export class AuthStore {
   async hydrate(): Promise<void> {
     if (!this.tokens.access) return
     try {
-      const user = await firstValueFrom(this.auth.me())
+      const user = await firstValueFrom(this.auth.me().pipe(timeout(8000)))
       this.setUser(user)
     } catch {
       this.clearLocalSession()

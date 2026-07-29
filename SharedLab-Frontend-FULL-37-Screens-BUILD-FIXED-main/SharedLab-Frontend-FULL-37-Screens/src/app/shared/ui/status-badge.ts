@@ -7,7 +7,10 @@ import { labelOf, toneOf } from '../utils/presentation'
   selector: 'app-status-badge',
   imports: [NgClass],
   template: `
-    <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-extrabold" [ngClass]="classes()">
+    <span
+      class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-extrabold"
+      [ngClass]="classes()"
+    >
       <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>{{ text() }}
     </span>
   `,

@@ -1,39 +1,272 @@
 {
-  "app": {
-    "name": "Angular Base",
-    "tagline": "Production-ready Angular starter"
+  "brand": {
+    "sharedLab": "Shared Lab",
+    "bookingSystem": "Booking System"
   },
-  "nav": {
-    "home": "Home",
-    "users": "Users",
-    "logout": "Log out"
-  },
-  "auth": {
-    "login": "Log in",
-    "email": "Email",
-    "password": "Password",
-    "signInToContinue": "Sign in to continue",
-    "invalidCredentials": "Invalid email or password"
-  },
-  "users": {
-    "title": "Users",
-    "search": "Search users…",
-    "create": "New user",
-    "empty": "No users found",
-    "name": "Name",
-    "username": "Username",
-    "email": "Email",
-    "actions": "Actions",
-    "edit": "Edit",
-    "delete": "Delete",
-    "save": "Save",
-    "cancel": "Cancel"
+  "language": {
+    "vi": "VI",
+    "en": "EN"
   },
   "common": {
     "loading": "Loading…",
     "retry": "Retry",
     "error": "Something went wrong",
     "notFound": "Page not found",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "backLogin": "Back to sign in",
+    "closeTab": "Close this tab",
+    "goLogin": "Go to sign in"
+  },
+  "auth": {
+    "login": {
+      "welcome": "Welcome back",
+      "title": "Sign in to your account",
+      "subtitle": "Use the email provided by your administrator to access the system.",
+      "email": "Email",
+      "password": "Password",
+      "forgot": "Forgot password?",
+      "remember": "Remember me on this device",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "home": "Back to homepage",
+      "smartSpace": "Smart research workspace",
+      "hero1": "Book lab rooms.",
+      "hero2": "Manage equipment.",
+      "hero3": "Optimize research.",
+      "heroText": "One unified platform for students, lecturers, and managers to operate shared laboratory resources efficiently every day.",
+      "emailPlaceholder": "name@university.edu.vn",
+      "passwordPlaceholder": "Enter password",
+      "resetSuccessTitle": "Password updated.",
+      "resetSuccessText": "You can now sign in with your new password.",
+      "adminNote": "Accounts are centrally managed by Admin. Contact an administrator if you have not received an account.",
+      "show": "Show password",
+      "hide": "Hide password",
+      "stats": {
+        "access": "Schedule access",
+        "central": "Centralized management",
+        "realtime": "Live status updates"
+      }
+    },
+    "forgot": {
+      "title": "Forgot password?",
+      "subtitle": "Enter your email. The system will send a password reset link valid for one hour.",
+      "email": "Account email",
+      "submit": "Send reset link",
+      "submitting": "Sending...",
+      "security": "For security, the system does not disclose whether an email exists.",
+      "sentTitle": "Check your inbox",
+      "sentText": "If the email exists in the system, a reset link has been sent to",
+      "another": "Use another email",
+      "completedTitle": "Password changed",
+      "completedText": "The password reset was completed in another tab. This tab is no longer waiting for the request.",
+      "closeHint": "Gmail or your browser may open the link in a new tab. That is browser behavior, not an extra application screen.",
+      "timeout": "Your request has been accepted. Please check your inbox in a few minutes.",
+      "connectionError": "Could not connect to the server. Please try again.",
+      "openGmail": "Open Gmail in this tab",
+      "gmailSameTabHint": "Open Gmail to replace this confirmation page with your inbox, so no extra confirmation tab is left open.",
+      "processing": "Processing your request..."
+    },
+    "reset": {
+      "title": "Create a new password",
+      "subtitle": "Choose a strong password that is different from your previous password.",
+      "email": "Email",
+      "newPassword": "New password",
+      "confirm": "Confirm password",
+      "placeholder": "At least 8 characters",
+      "strengthHint": "Use uppercase, lowercase, numbers, and special characters.",
+      "mismatch": "The confirmation password does not match.",
+      "submit": "Confirm new password",
+      "submitting": "Updating...",
+      "missingToken": "The reset link is missing a token. Open the exact link from the email.",
+      "successTitle": "Password reset complete",
+      "successText": "Your new password has been saved. The previous browser session was cleared so you can sign in safely.",
+      "redirect": "Redirecting to sign in...",
+      "requestError": "The request took too long or the connection was interrupted. Please try again."
+    }
+  },
+  "layout": {
+    "workspace": "Shared Lab Workspace",
+    "subtitle": "Manage shared laboratory rooms and equipment",
+    "quickBooking": "Quick booking",
+    "viewCalendar": "View calendar",
+    "notifications": "Notifications",
+    "connected": "Connected",
+    "logout": "Log out",
+    "groups": {
+      "overview": "Overview",
+      "resources": "Resources",
+      "personal": "Personal",
+      "management": "Management",
+      "admin": "System administration"
+    },
+    "items": {
+      "home": "Home",
+      "dashboard": "Dashboard",
+      "calendar": "Resource calendar",
+      "labs": "Laboratories",
+      "equipments": "Equipment",
+      "maintenance": "Maintenance calendar",
+      "myBookings": "My bookings",
+      "myWaitlists": "My waitlists",
+      "myViolations": "Violations & penalty points",
+      "profile": "Profile",
+      "pending": "Pending approvals",
+      "bookings": "Booking management",
+      "manageMaintenance": "Maintenance management",
+      "usageLogs": "Usage logs",
+      "incidents": "Incident review",
+      "waitlists": "Waitlist management",
+      "violations": "Violation management",
+      "reports": "Reports",
+      "users": "Users",
+      "departments": "Departments",
+      "priority": "Priority rules",
+      "sendNotification": "Send notification",
+      "audit": "Audit logs",
+      "roles": "Role directory",
+      "systemMaintenance": "System Maintenance"
+    },
+    "roles": {
+      "admin": "Administrator",
+      "manager": "Lab manager",
+      "requester": "Requester"
+    }
+  },
+  "landing": {
+    "features": "Features",
+    "workflow": "Workflow",
+    "resources": "Resources",
+    "login": "Sign in",
+    "enter": "Enter system",
+    "badge": "Smart laboratory operations platform",
+    "hero1": "Book faster.",
+    "hero2": "Operate accurately.",
+    "subtitle": "A unified workspace for students, lecturers, and managers to track labs, equipment, bookings, maintenance, and utilization in real time.",
+    "start": "Start signing in",
+    "open": "Open workspace",
+    "explore": "Explore the system",
+    "stats": {
+      "access": "24/7 resource calendar",
+      "roles": "Clear role permissions",
+      "live": "Real-time status"
+    },
+    "preview": {
+      "eyebrow": "Workspace preview",
+      "today": "Today’s operations",
+      "online": "Online",
+      "monthBookings": "Bookings this month",
+      "activeEquipment": "Active equipment",
+      "labs": "Lab rooms",
+      "utilization": "Resource utilization",
+      "utilizationHint": "Updated from bookings and usage logs",
+      "controlled": "Controlled booking",
+      "controlledHint": "Priority, conflicts, and waitlists",
+      "maintenance": "Proactive maintenance",
+      "maintenanceHint": "Track schedules and costs"
+    },
+    "featureSection": {
+      "eyebrow": "One system, the full workflow",
+      "title": "Everything needed to run labs efficiently",
+      "subtitle": "Role-based interfaces reduce unnecessary steps and keep important data easy to scan."
+    },
+    "featureItems": {
+      "booking": {
+        "title": "Smart booking",
+        "description": "Check conflicts, prioritize requests, and suggest suitable time slots."
+      },
+      "resources": {
+        "title": "Resource management",
+        "description": "Track labs, equipment, status, and usage history in one place."
+      },
+      "maintenance": {
+        "title": "Proactive maintenance",
+        "description": "Schedule one-time or recurring maintenance and control costs."
+      },
+      "dashboard": {
+        "title": "Visual dashboard",
+        "description": "Monitor KPIs, utilization, no-shows, and operational trends."
+      }
+    },
+    "workflowSection": {
+      "eyebrow": "A clear workflow",
+      "title": "From request to completion in one flow",
+      "subtitle": "Status, timing, and responsible users stay visible throughout the process."
+    },
+    "workflowItems": {
+      "resource": {
+        "title": "Choose resources",
+        "description": "Find labs or equipment by status and need."
+      },
+      "time": {
+        "title": "Choose time",
+        "description": "Check availability and submit a booking request."
+      },
+      "approval": {
+        "title": "Approve & notify",
+        "description": "Lab managers process requests by scope and priority."
+      },
+      "usage": {
+        "title": "Use & monitor",
+        "description": "Check-in, check-out, incidents, and reports stay connected."
+      }
+    },
+    "cta": {
+      "eyebrow": "Ready to operate",
+      "title": "Open the Shared Lab workspace",
+      "subtitle": "Sign in with an administrator-issued account to view calendars, book resources, or manage the entire system.",
+      "button": "Sign in now"
+    },
+    "footer": "Designed for shared laboratory operations"
+  },
+  "systemMaintenance": {
+    "title": "System Maintenance",
+    "subtitle": "Control system-wide maintenance mode and the notice displayed to users.",
+    "status": {
+      "on": "Maintenance Mode is on",
+      "off": "The system is operating normally"
+    },
+    "control": {
+      "eyebrow": "System control",
+      "title": "Maintenance Mode"
+    },
+    "fields": {
+      "start": "Expected start",
+      "end": "Expected end",
+      "message": "Message shown to users",
+      "placeholder": "Example: The system will be unavailable for an upgrade from 22:00 to 23:00. Please finish your work beforehand."
+    },
+    "actions": {
+      "save": "Save settings",
+      "saving": "Saving..."
+    },
+    "savedLocally": "The settings are updated immediately after saving.",
+    "preview": {
+      "eyebrow": "Notice preview",
+      "title": "What users will see",
+      "activeTitle": "The system is under maintenance",
+      "normalTitle": "The system is operating normally",
+      "defaultMessage": "The system is being maintained. Please return after the expected maintenance window.",
+      "normalMessage": "All features are ready to use."
+    },
+    "note": {
+      "title": "Operational note",
+      "text": "Set a clear maintenance window and prepare a concise notice so users can plan their work."
+    },
+    "lastUpdated": "Last updated:",
+    "banner": {
+      "title": "System maintenance notice"
+    },
+    "validation": {
+      "timeRequired": "Enter both the expected start and end time.",
+      "timeOrder": "The end time must be later than the start time.",
+      "messageRequired": "Enter the message shown to users."
+    },
+    "toast": {
+      "invalidTitle": "Cannot save settings yet",
+      "enabledTitle": "Maintenance Mode enabled",
+      "enabledText": "The maintenance notice has been updated in the interface.",
+      "disabledTitle": "Maintenance Mode disabled",
+      "disabledText": "The system has returned to normal operation."
+    }
   }
 }

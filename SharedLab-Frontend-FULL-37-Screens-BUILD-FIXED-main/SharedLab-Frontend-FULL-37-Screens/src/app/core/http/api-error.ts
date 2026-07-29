@@ -10,3 +10,10 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
+
+export function apiErrorMessage(
+  error: unknown,
+  fallback = 'Đã xảy ra lỗi. Vui lòng thử lại.',
+): string {
+  return error instanceof ApiError && error.message.trim() ? error.message : fallback
+}

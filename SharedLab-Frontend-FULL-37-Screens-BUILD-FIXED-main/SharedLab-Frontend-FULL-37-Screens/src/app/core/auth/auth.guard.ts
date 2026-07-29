@@ -17,11 +17,13 @@ export const guestGuard: CanActivateFn = () => {
   return store.isAuthenticated() ? router.createUrlTree([landingPath(store.role())]) : true
 }
 
-export const roleGuard = (roles: readonly UserRole[]): CanActivateFn => () => {
-  const store = inject(AuthStore)
-  const router = inject(Router)
-  return store.hasRole(roles) ? true : router.createUrlTree(['/403'])
-}
+export const roleGuard =
+  (roles: readonly UserRole[]): CanActivateFn =>
+  () => {
+    const store = inject(AuthStore)
+    const router = inject(Router)
+    return store.hasRole(roles) ? true : router.createUrlTree(['/403'])
+  }
 
 export const landingGuard: CanActivateFn = () => {
   const store = inject(AuthStore)

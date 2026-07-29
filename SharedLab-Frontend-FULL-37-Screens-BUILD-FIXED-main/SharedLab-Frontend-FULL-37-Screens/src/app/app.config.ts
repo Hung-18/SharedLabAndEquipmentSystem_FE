@@ -4,7 +4,13 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core'
-import { provideRouter, withComponentInputBinding } from '@angular/router'
+import {
+  NoPreloading,
+  provideRouter,
+  withComponentInputBinding,
+  withInMemoryScrolling,
+  withPreloading,
+} from '@angular/router'
 import { provideHttpClient, withInterceptors } from '@angular/common/http'
 import { provideTranslateService, TranslateService } from '@ngx-translate/core'
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader'
@@ -28,7 +34,12 @@ function resolveInitialLocale(): string {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withPreloading(NoPreloading),
+      withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
+    ),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideTranslateService({
       fallbackLang: env.defaultLocale,
@@ -40,7 +51,10 @@ export const appConfig: ApplicationConfig = {
       const authStore = inject(AuthStore)
       const locale = resolveInitialLocale()
       document.documentElement.lang = locale
-      return Promise.all([firstValueFrom(translate.use(locale)), authStore.hydrate()])
+      return Promise.all([
+        firstValueFrom(translate.use(locale)).catch(() => undefined),
+        authStore.hydrate(),
+      ])
     }),
   ],
 }

@@ -4,6 +4,12 @@ import { AppLayoutComponent } from './shared/layout/app-layout'
 
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    title: 'Shared Lab · Booking System',
+    loadComponent: () => import('./features/landing/homepage.page').then((m) => m.HomepagePage),
+  },
+  {
     path: 'login',
     canActivate: [guestGuard],
     title: 'Đăng nhập · Shared Lab',
@@ -12,12 +18,14 @@ export const routes: Routes = [
   {
     path: 'forgot-password',
     title: 'Quên mật khẩu · Shared Lab',
-    loadComponent: () => import('./features/auth/forgot-password.page').then((m) => m.ForgotPasswordPage),
+    loadComponent: () =>
+      import('./features/auth/forgot-password.page').then((m) => m.ForgotPasswordPage),
   },
   {
     path: 'reset-password',
     title: 'Đặt lại mật khẩu · Shared Lab',
-    loadComponent: () => import('./features/auth/reset-password.page').then((m) => m.ResetPasswordPage),
+    loadComponent: () =>
+      import('./features/auth/reset-password.page').then((m) => m.ResetPasswordPage),
   },
   {
     path: '403',
@@ -39,13 +47,15 @@ export const routes: Routes = [
         path: 'home',
         canActivate: [roleGuard(['Requester'])],
         title: 'Trang chủ · Shared Lab',
-        loadComponent: () => import('./features/home/requester-home.page').then((m) => m.RequesterHomePage),
+        loadComponent: () =>
+          import('./features/home/requester-home.page').then((m) => m.RequesterHomePage),
       },
       {
         path: 'dashboard',
         canActivate: [roleGuard(['Admin', 'LabManager'])],
         title: 'Dashboard · Shared Lab',
-        loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
         path: 'profile',
@@ -55,12 +65,14 @@ export const routes: Routes = [
       {
         path: 'notifications',
         title: 'Trung tâm thông báo',
-        loadComponent: () => import('./features/notifications/notifications.page').then((m) => m.NotificationsPage),
+        loadComponent: () =>
+          import('./features/notifications/notifications.page').then((m) => m.NotificationsPage),
       },
       {
         path: 'calendar',
         title: 'Lịch tài nguyên',
-        loadComponent: () => import('./features/resources/calendar.page').then((m) => m.CalendarPage),
+        loadComponent: () =>
+          import('./features/resources/calendar.page').then((m) => m.CalendarPage),
       },
       {
         path: 'labs',
@@ -70,100 +82,137 @@ export const routes: Routes = [
       {
         path: 'labs/:labId',
         title: 'Chi tiết phòng lab',
-        loadComponent: () => import('./features/resources/lab-detail.page').then((m) => m.LabDetailPage),
+        loadComponent: () =>
+          import('./features/resources/lab-detail.page').then((m) => m.LabDetailPage),
       },
       {
         path: 'equipments',
         title: 'Thiết bị',
-        loadComponent: () => import('./features/resources/equipments.page').then((m) => m.EquipmentsPage),
+        loadComponent: () =>
+          import('./features/resources/equipments.page').then((m) => m.EquipmentsPage),
       },
       {
         path: 'equipments/:equipmentId',
         title: 'Chi tiết thiết bị',
-        loadComponent: () => import('./features/resources/equipment-detail.page').then((m) => m.EquipmentDetailPage),
+        loadComponent: () =>
+          import('./features/resources/equipment-detail.page').then((m) => m.EquipmentDetailPage),
       },
       {
         path: 'bookings/new',
+        canActivate: [roleGuard(['Requester'])],
         title: 'Tạo booking',
-        loadComponent: () => import('./features/bookings/booking-form.page').then((m) => m.BookingFormPage),
+        loadComponent: () =>
+          import('./features/bookings/booking-form.page').then((m) => m.BookingFormPage),
       },
       {
         path: 'bookings/my',
+        canActivate: [roleGuard(['Requester'])],
         title: 'Booking của tôi',
-        loadComponent: () => import('./features/bookings/my-bookings.page').then((m) => m.MyBookingsPage),
+        loadComponent: () =>
+          import('./features/bookings/my-bookings.page').then((m) => m.MyBookingsPage),
+      },
+      {
+        path: 'bookings/:bookingId/edit',
+        canActivate: [roleGuard(['Requester'])],
+        title: 'Sửa booking',
+        loadComponent: () =>
+          import('./features/bookings/booking-form.page').then((m) => m.BookingFormPage),
       },
       {
         path: 'bookings/:bookingId',
         title: 'Chi tiết booking',
-        loadComponent: () => import('./features/bookings/booking-detail.page').then((m) => m.BookingDetailPage),
+        loadComponent: () =>
+          import('./features/bookings/booking-detail.page').then((m) => m.BookingDetailPage),
       },
       {
         path: 'waitlists/my',
+        canActivate: [roleGuard(['Requester'])],
         title: 'Hàng chờ của tôi',
-        loadComponent: () => import('./features/requester/my-waitlists.page').then((m) => m.MyWaitlistsPage),
+        loadComponent: () =>
+          import('./features/requester/my-waitlists.page').then((m) => m.MyWaitlistsPage),
       },
       {
         path: 'violations/my',
+        canActivate: [roleGuard(['Requester'])],
         title: 'Vi phạm của tôi',
-        loadComponent: () => import('./features/requester/my-violations.page').then((m) => m.MyViolationsPage),
+        loadComponent: () =>
+          import('./features/requester/my-violations.page').then((m) => m.MyViolationsPage),
       },
       {
         path: 'management/bookings/pending',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Booking cần duyệt',
-        loadComponent: () => import('./features/management/pending-bookings.page').then((m) => m.PendingBookingsPage),
+        loadComponent: () =>
+          import('./features/management/pending-bookings.page').then((m) => m.PendingBookingsPage),
       },
       {
         path: 'management/bookings',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Quản lý booking',
-        loadComponent: () => import('./features/management/bookings-management.page').then((m) => m.BookingsManagementPage),
+        loadComponent: () =>
+          import('./features/management/bookings-management.page').then(
+            (m) => m.BookingsManagementPage,
+          ),
       },
       {
         path: 'management/maintenances/new',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Tạo lịch bảo trì',
-        loadComponent: () => import('./features/management/maintenance-form.page').then((m) => m.MaintenanceFormPage),
+        loadComponent: () =>
+          import('./features/management/maintenance-form.page').then((m) => m.MaintenanceFormPage),
       },
       {
         path: 'management/maintenances/:id/edit',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Sửa lịch bảo trì',
-        loadComponent: () => import('./features/management/maintenance-form.page').then((m) => m.MaintenanceFormPage),
+        loadComponent: () =>
+          import('./features/management/maintenance-form.page').then((m) => m.MaintenanceFormPage),
       },
       {
         path: 'management/maintenances/:id',
         title: 'Chi tiết bảo trì',
-        loadComponent: () => import('./features/management/maintenance-detail.page').then((m) => m.MaintenanceDetailPage),
+        loadComponent: () =>
+          import('./features/management/maintenance-detail.page').then(
+            (m) => m.MaintenanceDetailPage,
+          ),
       },
       {
         path: 'management/maintenances',
         title: 'Lịch bảo trì',
-        loadComponent: () => import('./features/management/maintenances.page').then((m) => m.MaintenancesPage),
+        loadComponent: () =>
+          import('./features/management/maintenances.page').then((m) => m.MaintenancesPage),
       },
       {
         path: 'management/usage-logs',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Nhật ký sử dụng',
-        loadComponent: () => import('./features/management/usage-logs.page').then((m) => m.UsageLogsPage),
+        loadComponent: () =>
+          import('./features/management/usage-logs.page').then((m) => m.UsageLogsPage),
       },
       {
         path: 'management/incidents',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Duyệt sự cố',
-        loadComponent: () => import('./features/management/incidents.page').then((m) => m.IncidentsPage),
+        loadComponent: () =>
+          import('./features/management/incidents.page').then((m) => m.IncidentsPage),
       },
       {
         path: 'management/waitlists',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Quản lý hàng chờ',
-        loadComponent: () => import('./features/management/waitlists-management.page').then((m) => m.WaitlistsManagementPage),
+        loadComponent: () =>
+          import('./features/management/waitlists-management.page').then(
+            (m) => m.WaitlistsManagementPage,
+          ),
       },
       {
         path: 'management/violations',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['LabManager'])],
         title: 'Quản lý vi phạm',
-        loadComponent: () => import('./features/management/violations-management.page').then((m) => m.ViolationsManagementPage),
+        loadComponent: () =>
+          import('./features/management/violations-management.page').then(
+            (m) => m.ViolationsManagementPage,
+          ),
       },
       {
         path: 'reports',
@@ -175,13 +224,15 @@ export const routes: Routes = [
         path: 'admin/users/new',
         canActivate: [roleGuard(['Admin'])],
         title: 'Tạo người dùng',
-        loadComponent: () => import('./features/admin/create-user.page').then((m) => m.CreateUserPage),
+        loadComponent: () =>
+          import('./features/admin/create-user.page').then((m) => m.CreateUserPage),
       },
       {
         path: 'admin/users/:userId',
         canActivate: [roleGuard(['Admin'])],
         title: 'Chi tiết người dùng',
-        loadComponent: () => import('./features/admin/user-detail.page').then((m) => m.UserDetailPage),
+        loadComponent: () =>
+          import('./features/admin/user-detail.page').then((m) => m.UserDetailPage),
       },
       {
         path: 'admin/users',
@@ -193,25 +244,34 @@ export const routes: Routes = [
         path: 'admin/departments',
         canActivate: [roleGuard(['Admin'])],
         title: 'Khoa/phòng ban',
-        loadComponent: () => import('./features/admin/departments.page').then((m) => m.DepartmentsPage),
+        loadComponent: () =>
+          import('./features/admin/departments.page').then((m) => m.DepartmentsPage),
       },
       {
         path: 'admin/priority-rules',
         canActivate: [roleGuard(['Admin'])],
         title: 'Quy tắc ưu tiên',
-        loadComponent: () => import('./features/admin/priority-rules.page').then((m) => m.PriorityRulesPage),
+        loadComponent: () =>
+          import('./features/admin/priority-rules.page').then((m) => m.PriorityRulesPage),
+      },
+      {
+        path: 'notifications/send',
+        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        title: 'Gửi thông báo',
+        loadComponent: () =>
+          import('./features/admin/send-notification.page').then((m) => m.SendNotificationPage),
       },
       {
         path: 'admin/notifications/send',
-        canActivate: [roleGuard(['Admin'])],
-        title: 'Gửi thông báo',
-        loadComponent: () => import('./features/admin/send-notification.page').then((m) => m.SendNotificationPage),
+        pathMatch: 'full',
+        redirectTo: 'notifications/send',
       },
       {
         path: 'admin/audit-logs',
         canActivate: [roleGuard(['Admin'])],
         title: 'Audit log',
-        loadComponent: () => import('./features/admin/audit-logs.page').then((m) => m.AuditLogsPage),
+        loadComponent: () =>
+          import('./features/admin/audit-logs.page').then((m) => m.AuditLogsPage),
       },
       {
         path: 'admin/roles',
@@ -221,7 +281,6 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '', pathMatch: 'full', redirectTo: 'app' },
   {
     path: '**',
     title: 'Không tìm thấy trang',

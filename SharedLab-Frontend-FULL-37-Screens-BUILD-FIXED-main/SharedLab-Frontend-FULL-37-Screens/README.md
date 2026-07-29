@@ -1,16 +1,18 @@
 # Shared Lab & Equipment Booking System — Full Frontend
 
-Frontend Angular hoàn chỉnh cho backend **SharedLabAndEquipmentBookingSystem(22)**. Project được mở rộng trực tiếp từ cây thư mục `angular-base-starter-main`, giữ nguyên kiến trúc standalone component và bổ sung đầy đủ **37 màn hình nghiệp vụ** theo ba vai trò Requester, LabManager và Admin.
+Frontend Angular hoàn chỉnh cho backend **SharedLabAndEquipmentBookingSystem(22)**. Project được mở rộng trực tiếp từ cây thư mục `angular-base-starter-main`, giữ nguyên kiến trúc standalone component và bổ sung đầy đủ **37 màn hình nghiệp vụ** theo ba vai trò Requester, LabManager và Admin, cùng **homepage công khai mới** tại route `/`.
 
 ## Điểm nổi bật
 
-- 37 màn hình chính, đầy đủ route, menu và route guard theo vai trò.
+- 37 màn hình nghiệp vụ + 1 homepage công khai, đầy đủ route, menu và route guard theo vai trò.
 - Gọi API thật của backend cho đăng nhập, tài nguyên, booking, bảo trì, usage log, waitlist, violation, report, user management và audit log.
 - JWT access token, refresh token tự động, ghi nhớ đăng nhập bằng `localStorage` hoặc phiên tab bằng `sessionStorage`.
 - Angular dev proxy `/api` sang `https://localhost:7073`, tránh lỗi CORS do backend redirect HTTP sang HTTPS.
-- Giao diện responsive, sidebar theo role, dashboard, lịch tháng, wizard booking, bảng, card, modal, drawer, toast, loading skeleton, empty state và error state.
+- Giao diện responsive, homepage mới, sidebar theo role, dashboard, lịch tháng, wizard booking, bảng, card, modal, drawer, toast, loading skeleton, empty state và error state.
 - Không thêm nút gọi API không tồn tại. Các giới hạn của backend được thể hiện đúng trên giao diện.
 - Không dùng thư viện biểu đồ ngoài; dashboard và report dùng CSS/SVG để giảm dependency.
+- Ảnh phòng/thiết bị có skeleton, lazy loading và fallback, không còn biểu tượng ảnh vỡ.
+- Reset mật khẩu tự quay về đăng nhập; route lazy được preload; request refresh token đồng thời được gom lại.
 
 ## Công nghệ
 
@@ -108,6 +110,7 @@ src/app/
 │   ├── bookings/        # Booking wizard, danh sách cá nhân, chi tiết
 │   ├── dashboard/       # Dashboard Admin/LabManager
 │   ├── home/            # Requester home
+│   ├── landing/         # Homepage công khai
 │   ├── management/      # Booking, maintenance, usage, incident, waitlist, violation
 │   ├── notifications/   # Trung tâm thông báo
 │   ├── profile/         # Hồ sơ chỉ xem
