@@ -282,18 +282,14 @@ export class ResetPasswordPage {
 
   private resolveResetError(error: unknown): string {
     if (error instanceof ApiError) {
-      const message = error.message?.trim() ?? ''
-      const tokenProblem = /token|expired|invalid|hết hạn|không hợp lệ|đã sử dụng/i.test(message)
-
-      if (tokenProblem && message) return message
-
-      // The current backend returns 400/false without a specific body when the
-      // new password matches the existing BCrypt hash. Always surface a clear
-      // message in the page instead of leaving only a failed request in DevTools.
+      // Backend hiện trả cùng mã 400 cho trường hợp mật khẩu mới trùng mật khẩu
+      // hiện tại nhưng không luôn trả được message nghiệp vụ. Theo yêu cầu UI,
+      // mọi response 400 tại bước xác nhận sẽ hiển thị thông báo này.
       if (error.status === 400) {
         return this.translate.instant('auth.reset.samePassword')
       }
 
+      const message = error.message?.trim() ?? ''
       if (message && !/^http failure response/i.test(message)) return message
     }
 
