@@ -3,6 +3,7 @@ import { Component, computed, inject } from '@angular/core'
 import { RouterLink } from '@angular/router'
 import { AuthStore } from '../../core/auth/auth.store'
 import { IconComponent } from '../../shared/ui/icon'
+import { normalizeUserStatus } from '../../shared/utils/presentation'
 
 @Component({
   selector: 'app-profile-page',
@@ -221,15 +222,9 @@ import { IconComponent } from '../../shared/ui/icon'
 export class ProfilePage {
   protected readonly store = inject(AuthStore)
 
-  protected readonly statusText = computed(() => {
-    const status = this.store.user()?.status
-    if (typeof status === 'string') return status
-    return (
-      ({ 1: 'Active', 2: 'Restricted', 3: 'Inactive', 4: 'Locked' } as Record<number, string>)[
-        status ?? 1
-      ] ?? 'Active'
-    )
-  })
+  protected readonly statusText = computed(() =>
+    normalizeUserStatus(this.store.user()?.status) || 'Active',
+  )
 
   protected initials(name: string): string {
     return name

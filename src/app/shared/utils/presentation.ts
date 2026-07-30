@@ -3,8 +3,8 @@ import type { ApiEnum } from '../../core/api/system.models'
 const maps: Record<string, Record<string, string>> = {
   user: {
     '1': 'Đang hoạt động',
-    '2': 'Bị hạn chế',
-    '3': 'Ngừng hoạt động',
+    '2': 'Ngừng hoạt động',
+    '3': 'Bị hạn chế',
     '4': 'Bị khóa',
     Active: 'Đang hoạt động',
     Inactive: 'Ngừng hoạt động',
@@ -102,8 +102,8 @@ export function toneOf(domain: string, value: ApiEnum | null | undefined): strin
   const tones: Record<string, Record<string, string>> = {
     user: {
       '1': 'emerald',
-      '2': 'amber',
-      '3': 'rose',
+      '2': 'rose',
+      '3': 'amber',
       '4': 'rose',
       Active: 'emerald',
       Inactive: 'rose',
@@ -144,6 +144,43 @@ export function toneOf(domain: string, value: ApiEnum | null | undefined): strin
     incident: { NotRequired: 'slate', Pending: 'amber', Confirmed: 'rose', Rejected: 'slate' },
   }
   return tones[domain]?.[key] ?? 'slate'
+}
+
+export type NormalizedUserStatus = 'Active' | 'Inactive' | 'Restricted' | 'Locked'
+
+export function normalizeUserStatus(value: ApiEnum | null | undefined): NormalizedUserStatus | '' {
+  const key = String(value ?? '').trim()
+  const numeric: Record<string, NormalizedUserStatus> = {
+    '1': 'Active',
+    '2': 'Inactive',
+    '3': 'Restricted',
+    '4': 'Locked',
+  }
+  if (numeric[key]) return numeric[key]
+  if (key === 'Active' || key === 'Inactive' || key === 'Restricted' || key === 'Locked') {
+    return key
+  }
+  return ''
+}
+
+export function isAvailableLabStatus(value: ApiEnum | null | undefined): boolean {
+  const key = String(value ?? '').trim().toLowerCase()
+  return key === '1' || key === 'available'
+}
+
+export function isInactiveLabStatus(value: ApiEnum | null | undefined): boolean {
+  const key = String(value ?? '').trim().toLowerCase()
+  return key === '4' || key === 'inactive'
+}
+
+export function isAvailableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
+  const key = String(value ?? '').trim().toLowerCase()
+  return key === '1' || key === 'available'
+}
+
+export function isRetiredEquipmentStatus(value: ApiEnum | null | undefined): boolean {
+  const key = String(value ?? '').trim().toLowerCase()
+  return key === '5' || key === 'retired'
 }
 
 export function toIso(localValue: string): string {

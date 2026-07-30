@@ -170,6 +170,9 @@ const UI_EN_OVERRIDES: Readonly<Record<string, string>> = {
 }
 
 const PHRASE_FALLBACKS: readonly [RegExp, string][] = [
+  [/\bXem phòng\b/gi, 'View laboratory'],
+  [/\bXem thiết bị\b/gi, 'View equipment'],
+  [/\bXem\b/gi, 'View'],
   [/\bPhòng thí nghiệm\b/gi, 'Laboratory'],
   [/\bphòng lab\b/gi, 'laboratory'],
   [/\bThiết bị\b/gi, 'Equipment'],
@@ -421,7 +424,76 @@ function translateDynamic(value: string): string | null {
   if ((match = value.match(/^Trang\s+(\d+)\s*\/\s*(\d+)$/))) return `Page ${match[1]} / ${match[2]}`
   if ((match = value.match(/^Đang hiển thị\s+(.+)$/))) return `Showing ${match[1]}`
   if ((match = value.match(/^(\d+)\s+sự kiện trong kỳ$/))) return `${match[1]} events in this period`
+  if ((match = value.match(/^\+(\d+)\s+sự kiện khác$/))) return `+${match[1]} more events`
+  if ((match = value.match(/^Hiển thị\s+(\d+)\s*\/\s*(\d+)\s+tài khoản$/)))
+    return `Showing ${match[1]} of ${match[2]} accounts`
+  if ((match = value.match(/^Trang\s+(\d+)\s+·\s+(\d+)\s+bản ghi$/)))
+    return `Page ${match[1]} · ${match[2]} records`
+  if ((match = value.match(/^Trang\s+(\d+)\s+•\s+tối đa\s+(\d+)\s+thông báo\/trang$/)))
+    return `Page ${match[1]} • up to ${match[2]} notifications per page`
+  if ((match = value.match(/^(\d+)\s+lượt\s+·\s+([\d.,]+)\s+giờ$/)))
+    return `${match[1]} uses · ${match[2]} hours`
+  if ((match = value.match(/^(\d+)\s+vi phạm đang hoạt động,\s*(\d+)\s+điểm phạt hiệu lực\.$/)))
+    return `${match[1]} active violations, ${match[2]} active penalty points.`
+  if ((match = value.match(/^(.+?)\s+•\s+(\d+)\s+vi phạm hoạt động$/)))
+    return `${match[1]} • ${match[2]} active violations`
+  if ((match = value.match(/^(\d+)\s+·\s+(\d+)\s+vi phạm$/)))
+    return `${match[1]} · ${match[2]} violations`
+  if ((match = value.match(/^(.+?)\s+·\s+\+(\d+)\s+điểm$/)))
+    return `${match[1]} · +${match[2]} points`
+  if ((match = value.match(/^Vị trí được giữ tối đa 30 phút kể từ\s+(.+)\.$/)))
+    return `Your position is held for up to 30 minutes from ${match[1]}.`
+  if ((match = value.match(/^Tài khoản đang bị hạn chế đến\s+(.+)\. Trong thời gian này bạn có thể không tạo được booking mới\.$/)))
+    return `This account is restricted until ${match[1]}. You may be unable to create new bookings during this period.`
+  if ((match = value.match(/^Tài khoản đang bị hạn chế đến\s+(.+)\. Vui lòng kiểm tra thời hạn hạn chế hoặc liên hệ quản trị viên\.$/)))
+    return `This account is restricted until ${match[1]}. Check the restriction period or contact an administrator.`
+  if ((match = value.match(/^Bạn đang có\s+(\d+)\s+vi phạm hoạt động\. Hãy kiểm tra để tránh bị hạn chế tài khoản\.$/)))
+    return `You have ${match[1]} active violations. Review them to avoid account restrictions.`
+  if ((match = value.match(/^Xác nhận\s+(.+?)\s+booking #([0-9]+)\?$/)))
+    return `Confirm ${translateAction(match[1])} for booking #${match[2]}?`
+  if ((match = value.match(/^Xác nhận thao tác\s+(.+?)\s+booking #([0-9]+)\?$/)))
+    return `Confirm ${translateAction(match[1])} for booking #${match[2]}?`
+  if ((match = value.match(/^Duyệt booking #([0-9]+)\?$/))) return `Approve booking #${match[1]}?`
+  if ((match = value.match(/^Hủy waitlist #([0-9]+)\?$/))) return `Cancel waitlist #${match[1]}?`
+  if ((match = value.match(/^Cho hết hạn waitlist #([0-9]+)\?$/)))
+    return `Mark waitlist #${match[1]} as expired?`
+  if ((match = value.match(/^(Xử lý|Hủy) vi phạm #([0-9]+)\?$/)))
+    return `${match[1] === 'Xử lý' ? 'Resolve' : 'Cancel'} violation #${match[2]}?`
+  if ((match = value.match(/^Xác nhận\s+(.+?)\s+lịch bảo trì #([0-9]+)\?$/)))
+    return `Confirm ${translateAction(match[1])} for maintenance #${match[2]}?`
+  if ((match = value.match(/^Bạn sắp\s+(.+?)\s+tài khoản của\s+(.+)\. Thao tác sẽ có hiệu lực ngay\.$/)))
+    return `You are about to ${translateAction(match[1])} ${match[2]}'s account. This action takes effect immediately.`
+  if ((match = value.match(/^Ngừng hoạt động đơn vị “(.+)”\? Người dùng cũ vẫn giữ liên kết dữ liệu\.$/)))
+    return `Deactivate “${match[1]}”? Existing user data links will be preserved.`
+  if ((match = value.match(/^Kích hoạt lại đơn vị “(.+)”\?$/))) return `Reactivate “${match[1]}”?`
+  if ((match = value.match(/^Thông báo đã được gửi tới\s+(.+)\.$/)))
+    return `The notification was sent to ${match[1]}.`
+  if ((match = value.match(/^(\d+)\s+nhóm dữ liệu chưa tải được; các phần còn lại vẫn được hiển thị\.$/)))
+    return `${match[1]} data groups could not be loaded; the remaining sections are still displayed.`
+  if ((match = value.match(/^Booking #([0-9]+) đang chờ duyệt\.$/)))
+    return `Booking #${match[1]} is pending approval.`
+  if ((match = value.match(/^Vị trí hiện tại của bạn:\s*([0-9]+)\.$/)))
+    return `Your current queue position: ${match[1]}.`
+  if ((match = value.match(/^([\d.,]+)\s+tỷ$/))) return `${match[1]} billion`
   return null
+}
+
+function translateAction(value: string): string {
+  const normalized = normalize(value).toLowerCase()
+  const actions: Record<string, string> = {
+    duyệt: 'approve',
+    'từ chối': 'reject',
+    hủy: 'cancel',
+    'hoàn thành': 'complete',
+    'đánh dấu không đến': 'mark as no-show',
+    'bắt đầu': 'start',
+    'kết thúc': 'complete',
+    khóa: 'lock',
+    'mở khóa': 'unlock',
+    'ngừng hoạt động': 'deactivate',
+    'kích hoạt': 'activate',
+  }
+  return actions[normalized] ?? value
 }
 
 function cleanGeneratedEnglish(value: string): string {

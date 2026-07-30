@@ -17,7 +17,14 @@ import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
-import { labelOf, toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
+import {
+  isAvailableEquipmentStatus,
+  isAvailableLabStatus,
+  labelOf,
+  normalizeUserStatus,
+  toIso,
+  toLocalDateTimeInput,
+} from '../../shared/utils/presentation'
 import { ApiError, apiErrorMessage } from '../../core/http/api-error'
 
 interface SelectedResource {
@@ -612,7 +619,9 @@ export class BookingFormPage implements OnInit {
     },
   ]
   protected availableEquipments(): EquipmentResponse[] {
-    return this.equipments().filter((item) => item.labId === this.labId)
+    return this.equipments().filter(
+      (item) => item.labId === this.labId && isAvailableEquipmentStatus(item.status),
+    )
   }
 
   protected selectedLabName(): string {
@@ -630,8 +639,12 @@ export class BookingFormPage implements OnInit {
       booking: this.bookingId > 0 ? this.api.booking(this.bookingId) : of(null),
     }).subscribe({
       next: ({ labs, equipments, rules, booking }) => {
-        this.labs.set(labs)
-        this.equipments.set(equipments)
+        const availableLabs = labs.filter((lab) => isAvailableLabStatus(lab.status))
+        const availableEquipments = equipments.filter((equipment) =>
+          isAvailableEquipmentStatus(equipment.status),
+        )
+        this.labs.set(booking ? labs : availableLabs)
+        this.equipments.set(booking ? equipments : availableEquipments)
         this.rules.set(rules)
 
         if (booking) {
@@ -656,7 +669,9 @@ export class BookingFormPage implements OnInit {
           this.mode.set(qEquipment ? 'equipment' : 'lab')
           this.onLabChange()
           if (qEquipment) {
-            const item = equipments.find((equipment) => equipment.equipmentId === qEquipment)
+            const item = availableEquipments.find(
+              (equipment) => equipment.equipmentId === qEquipment,
+            )
             if (item) this.toggleEquipment(item)
           }
         }
@@ -727,7 +742,7 @@ export class BookingFormPage implements OnInit {
       ])
   }
   protected toggleEquipment(item: EquipmentResponse): void {
-    if (this.editing() || item.status !== 'Available') return
+    if (this.editing() || !isAvailableEquipmentStatus(item.status)) return
     this.selected.update((current) =>
       current.some((selected) => selected.equipmentId === item.equipmentId)
         ? current.filter((selected) => selected.equipmentId !== item.equipmentId)
@@ -754,8 +769,7 @@ export class BookingFormPage implements OnInit {
     )
   }
   protected canCreateBooking(): boolean {
-    const status = this.store.user()?.status
-    return status === 'Active' || status === 1
+    return normalizeUserStatus(this.store.user()?.status) === 'Active'
   }
 
   protected validTime(): boolean {
