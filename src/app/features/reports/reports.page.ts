@@ -331,11 +331,11 @@ export class TrendCardComponent {
               </p>
             </div>
             <div class="kpi-card">
-              <p class="text-xs font-bold text-slate-400">NoShow</p>
+              <p class="text-xs font-bold text-slate-400">Không đến</p>
               <p class="mt-2 text-3xl font-black text-rose-600">{{ noShow().noShowCount }}</p>
             </div>
             <div class="kpi-card">
-              <p class="text-xs font-bold text-slate-400">Tỷ lệ NoShow</p>
+              <p class="text-xs font-bold text-slate-400">Tỷ lệ không đến</p>
               <p class="mt-2 text-3xl font-black text-amber-600">
                 {{ noShow().noShowRate | number: '1.1-2' }}%
               </p>

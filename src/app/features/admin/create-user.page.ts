@@ -31,7 +31,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
           >
             <h2 class="font-black text-slate-950">Thông tin tài khoản</h2>
             <p class="mt-1 text-xs leading-5 text-slate-500">
-              Các trường có dấu * là bắt buộc. Username và email phải duy nhất.
+              Các trường có dấu * là bắt buộc. Tên đăng nhập và email phải duy nhất.
             </p>
           </div>
           @if (lookupError()) {
@@ -66,7 +66,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
               />
             </div>
             <div>
-              <label class="field-label">Username *</label
+              <label class="field-label">Tên đăng nhập *</label
               ><input
                 class="input-shell"
                 required
@@ -179,7 +179,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
               /></span>
               <h2 class="mt-5 text-lg font-black">Phân quyền an toàn</h2>
               <p class="mt-2 text-sm leading-6 text-white/60">
-                Admin có toàn quyền; LabManager chỉ quản lý tài nguyên được phân công; Requester sử
+                Quản trị viên quản lý hệ thống; quản lý phòng thí nghiệm xử lý tài nguyên được phân công; người đặt lịch sử
                 dụng luồng đặt lịch cá nhân.
               </p>
             </div>
@@ -342,7 +342,7 @@ export class CreateUserPage implements OnInit {
           this.saving.set(false)
           this.toast.error(
             'Không thể tạo tài khoản',
-            apiErrorMessage(error, 'Username hoặc email có thể đã được sử dụng.'),
+            apiErrorMessage(error, 'Tên đăng nhập hoặc email có thể đã được sử dụng.'),
           )
         },
       })

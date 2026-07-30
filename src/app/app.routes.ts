@@ -256,7 +256,7 @@ export const routes: Routes = [
       },
       {
         path: 'notifications/send',
-        canActivate: [roleGuard(['Admin', 'LabManager'])],
+        canActivate: [roleGuard(['Admin'])],
         title: 'Gửi thông báo',
         loadComponent: () =>
           import('./features/admin/send-notification.page').then((m) => m.SendNotificationPage),

@@ -169,7 +169,7 @@ import { labelOf, toDateInput } from '../../shared/utils/presentation'
                             [disabled]="!canAttemptNoShow(item)"
                             [title]="
                               canAttemptNoShow(item)
-                                ? 'NoShow'
+                                ? 'Không đến'
                                 : 'Chỉ đánh dấu sau 30 phút kể từ giờ bắt đầu'
                             "
                             (click)="action(item, 'no-show')"
@@ -278,7 +278,7 @@ export class BookingsManagementPage implements OnInit {
       return
     }
     if (action === 'no-show' && !this.canAttemptNoShow(item)) {
-      this.toast.info('Chỉ có thể đánh dấu NoShow sau 30 phút kể từ giờ bắt đầu')
+      this.toast.info('Chỉ có thể đánh dấu không đến sau 30 phút kể từ giờ bắt đầu')
       return
     }
     if (!confirm(`Xác nhận ${action} booking #${item.bookingId}?`)) return

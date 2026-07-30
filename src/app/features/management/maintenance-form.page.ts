@@ -230,7 +230,7 @@ export class MaintenanceFormPage implements OnInit {
     'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.',
     'Lịch mới hoặc lịch sửa phải nằm trong tương lai.',
     'Chi phí không âm; chu kỳ lặp và ngày kết thúc phải hợp lệ.',
-    'LabManager chỉ chọn được tài nguyên thuộc phạm vi quản lý.',
+    'Quản lý phòng thí nghiệm chỉ chọn được tài nguyên thuộc phạm vi được phân công.',
   ]
   ngOnInit(): void {
     this.id = Number(this.route.snapshot.paramMap.get('id'))

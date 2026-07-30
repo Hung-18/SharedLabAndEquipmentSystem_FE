@@ -299,7 +299,7 @@ interface LabForm {
             />
           </div>
           <div class="sm:col-span-2">
-            <label class="field-label">LabManager *</label
+            <label class="field-label">Quản lý phòng thí nghiệm *</label
             ><select class="input-shell" required [(ngModel)]="form.managerId" name="managerId">
               <option [ngValue]="null">Chọn người quản lý</option>
               @for (manager of managers(); track manager.userId) {
@@ -415,7 +415,7 @@ export class LabsPage implements OnInit {
       Number(this.form.capacity) < 1 ||
       !this.form.managerId
     ) {
-      this.toast.info('Hãy nhập đầy đủ tên phòng, mã phòng, vị trí, sức chứa và LabManager')
+      this.toast.info('Hãy nhập đầy đủ tên phòng, mã phòng, vị trí, sức chứa và người quản lý phòng thí nghiệm')
       return
     }
     this.saving.set(true)

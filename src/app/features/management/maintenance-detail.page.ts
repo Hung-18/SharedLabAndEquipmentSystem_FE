@@ -182,7 +182,7 @@ export class MaintenanceDetailPage implements OnInit {
   protected readonly labelOf = labelOf
   protected readonly formatMoney = formatMoney
   private id = 0
-  protected readonly canManage = computed(() => this.store.isAdmin() || this.store.isManager())
+  protected readonly canManage = computed(() => this.store.isManager())
   protected readonly resourceName = computed(() => {
     const item = this.item()
     if (!item) return ''

@@ -435,7 +435,7 @@ export class RequesterHomePage implements OnInit {
     const status = this.store.user()?.status
     if (typeof status === 'string') return status
     return (
-      ({ 1: 'Active', 2: 'Inactive', 3: 'Restricted', 4: 'Locked' } as Record<number, string>)[
+      ({ 1: 'Active', 2: 'Restricted', 3: 'Inactive', 4: 'Locked' } as Record<number, string>)[
         status ?? 1
       ] ?? 'Active'
     )
@@ -459,8 +459,8 @@ export class RequesterHomePage implements OnInit {
         ? `Tài khoản đang bị hạn chế đến ${new Date(until).toLocaleString('vi-VN')}. Trong thời gian này bạn có thể không tạo được booking mới.`
         : 'Tài khoản đang bị hạn chế. Vui lòng xem các vi phạm đang hoạt động.'
     }
-    if (status === 'Locked') return 'Tài khoản đã bị khóa. Hãy liên hệ Admin để được hỗ trợ.'
-    if (status === 'Inactive') return 'Tài khoản đang ngừng hoạt động. Hãy liên hệ Admin.'
+    if (status === 'Locked') return 'Tài khoản đã bị khóa. Hãy liên hệ quản trị viên để được hỗ trợ.'
+    if (status === 'Inactive') return 'Tài khoản đang ngừng hoạt động. Hãy liên hệ quản trị viên.'
     if (this.violationSummary().activeViolationCount > 0)
       return `Bạn đang có ${this.violationSummary().activeViolationCount} vi phạm hoạt động. Hãy kiểm tra để tránh bị hạn chế tài khoản.`
     return ''

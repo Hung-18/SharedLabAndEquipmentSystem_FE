@@ -136,7 +136,7 @@ import { ToastService } from '../../shared/ui/toast.service'
               <p class="text-xs font-black text-slate-700">Hướng dẫn sử dụng</p>
               <p class="mt-2 text-sm leading-6 whitespace-pre-line text-slate-500">
                 {{
-                  lab()!.usageGuideline || 'Liên hệ LabManager để được hướng dẫn trước khi sử dụng.'
+                  lab()!.usageGuideline || 'Liên hệ quản lý phòng thí nghiệm để được hướng dẫn trước khi sử dụng.'
                 }}
               </p>
             </div>
@@ -170,7 +170,7 @@ import { ToastService } from '../../shared/ui/toast.service'
           @if (equipments().length === 0) {
             <app-data-state
               title="Phòng chưa có thiết bị"
-              message="Admin có thể bổ sung thiết bị từ màn hình quản lý thiết bị."
+              message="Quản trị viên có thể bổ sung thiết bị từ màn hình quản lý thiết bị."
               icon="microscope"
             />
           } @else {
@@ -301,7 +301,7 @@ import { ToastService } from '../../shared/ui/toast.service'
               />
             </div>
             <div>
-              <label class="field-label">Đổi LabManager</label
+              <label class="field-label">Đổi quản lý phòng thí nghiệm</label
               ><select class="input-shell" [(ngModel)]="managerId" name="managerId">
                 <option [ngValue]="null">Giữ nguyên</option>
                 @for (manager of managers(); track manager.userId) {
@@ -404,7 +404,7 @@ export class LabDetailPage implements OnInit {
                 manager.status === 1 || manager.status === '1' || manager.status === 'Active',
             ),
           ),
-        error: () => this.toast.error('Không tải được danh sách LabManager đang hoạt động'),
+        error: () => this.toast.error('Không tải được danh sách quản lý phòng thí nghiệm đang hoạt động'),
       })
   }
   protected save(): void {

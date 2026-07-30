@@ -94,7 +94,7 @@ import { ToastService } from '../../shared/ui/toast.service'
           ><select class="input-shell" [(ngModel)]="roleName">
             <option value="">Tất cả</option>
             <option value="Admin">Admin</option>
-            <option value="LabManager">LabManager</option>
+            <option value="LabManager">Quản lý phòng thí nghiệm</option>
             <option value="Requester">Requester</option>
           </select>
         </div>

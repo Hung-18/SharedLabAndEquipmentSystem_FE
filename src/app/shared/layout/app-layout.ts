@@ -169,7 +169,7 @@ interface NavGroup {
           </button>
           <div class="min-w-0 flex-1">
             <p class="text-[10px] font-black tracking-[0.2em] text-indigo-500 uppercase">
-              Shared Lab Workspace
+              {{ 'layout.workspace' | translate }}
             </p>
             <p class="mt-1 truncate text-sm font-bold text-slate-600">
               {{ 'layout.subtitle' | translate }}
@@ -313,11 +313,6 @@ export class AppLayoutComponent implements OnInit {
           route: '/app/management/violations',
         },
         { labelKey: 'layout.items.reports', icon: 'chart', route: '/app/reports' },
-        {
-          labelKey: 'layout.items.sendNotification',
-          icon: 'send',
-          route: '/app/notifications/send',
-        },
       ],
     },
     {

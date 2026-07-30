@@ -194,11 +194,16 @@ import { apiErrorMessage } from '../../core/http/api-error'
                         }
                         @if (logFor(item.bookingItemId); as log) {
                           @if (!log.actualCheckout) {
-                            <button class="btn-primary" (click)="checkOut(log.logId)">
-                              <app-icon name="logout" [size]="16" /> Check-out</button
-                            ><button class="btn-secondary" (click)="openIncident(log)">
-                              <app-icon name="alert" [size]="16" /> Báo sự cố
-                            </button>
+                            @if (canCheckOut(log)) {
+                              <button class="btn-primary" (click)="checkOut(log.logId)">
+                                <app-icon name="logout" [size]="16" /> Check-out
+                              </button>
+                            }
+                            @if (canReportIncident(log)) {
+                              <button class="btn-secondary" (click)="openIncident(log)">
+                                <app-icon name="alert" [size]="16" /> Báo sự cố
+                              </button>
+                            }
                           } @else {
                             <span
                               class="rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700"
@@ -315,7 +320,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
               <article class="rounded-[24px] border border-indigo-200 bg-indigo-50 p-5">
                 <p class="font-black text-indigo-900">Hoàn tất nghiệp vụ</p>
                 <p class="mt-2 text-sm leading-6 text-indigo-800/70">
-                  Nút chỉ được bật khi booking đáp ứng đúng điều kiện thời gian và usage log.
+                  Nút chỉ được bật khi lịch đặt đáp ứng đúng điều kiện thời gian và nhật ký sử dụng.
                 </p>
                 <div class="mt-4 grid gap-2">
                   <button
@@ -331,7 +336,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
                     [title]="noShowHint()"
                     (click)="action('no-show')"
                   >
-                    <app-icon name="alert" [size]="16" /> Đánh dấu NoShow
+                    <app-icon name="alert" [size]="16" /> Đánh dấu không đến
                   </button>
                 </div>
               </article>
@@ -360,7 +365,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
         <app-modal
           [open]="incidentOpen()"
           title="Báo sự cố sử dụng"
-          subtitle="Sự cố sẽ chờ Admin/LabManager xác nhận nếu cần."
+          subtitle="Sự cố sẽ chờ quản lý phòng thí nghiệm xác nhận nếu cần."
           (close)="incidentOpen.set(false)"
           ><div class="grid gap-4">
             <div>
@@ -432,13 +437,17 @@ export class BookingDetailPage implements OnInit {
     this.load()
   }
   protected canApprove(): boolean {
-    return Boolean(
-      (this.store.isAdmin() || this.store.isManager()) && this.booking()?.status === 'Pending',
-    )
+    return Boolean(this.store.isManager() && this.booking()?.status === 'Pending')
+  }
+
+  protected isOwnerRequester(): boolean {
+    const item = this.booking()
+    const user = this.store.user()
+    return Boolean(item && user && this.store.isRequester() && item.userId === user.userId)
   }
   protected canEdit(): boolean {
     const item = this.booking()
-    return Boolean(item && item.status === 'Pending' && item.userId === this.store.user()?.userId)
+    return Boolean(item && item.status === 'Pending' && this.isOwnerRequester())
   }
 
   protected canCancel(): boolean {
@@ -446,7 +455,7 @@ export class BookingDetailPage implements OnInit {
     if (
       !item ||
       !['Pending', 'Approved'].includes(item.status) ||
-      !(item.userId === this.store.user()?.userId || this.store.isAdmin() || this.store.isManager())
+      !this.isOwnerRequester()
     ) {
       return false
     }
@@ -456,7 +465,7 @@ export class BookingDetailPage implements OnInit {
   }
   protected canCheckIn(): boolean {
     const item = this.booking()
-    if (!item || item.status !== 'Approved') return false
+    if (!item || !this.isOwnerRequester() || item.status !== 'Approved') return false
     const now = Date.now()
     return (
       now >= +new Date(item.startTime) - 15 * 60_000 &&
@@ -464,9 +473,15 @@ export class BookingDetailPage implements OnInit {
     )
   }
   protected canManageConcluded(): boolean {
-    return Boolean(
-      (this.store.isAdmin() || this.store.isManager()) && this.booking()?.status === 'Approved',
-    )
+    return Boolean(this.store.isManager() && this.booking()?.status === 'Approved')
+  }
+
+  protected canCheckOut(log: UsageLogResponse): boolean {
+    return this.isOwnerRequester() && !log.actualCheckout
+  }
+
+  protected canReportIncident(log: UsageLogResponse): boolean {
+    return this.isOwnerRequester() && !log.actualCheckout
   }
 
   protected canComplete(): boolean {
@@ -495,9 +510,9 @@ export class BookingDetailPage implements OnInit {
     const item = this.booking()
     if (!item) return ''
     if (Date.now() < +new Date(item.startTime) + 30 * 60_000) {
-      return 'Chỉ được NoShow sau 30 phút kể từ giờ bắt đầu'
+      return 'Chỉ được đánh dấu không đến sau 30 phút kể từ giờ bắt đầu'
     }
-    return 'Booking đã có check-in nên không thể NoShow'
+    return 'Lịch đặt đã có lượt vào nên không thể đánh dấu không đến'
   }
   protected logFor(itemId: number): UsageLogResponse | undefined {
     return this.logs().find((log) => log.bookingItemId === itemId)
@@ -511,6 +526,10 @@ export class BookingDetailPage implements OnInit {
       .join('')
   }
   protected action(action: 'approve' | 'cancel' | 'complete' | 'no-show'): void {
+    if (action === 'approve' && !this.canApprove()) {
+      this.toast.info('Bạn không có quyền duyệt booking này')
+      return
+    }
     if (action === 'cancel' && !this.canCancel()) {
       this.toast.info('Booking không còn đủ điều kiện để hủy')
       return
@@ -542,6 +561,11 @@ export class BookingDetailPage implements OnInit {
     })
   }
   protected reject(): void {
+    if (!this.canApprove()) {
+      this.rejectOpen.set(false)
+      this.toast.info('Bạn không có quyền từ chối booking này')
+      return
+    }
     this.api.rejectBooking(this.id, this.rejectionReason.trim()).subscribe({
       next: () => {
         this.rejectOpen.set(false)
@@ -552,6 +576,10 @@ export class BookingDetailPage implements OnInit {
     })
   }
   protected checkIn(itemId: number): void {
+    if (!this.canCheckIn()) {
+      this.toast.info('Bạn không có quyền check-in booking này')
+      return
+    }
     this.api.checkIn(itemId).subscribe({
       next: () => {
         this.toast.success('Check-in thành công')
@@ -562,6 +590,11 @@ export class BookingDetailPage implements OnInit {
     })
   }
   protected checkOut(logId: number): void {
+    const log = this.logs().find((item) => item.logId === logId)
+    if (!log || !this.canCheckOut(log)) {
+      this.toast.info('Bạn không có quyền check-out booking này')
+      return
+    }
     if (!confirm('Xác nhận check-out tài nguyên này?')) return
     this.api.checkOut(logId).subscribe({
       next: () => {
@@ -572,6 +605,10 @@ export class BookingDetailPage implements OnInit {
     })
   }
   protected openIncident(log: UsageLogResponse): void {
+    if (!this.canReportIncident(log)) {
+      this.toast.info('Bạn không có quyền báo sự cố cho booking này')
+      return
+    }
     this.incidentLogId = log.logId
     this.incidentStatus = 2
     this.incidentDescription = ''
@@ -579,6 +616,12 @@ export class BookingDetailPage implements OnInit {
     this.incidentOpen.set(true)
   }
   protected reportIncident(): void {
+    const log = this.logs().find((item) => item.logId === this.incidentLogId)
+    if (!log || !this.canReportIncident(log)) {
+      this.incidentOpen.set(false)
+      this.toast.info('Bạn không có quyền báo sự cố cho booking này')
+      return
+    }
     this.api
       .reportIncident(this.incidentLogId, {
         incidentStatus: this.incidentStatus,
@@ -600,7 +643,7 @@ export class BookingDetailPage implements OnInit {
       booking: this.api.booking(this.id),
       logs: this.api.usageLogsByBooking(this.id).pipe(
         catchError((error: unknown) => {
-          this.toast.info('Không tải được usage log', apiErrorMessage(error))
+          this.toast.info('Không tải được nhật ký sử dụng', apiErrorMessage(error))
           return of([] as UsageLogResponse[])
         }),
       ),

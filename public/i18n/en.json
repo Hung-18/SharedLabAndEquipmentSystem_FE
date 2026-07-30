@@ -81,7 +81,9 @@
       "successTitle": "Password reset complete",
       "successText": "Your new password has been saved. The previous browser session was cleared so you can sign in safely.",
       "redirect": "Redirecting to sign in...",
-      "requestError": "The request took too long or the connection was interrupted. Please try again."
+      "requestError": "The request took too long or the connection was interrupted. Please try again.",
+      "samePassword": "The new password must be different from the current password.",
+      "connectionError": "The request timed out or the connection was interrupted. Please try again."
     }
   },
   "layout": {
