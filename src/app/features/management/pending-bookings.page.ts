@@ -153,7 +153,7 @@ export class PendingBookingsPage implements OnInit {
       error: () =>
         this.toast.error(
           'Không thể duyệt booking',
-          'Slot có thể vừa phát sinh xung đột hoặc booking không còn Pending.',
+          'Khung giờ có thể vừa phát sinh xung đột hoặc lịch đặt không còn ở trạng thái chờ duyệt.',
         ),
     })
   }

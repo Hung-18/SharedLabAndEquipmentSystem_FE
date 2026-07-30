@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
-import { TranslatePipe } from '@ngx-translate/core'
+import { TranslatePipe, TranslateService } from '@ngx-translate/core'
 import { firstValueFrom, timeout } from 'rxjs'
 import { PasswordResetFlowService } from '../../core/auth/password-reset-flow.service'
 import { AuthService } from '../../core/auth/auth.service'
@@ -205,6 +205,7 @@ export class ResetPasswordPage {
   private readonly flow = inject(PasswordResetFlowService)
   private readonly route = inject(ActivatedRoute)
   private readonly router = inject(Router)
+  private readonly translate = inject(TranslateService)
   private redirectTimer?: number
 
   protected email = this.route.snapshot.queryParamMap.get('email') ?? ''
@@ -263,10 +264,15 @@ export class ResetPasswordPage {
       this.success = true
       this.redirectTimer = window.setTimeout(() => this.goLogin(), 900)
     } catch (error) {
-      this.errorMessage =
-        error instanceof ApiError
-          ? error.message
-          : 'Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại.'
+      if (error instanceof ApiError) {
+        const explicitTokenError = /token|expired|invalid|hết hạn|không hợp lệ/i.test(error.message)
+        const samePasswordError = error.status === 400 && !explicitTokenError
+        this.errorMessage = samePasswordError
+          ? this.translate.instant('auth.reset.samePassword')
+          : error.message
+      } else {
+        this.errorMessage = this.translate.instant('auth.reset.connectionError')
+      }
     } finally {
       this.loading = false
     }

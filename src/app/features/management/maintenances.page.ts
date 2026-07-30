@@ -230,7 +230,7 @@ export class MaintenancesPage implements OnInit {
   protected status = ''
   protected from = ''
   protected readonly labelOf = labelOf
-  protected readonly canManage = computed(() => this.store.isAdmin() || this.store.isManager())
+  protected readonly canManage = computed(() => this.store.isManager())
   protected filteredEquipmentOptions(): EquipmentResponse[] {
     return this.labId
       ? this.equipments().filter((item) => item.labId === this.labId)

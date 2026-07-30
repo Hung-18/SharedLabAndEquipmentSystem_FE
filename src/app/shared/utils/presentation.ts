@@ -3,8 +3,8 @@ import type { ApiEnum } from '../../core/api/system.models'
 const maps: Record<string, Record<string, string>> = {
   user: {
     '1': 'Đang hoạt động',
-    '2': 'Ngừng hoạt động',
-    '3': 'Bị hạn chế',
+    '2': 'Bị hạn chế',
+    '3': 'Ngừng hoạt động',
     '4': 'Bị khóa',
     Active: 'Đang hoạt động',
     Inactive: 'Ngừng hoạt động',
@@ -102,8 +102,8 @@ export function toneOf(domain: string, value: ApiEnum | null | undefined): strin
   const tones: Record<string, Record<string, string>> = {
     user: {
       '1': 'emerald',
-      '2': 'rose',
-      '3': 'amber',
+      '2': 'amber',
+      '3': 'rose',
       '4': 'rose',
       Active: 'emerald',
       Inactive: 'rose',

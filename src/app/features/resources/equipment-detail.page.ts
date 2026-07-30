@@ -134,7 +134,7 @@ import { ToastService } from '../../shared/ui/toast.service'
                 <app-icon name="book-open" [size]="17" /> Hướng dẫn sử dụng
               </p>
               <p class="mt-2 text-sm leading-6 whitespace-pre-line text-cyan-900/65">
-                {{ item()!.usageGuideline || 'Liên hệ LabManager để được hướng dẫn.' }}
+                {{ item()!.usageGuideline || 'Liên hệ quản lý phòng thí nghiệm để được hướng dẫn.' }}
               </p>
             </div>
           </article>

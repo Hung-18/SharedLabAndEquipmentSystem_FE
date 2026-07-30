@@ -81,11 +81,13 @@
       "successTitle": "Đặt lại thành công",
       "successText": "Mật khẩu mới đã được cập nhật. Phiên đăng nhập cũ đã được xóa trên trình duyệt này để bạn đăng nhập lại an toàn.",
       "redirect": "Đang chuyển về trang đăng nhập...",
-      "requestError": "Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại."
+      "requestError": "Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại.",
+      "samePassword": "Mật khẩu mới không được trùng với mật khẩu hiện tại.",
+      "connectionError": "Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại."
     }
   },
   "layout": {
-    "workspace": "Shared Lab Workspace",
+    "workspace": "Không gian phòng thí nghiệm dùng chung",
     "subtitle": "Quản lý phòng thí nghiệm & thiết bị dùng chung",
     "quickBooking": "Tạo booking nhanh",
     "viewCalendar": "Xem lịch",
@@ -101,17 +103,17 @@
     },
     "items": {
       "home": "Trang chủ",
-      "dashboard": "Dashboard",
+      "dashboard": "Bảng điều khiển",
       "calendar": "Lịch tài nguyên",
       "labs": "Phòng thí nghiệm",
       "equipments": "Thiết bị",
       "maintenance": "Lịch bảo trì",
-      "myBookings": "Booking của tôi",
+      "myBookings": "Lịch đặt của tôi",
       "myWaitlists": "Hàng chờ của tôi",
       "myViolations": "Vi phạm & điểm phạt",
       "profile": "Tài khoản cá nhân",
-      "pending": "Booking cần duyệt",
-      "bookings": "Quản lý booking",
+      "pending": "Yêu cầu cần duyệt",
+      "bookings": "Quản lý lịch đặt",
       "manageMaintenance": "Quản lý bảo trì",
       "usageLogs": "Nhật ký sử dụng",
       "incidents": "Duyệt sự cố",
@@ -122,7 +124,7 @@
       "departments": "Khoa/phòng ban",
       "priority": "Quy tắc ưu tiên",
       "sendNotification": "Gửi thông báo",
-      "audit": "Audit log",
+      "audit": "Nhật ký kiểm toán",
       "roles": "Danh sách vai trò",
       "systemMaintenance": "Bảo trì hệ thống"
     },

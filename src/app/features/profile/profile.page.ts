@@ -263,10 +263,10 @@ export class ProfilePage {
     return (
       (
         {
-          Active: 'M có thể sử dụng đầy đủ các chức năng theo vai trò được cấp.',
+          Active: 'Bạn có thể sử dụng đầy đủ các chức năng theo vai trò được cấp.',
           Restricted: 'Một số thao tác như tạo booking mới có thể bị hạn chế.',
           Inactive: 'Tài khoản không còn hoạt động trên hệ thống.',
-          Locked: 'Tài khoản đã bị khóa và cần Admin mở lại.',
+          Locked: 'Tài khoản đã bị khóa và cần quản trị viên mở lại.',
         } as Record<string, string>
       )[status] ?? 'Không xác định trạng thái tài khoản.'
     )
@@ -283,7 +283,7 @@ export class ProfilePage {
     return [
       { label: 'Mã người dùng', value: `#${user.userId}`, icon: 'user' },
       { label: 'Họ và tên', value: user.fullName, icon: 'user' },
-      { label: 'Username', value: user.username, icon: 'shield' },
+      { label: 'Tên đăng nhập', value: user.username, icon: 'shield' },
       { label: 'Email', value: user.email, icon: 'mail' },
       { label: 'Vai trò', value: this.roleLabel(user.roleName), icon: 'shield' },
       {

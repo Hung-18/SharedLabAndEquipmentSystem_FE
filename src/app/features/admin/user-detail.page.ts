@@ -178,7 +178,7 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                   <p class="mt-2 font-black text-slate-800">{{ current.fullName }}</p>
                 </div>
                 <div>
-                  <p class="text-xs font-bold text-slate-400">Username</p>
+                  <p class="text-xs font-bold text-slate-400">Tên đăng nhập</p>
                   <p class="mt-2 font-black text-slate-800">{{ current.username }}</p>
                 </div>
                 <div>
@@ -322,7 +322,7 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
             />
           </div>
           <div>
-            <label class="field-label">Username *</label
+            <label class="field-label">Tên đăng nhập *</label
             ><input
               class="input-shell"
               required
@@ -369,7 +369,7 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
           <div
             class="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-xs leading-5 text-amber-800"
           >
-            Không thể đổi LabManager sang vai trò khác nếu người này vẫn đang được gán quản lý phòng
+            Không thể đổi vai trò của quản lý phòng thí nghiệm khi người này vẫn đang được phân công quản lý phòng
             lab.
           </div>
           <div class="flex justify-end gap-2">

@@ -632,7 +632,7 @@ export class DashboardPage implements OnInit {
         tone: 'indigo',
       },
       {
-        label: 'Usage log',
+        label: 'Lượt sử dụng',
         value: this.integer(data.totalUsageLogs),
         icon: 'activity',
         tone: 'cyan',
@@ -645,13 +645,13 @@ export class DashboardPage implements OnInit {
         tone: 'violet',
       },
       {
-        label: 'No-show',
+        label: 'Không đến',
         value: this.integer(data.noShow.noShowCount),
         icon: 'user',
         tone: 'amber',
       },
       {
-        label: 'Tỷ lệ No-show',
+        label: 'Tỷ lệ không đến',
         value: `${data.noShow.noShowRate.toFixed(1)}%`,
         icon: 'chart',
         tone: 'emerald',
@@ -752,7 +752,7 @@ export class DashboardPage implements OnInit {
           Rejected: 'Từ chối',
           Cancelled: 'Đã hủy',
           Completed: 'Hoàn thành',
-          NoShow: 'No-show',
+          NoShow: 'Không đến',
         } as Record<string, string>
       )[value] ?? value
     )

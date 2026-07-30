@@ -18,6 +18,7 @@ import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf, toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
+import { ApiError, apiErrorMessage } from '../../core/http/api-error'
 
 interface SelectedResource {
   key: string
@@ -54,7 +55,7 @@ interface SelectedResource {
         >
       </app-page-header>
 
-      @if (store.user()?.status !== 'Active') {
+      @if (!canCreateBooking()) {
         <div class="rounded-[24px] border border-amber-200 bg-amber-50 p-5 text-amber-900">
           <div class="flex gap-3">
             <app-icon name="alert" [size]="21" />
@@ -272,11 +273,11 @@ interface SelectedResource {
               <div class="mt-6 grid gap-4 sm:grid-cols-2">
                 <div>
                   <label class="field-label">Bắt đầu *</label
-                  ><input class="input-shell" type="datetime-local" [(ngModel)]="startTime" />
+                  ><input class="input-shell" type="datetime-local" [(ngModel)]="startTime" (ngModelChange)="onTimeChange()" />
                 </div>
                 <div>
                   <label class="field-label">Kết thúc *</label
-                  ><input class="input-shell" type="datetime-local" [(ngModel)]="endTime" />
+                  ><input class="input-shell" type="datetime-local" [(ngModel)]="endTime" (ngModelChange)="onTimeChange()" />
                 </div>
               </div>
               <div class="mt-5 flex flex-wrap gap-2">
@@ -347,7 +348,11 @@ interface SelectedResource {
               <div class="mt-7 flex justify-between">
                 <button class="btn-secondary" (click)="step.set(1)">
                   <app-icon name="arrow-left" [size]="17" /> Quay lại</button
-                ><button class="btn-primary" [disabled]="!validTime()" (click)="step.set(3)">
+                ><button
+                  class="btn-primary"
+                  [disabled]="!availabilityIsCurrent()"
+                  (click)="continueToPurpose()"
+                >
                   Tiếp tục <app-icon name="arrow-right" [size]="17" />
                 </button>
               </div>
@@ -429,7 +434,7 @@ interface SelectedResource {
                 <div>
                   <h2 class="text-xl font-black text-slate-950">Xác nhận yêu cầu</h2>
                   <p class="mt-1 text-sm text-slate-500">
-                    Kiểm tra lần cuối trước khi gửi booking ở trạng thái Pending.
+                    Kiểm tra lần cuối trước khi gửi booking ở trạng thái chờ duyệt.
                   </p>
                 </div>
               </div>
@@ -489,7 +494,7 @@ interface SelectedResource {
                   <app-icon name="arrow-left" [size]="17" /> Quay lại</button
                 ><button
                   class="btn-primary"
-                  [disabled]="submitting() || store.user()?.status !== 'Active'"
+                  [disabled]="submitting() || !canCreateBooking()"
                   (click)="submit()"
                 >
                   <app-icon name="send" [size]="17" />
@@ -538,7 +543,7 @@ interface SelectedResource {
             </div>
             <p class="mt-4 font-black text-slate-900">Mẹo đặt lịch</p>
             <p class="mt-2 text-sm leading-6 text-slate-600">
-              Kiểm tra lịch trước khi gửi. Pending không khóa tài nguyên; booking chỉ khóa slot sau
+              Kiểm tra lịch trước khi gửi. Yêu cầu chờ duyệt không khóa tài nguyên; lịch đặt chỉ giữ khung giờ sau
               khi được duyệt.
             </p>
           </article>
@@ -566,6 +571,7 @@ export class BookingFormPage implements OnInit {
   protected readonly available = signal(false)
   protected readonly editing = signal(false)
   protected readonly availabilityMessage = signal('')
+  private readonly availabilityFingerprint = signal<string | null>(null)
   protected labId: number | null = null
   protected startTime = toLocalDateTimeInput(new Date(Date.now() + 24 * 60 * 60 * 1000))
   protected endTime = toLocalDateTimeInput(new Date(Date.now() + 26 * 60 * 60 * 1000))
@@ -700,11 +706,13 @@ export class BookingFormPage implements OnInit {
     if (this.editing()) return
     this.mode.set(mode)
     this.selected.set([])
+    this.invalidateAvailability()
     if (this.labId) this.onLabChange()
   }
   protected onLabChange(): void {
     if (this.editing()) return
     this.selected.set([])
+    this.invalidateAvailability()
     const lab = this.labs().find((item) => item.labId === this.labId)
     if (lab && this.mode() === 'lab')
       this.selected.set([
@@ -735,6 +743,7 @@ export class BookingFormPage implements OnInit {
             },
           ],
     )
+    this.invalidateAvailability()
   }
   protected isSelected(id: number): boolean {
     return this.selected().some((item) => item.equipmentId === id)
@@ -744,6 +753,11 @@ export class BookingFormPage implements OnInit {
       items.map((item, itemIndex) => (itemIndex === index ? { ...item, note } : item)),
     )
   }
+  protected canCreateBooking(): boolean {
+    const status = this.store.user()?.status
+    return status === 'Active' || status === 1
+  }
+
   protected validTime(): boolean {
     return Boolean(
       this.startTime &&
@@ -755,13 +769,33 @@ export class BookingFormPage implements OnInit {
   protected goTo(target: number): void {
     if (target <= this.step()) this.step.set(target)
   }
+
+  protected onTimeChange(): void {
+    this.invalidateAvailability()
+  }
+
+  protected availabilityIsCurrent(): boolean {
+    return (
+      this.available() &&
+      this.availabilityFingerprint() === this.currentAvailabilityFingerprint()
+    )
+  }
+
+  protected continueToPurpose(): void {
+    if (!this.availabilityIsCurrent()) {
+      this.toast.info('Hãy kiểm tra lại khung giờ sau khi thay đổi tài nguyên hoặc thời gian')
+      return
+    }
+    this.step.set(3)
+  }
+
   protected checkAvailability(): void {
     if (!this.validTime() || !this.selected().length) {
       this.toast.info('Hãy chọn thời gian và tài nguyên hợp lệ')
       return
     }
+    this.invalidateAvailability()
     this.checking.set(true)
-    this.suggestions.set([])
     this.api
       .calendar(toIso(this.startTime), toIso(this.endTime), this.labId ?? undefined)
       .subscribe({
@@ -787,6 +821,9 @@ export class BookingFormPage implements OnInit {
             )
           })
           this.available.set(!blocking)
+          this.availabilityFingerprint.set(
+            blocking ? null : this.currentAvailabilityFingerprint(),
+          )
           this.availabilityMessage.set(
             blocking
               ? 'Khung giờ đang có sự kiện chặn tài nguyên. Hãy xem các gợi ý bên dưới.'
@@ -805,7 +842,8 @@ export class BookingFormPage implements OnInit {
     this.startTime = toLocalDateTimeInput(slot.startTime)
     this.endTime = toLocalDateTimeInput(slot.endTime)
     this.available.set(true)
-    this.availabilityMessage.set('Đã chọn một khung giờ thay thế.')
+    this.availabilityFingerprint.set(this.currentAvailabilityFingerprint())
+    this.availabilityMessage.set('Đã chọn một khung giờ thay thế đã được kiểm tra.')
   }
   protected priorityFor(purpose: string): number {
     return (
@@ -820,8 +858,17 @@ export class BookingFormPage implements OnInit {
     return labelOf('purpose', this.purposeKey())
   }
   protected submit(): void {
+    if (!this.canCreateBooking()) {
+      this.toast.info('Tài khoản hiện không được phép tạo hoặc chỉnh sửa lịch đặt')
+      return
+    }
     if (!this.validTime() || !this.selected().length || !this.purposeDescription.trim()) {
       this.toast.info('Thông tin booking chưa đầy đủ')
+      return
+    }
+    if (!this.availabilityIsCurrent()) {
+      this.step.set(2)
+      this.toast.info('Khung giờ chưa được kiểm tra hoặc kết quả kiểm tra đã hết hiệu lực')
       return
     }
     this.submitting.set(true)
@@ -839,12 +886,13 @@ export class BookingFormPage implements OnInit {
           this.toast.success('Đã cập nhật booking')
           void this.router.navigate(['/app/bookings', this.bookingId])
         },
-        error: () => {
+        error: (error: unknown) => {
           this.submitting.set(false)
-          this.toast.error(
-            'Không thể cập nhật booking',
-            'Kiểm tra trạng thái và xung đột thời gian.',
-          )
+          if (error instanceof ApiError && (error as ApiError).status === 409) {
+            this.handleConflict(error)
+            return
+          }
+          this.toast.error('Không thể cập nhật booking', apiErrorMessage(error))
         },
       })
       return
@@ -880,12 +928,13 @@ export class BookingFormPage implements OnInit {
             },
           })
         },
-        error: () => {
+        error: (error: unknown) => {
           this.submitting.set(false)
-          this.toast.error(
-            'Không thể tạo booking',
-            'Khung giờ có thể vừa phát sinh xung đột. Hãy kiểm tra lại lịch.',
-          )
+          if (error instanceof ApiError && (error as ApiError).status === 409) {
+            this.handleConflict(error)
+            return
+          }
+          this.toast.error('Không thể tạo booking', apiErrorMessage(error))
         },
       })
   }
@@ -939,6 +988,34 @@ export class BookingFormPage implements OnInit {
         },
       })
   }
+  private handleConflict(error: ApiError): void {
+    this.invalidateAvailability()
+    this.step.set(2)
+    this.toast.error(
+      'Khung giờ vừa phát sinh xung đột',
+      apiErrorMessage(error, 'Hãy kiểm tra lại và chọn một khung giờ thay thế.'),
+    )
+    if (this.validTime() && this.selected().length) {
+      this.checking.set(true)
+      this.loadSuggestions()
+    }
+  }
+
+  private invalidateAvailability(): void {
+    this.available.set(false)
+    this.availabilityFingerprint.set(null)
+    this.availabilityMessage.set('')
+    this.suggestions.set([])
+  }
+
+  private currentAvailabilityFingerprint(): string {
+    const resources = this.selected()
+      .map((item) => `${item.resourceType}:${item.labId ?? 0}:${item.equipmentId ?? 0}`)
+      .sort()
+      .join('|')
+    return [this.mode(), this.labId ?? 0, resources, this.startTime, this.endTime].join('::')
+  }
+
   private itemPayload(): BookingItemRequest[] {
     return this.selected().map((item) => ({
       resourceType: item.resourceType,

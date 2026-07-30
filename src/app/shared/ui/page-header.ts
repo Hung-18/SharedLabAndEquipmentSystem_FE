@@ -28,7 +28,7 @@ import { Component, input } from '@angular/core'
   `,
 })
 export class PageHeaderComponent {
-  readonly eyebrow = input('Shared Lab Workspace')
+  readonly eyebrow = input('Không gian phòng thí nghiệm dùng chung')
   readonly title = input.required<string>()
   readonly subtitle = input('')
 }
