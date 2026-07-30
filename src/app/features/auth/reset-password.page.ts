@@ -30,7 +30,7 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
       <section
         class="relative w-full max-w-[560px] rounded-[32px] bg-white p-6 shadow-2xl shadow-black/25 sm:p-10"
       >
-        @if (success) {
+        @if (success()) {
           <div class="py-6 text-center" aria-live="polite">
             <div
               class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
@@ -157,12 +157,19 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
               }
             </label>
 
-            @if (errorMessage) {
+            @if (errorMessage()) {
               <div
-                class="flex gap-3 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700"
+                id="reset-password-error"
+                role="alert"
+                aria-live="assertive"
+                tabindex="-1"
+                class="flex gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 outline-none ring-rose-200 focus:ring-2"
               >
                 <app-icon name="alert" [size]="18" />
-                <p>{{ errorMessage }}</p>
+                <div>
+                  <p class="font-bold">{{ 'auth.reset.errorTitle' | translate }}</p>
+                  <p class="mt-1 leading-5">{{ errorMessage() }}</p>
+                </div>
               </div>
             }
 
@@ -170,14 +177,14 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
               type="submit"
               [disabled]="
                 form.invalid ||
-                loading ||
+                loading() ||
                 newPassword !== confirmPassword ||
                 !token ||
                 !isPasswordValid()
               "
               class="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-indigo-600 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              @if (loading) {
+              @if (loading()) {
                 <span
                   class="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"
                 ></span>
@@ -213,9 +220,9 @@ export class ResetPasswordPage {
   protected newPassword = ''
   protected confirmPassword = ''
   protected showPassword = false
-  protected loading = false
-  protected success = false
-  protected errorMessage = ''
+  protected readonly loading = signal(false)
+  protected readonly success = signal(false)
+  protected readonly errorMessage = signal('')
   protected readonly passwordSignal = signal('')
   protected readonly passwordStrength = computed(() => {
     const value = this.passwordSignal()
@@ -239,13 +246,13 @@ export class ResetPasswordPage {
   protected async submit(): Promise<void> {
     if (
       !this.token ||
-      this.loading ||
+      this.loading() ||
       this.newPassword !== this.confirmPassword ||
       !this.isPasswordValid()
     )
       return
-    this.loading = true
-    this.errorMessage = ''
+    this.loading.set(true)
+    this.errorMessage.set('')
     try {
       await firstValueFrom(
         this.auth
@@ -261,21 +268,36 @@ export class ResetPasswordPage {
       // guard from sending the user to dashboard/home instead of the login page.
       this.authStore.clearLocalSession()
       this.flow.notifyCompleted(this.email.trim())
-      this.success = true
+      this.success.set(true)
       this.redirectTimer = window.setTimeout(() => this.goLogin(), 900)
     } catch (error) {
-      if (error instanceof ApiError) {
-        const explicitTokenError = /token|expired|invalid|hết hạn|không hợp lệ/i.test(error.message)
-        const samePasswordError = error.status === 400 && !explicitTokenError
-        this.errorMessage = samePasswordError
-          ? this.translate.instant('auth.reset.samePassword')
-          : error.message
-      } else {
-        this.errorMessage = this.translate.instant('auth.reset.connectionError')
-      }
+      this.errorMessage.set(this.resolveResetError(error))
+      window.setTimeout(() => {
+        document.getElementById('reset-password-error')?.focus()
+      })
     } finally {
-      this.loading = false
+      this.loading.set(false)
     }
+  }
+
+  private resolveResetError(error: unknown): string {
+    if (error instanceof ApiError) {
+      const message = error.message?.trim() ?? ''
+      const tokenProblem = /token|expired|invalid|hết hạn|không hợp lệ|đã sử dụng/i.test(message)
+
+      if (tokenProblem && message) return message
+
+      // The current backend returns 400/false without a specific body when the
+      // new password matches the existing BCrypt hash. Always surface a clear
+      // message in the page instead of leaving only a failed request in DevTools.
+      if (error.status === 400) {
+        return this.translate.instant('auth.reset.samePassword')
+      }
+
+      if (message && !/^http failure response/i.test(message)) return message
+    }
+
+    return this.translate.instant('auth.reset.connectionError')
   }
 
   protected goLogin(): void {

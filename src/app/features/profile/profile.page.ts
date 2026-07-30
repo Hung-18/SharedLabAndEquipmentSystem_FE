@@ -80,10 +80,10 @@ import { IconComponent } from '../../shared/ui/icon'
               </div>
               <h3 class="mt-5 text-lg font-bold">Bảo mật tài khoản</h3>
               <p class="mt-2 text-sm leading-6 text-white/55">
-                Đặt lại mật khẩu qua email để bảo vệ tài khoản và duy trì quyền truy cập an toàn.
+                Gửi liên kết bảo mật tới email tài khoản để tạo mật khẩu mới.
               </p>
               <a
-                routerLink="/forgot-password"
+                routerLink="/app/security/password-reset"
                 class="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-xs font-bold text-[#111a3a] hover:bg-cyan-50"
               >
                 Đặt lại mật khẩu

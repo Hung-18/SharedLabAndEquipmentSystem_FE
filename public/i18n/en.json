@@ -83,7 +83,26 @@
       "redirect": "Redirecting to sign in...",
       "requestError": "The request took too long or the connection was interrupted. Please try again.",
       "samePassword": "The new password must be different from the current password.",
-      "connectionError": "The request timed out or the connection was interrupted. Please try again."
+      "connectionError": "The request timed out or the connection was interrupted. Please try again.",
+      "errorTitle": "Unable to reset password"
+    },
+    "requestReset": {
+      "title": "Reset password",
+      "subtitle": "Request a secure link for the account that is currently signed in. Opening that email link takes you to the separate screen where you create a new password.",
+      "backProfile": "Back to profile",
+      "accountEmail": "Email receiving the link",
+      "emailHint": "The reset link is sent only to the email currently assigned to this account.",
+      "submit": "Send reset link",
+      "submitting": "Sending reset link...",
+      "sentTitle": "Reset request sent",
+      "sentText": "Check the inbox for",
+      "openGmail": "Open Gmail",
+      "errorTitle": "Unable to send the link",
+      "connectionError": "Could not connect to the server. Please try again.",
+      "step1": "Receive a secure email link",
+      "step2": "Open the valid reset link",
+      "step3": "Create and confirm a new password",
+      "distinction": "Forgot password is the public email-request screen. Reset password is the separate token-based flow for creating a new password."
     }
   },
   "layout": {
