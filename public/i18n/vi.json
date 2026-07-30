@@ -83,7 +83,26 @@
       "redirect": "Đang chuyển về trang đăng nhập...",
       "requestError": "Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại.",
       "samePassword": "Mật khẩu mới không được trùng với mật khẩu hiện tại.",
-      "connectionError": "Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại."
+      "connectionError": "Yêu cầu mất quá nhiều thời gian hoặc kết nối bị gián đoạn. Vui lòng thử lại.",
+      "errorTitle": "Không thể đặt lại mật khẩu"
+    },
+    "requestReset": {
+      "title": "Đặt lại mật khẩu",
+      "subtitle": "Yêu cầu một liên kết bảo mật dành riêng cho tài khoản đang đăng nhập. Sau khi mở liên kết trong email, bạn sẽ được chuyển tới màn hình tạo mật khẩu mới.",
+      "backProfile": "Quay lại hồ sơ",
+      "accountEmail": "Email nhận liên kết",
+      "emailHint": "Liên kết đặt lại chỉ được gửi đến email đang gắn với tài khoản này.",
+      "submit": "Gửi liên kết đặt lại",
+      "submitting": "Đang gửi liên kết...",
+      "sentTitle": "Đã gửi yêu cầu đặt lại",
+      "sentText": "Hãy kiểm tra hộp thư của",
+      "openGmail": "Mở Gmail",
+      "errorTitle": "Không thể gửi liên kết",
+      "connectionError": "Không thể kết nối tới máy chủ. Vui lòng thử lại.",
+      "step1": "Nhận liên kết bảo mật qua email",
+      "step2": "Mở đúng liên kết còn hiệu lực",
+      "step3": "Tạo và xác nhận mật khẩu mới",
+      "distinction": "Quên mật khẩu là màn hình công khai để yêu cầu email. Đặt lại mật khẩu là quy trình tạo mật khẩu mới bằng liên kết có token."
     }
   },
   "layout": {

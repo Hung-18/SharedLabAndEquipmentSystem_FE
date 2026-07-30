@@ -63,6 +63,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/profile/profile.page').then((m) => m.ProfilePage),
       },
       {
+        path: 'security/password-reset',
+        title: 'Đặt lại mật khẩu · Shared Lab',
+        loadComponent: () =>
+          import('./features/profile/request-password-reset.page').then(
+            (m) => m.RequestPasswordResetPage,
+          ),
+      },
+      {
         path: 'notifications',
         title: 'Trung tâm thông báo',
         loadComponent: () =>
