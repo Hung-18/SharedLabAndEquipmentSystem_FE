@@ -16,7 +16,12 @@ import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
-import { labelOf, toDateInput } from '../../shared/utils/presentation'
+import {
+  isAvailableEquipmentStatus,
+  isAvailableLabStatus,
+  labelOf,
+  toDateInput,
+} from '../../shared/utils/presentation'
 
 type CalendarView = 'day' | 'week' | 'month' | 'list'
 
@@ -406,9 +411,24 @@ export class CalendarPage implements OnInit {
       labs: this.api.labs().pipe(catchError(() => of([] as LabRoomResponse[]))),
       equipments: this.api.equipments().pipe(catchError(() => of([] as EquipmentResponse[]))),
     }).subscribe(({ labs, equipments }) => {
-      this.labs.set(labs)
-      this.equipments.set(equipments)
-      if (!labs.length || !equipments.length) {
+      const visibleLabs = this.store.isRequester()
+        ? labs.filter((lab) => isAvailableLabStatus(lab.status))
+        : labs
+      const visibleEquipments = this.store.isRequester()
+        ? equipments.filter((equipment) => isAvailableEquipmentStatus(equipment.status))
+        : equipments
+      this.labs.set(visibleLabs)
+      this.equipments.set(visibleEquipments)
+      if (this.store.isRequester()) {
+        if (this.labId && !visibleLabs.some((lab) => lab.labId === this.labId)) this.labId = null
+        if (
+          this.equipmentId &&
+          !visibleEquipments.some((equipment) => equipment.equipmentId === this.equipmentId)
+        ) {
+          this.equipmentId = null
+        }
+      }
+      if (!visibleLabs.length || !visibleEquipments.length) {
         this.toast.info('Một phần danh mục tài nguyên chưa tải được, lịch vẫn tiếp tục hoạt động.')
       }
       this.load()

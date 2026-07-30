@@ -13,6 +13,7 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { SmartImageComponent } from '../../shared/ui/smart-image'
 import { ToastService } from '../../shared/ui/toast.service'
+import { isAvailableLabStatus } from '../../shared/utils/presentation'
 
 interface LabForm {
   labName: string
@@ -68,16 +69,18 @@ interface LabForm {
             />
           </div>
         </div>
-        <div>
-          <label class="field-label">Trạng thái</label
-          ><select class="input-shell" [(ngModel)]="status" (ngModelChange)="page.set(1); load()">
-            <option value="">Tất cả</option>
-            <option [value]="1">Có thể sử dụng</option>
-            <option [value]="2">Tạm không khả dụng</option>
-            <option [value]="3">Đang bảo trì</option>
-            <option [value]="4">Ngừng hoạt động</option>
-          </select>
-        </div>
+        @if (!store.isRequester()) {
+          <div>
+            <label class="field-label">Trạng thái</label
+            ><select class="input-shell" [(ngModel)]="status" (ngModelChange)="page.set(1); load()">
+              <option value="">Tất cả</option>
+              <option [value]="1">Có thể sử dụng</option>
+              <option [value]="2">Tạm không khả dụng</option>
+              <option [value]="3">Đang bảo trì</option>
+              <option [value]="4">Ngừng hoạt động</option>
+            </select>
+          </div>
+        }
         <div>
           <label class="field-label">Sức chứa tối thiểu</label
           ><input
@@ -374,7 +377,7 @@ export class LabsPage implements OnInit {
     this.api
       .searchLabs({
         keyword: this.keyword || undefined,
-        status: this.status || undefined,
+        status: this.store.isRequester() ? 1 : this.status || undefined,
         minimumCapacity: this.minimumCapacity ?? undefined,
         pageNumber: this.page(),
         pageSize: 12,
@@ -387,8 +390,11 @@ export class LabsPage implements OnInit {
       .subscribe({
         next: (result) => {
           if (version !== this.loadVersion) return
-          this.labs.set(result.items)
-          this.hydrateImages(result.items, version)
+          const visibleItems = this.store.isRequester()
+            ? result.items.filter((item) => isAvailableLabStatus(item.status))
+            : result.items
+          this.labs.set(visibleItems)
+          this.hydrateImages(visibleItems, version)
           this.totalPages.set(result.totalPages || 1)
         },
         error: () => {

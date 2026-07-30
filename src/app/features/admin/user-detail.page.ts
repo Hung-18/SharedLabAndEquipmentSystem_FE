@@ -18,7 +18,7 @@ import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
-import { labelOf, toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
+import { labelOf, normalizeUserStatus, toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
 
 type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
 
@@ -529,7 +529,16 @@ export class UserDetailPage implements OnInit {
   protected openStatus(status?: number): void {
     const current = this.user()
     if (!current || this.isCurrentAccount()) return
-    this.statusValue = status ?? Number(current.status)
+    const normalized = normalizeUserStatus(current.status)
+    const statusNumber =
+      normalized === 'Inactive'
+        ? 2
+        : normalized === 'Restricted'
+          ? 3
+          : normalized === 'Locked'
+            ? 4
+            : 1
+    this.statusValue = status ?? statusNumber
     this.restrictionUntil = current.restrictionUntil
       ? toLocalDateTimeInput(current.restrictionUntil)
       : ''
@@ -579,22 +588,32 @@ export class UserDetailPage implements OnInit {
   protected saveStatus(): void {
     const until =
       this.statusValue === 3 && this.restrictionUntil ? toIso(this.restrictionUntil) : null
+    const email = this.user()?.email ?? ''
     this.perform(
       this.api.setUserStatus(this.userId, this.statusValue, until),
       'Đã cập nhật trạng thái tài khoản',
+      () => this.store.rememberUserStatusHint(email, this.statusValue, until),
     )
   }
   protected confirmAction(): void {
+    const email = this.user()?.email ?? ''
+    const statusByAction = { lock: 4, unlock: 1, deactivate: 2, activate: 1 } as const
     this.perform(
       this.api.userAction(this.userId, this.pendingAction),
       'Thao tác tài khoản thành công',
+      () => this.store.rememberUserStatusHint(email, statusByAction[this.pendingAction]),
     )
   }
 
-  private perform(request: ReturnType<SystemService['updateUser']>, message: string): void {
+  private perform(
+    request: ReturnType<SystemService['updateUser']>,
+    message: string,
+    onSuccess?: () => void,
+  ): void {
     this.saving.set(true)
     request.subscribe({
       next: () => {
+        onSuccess?.()
         this.saving.set(false)
         this.closeModal()
         this.toast.success(message)

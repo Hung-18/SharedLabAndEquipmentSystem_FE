@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { catchError, forkJoin, of } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
+import { apiErrorMessage } from '../../core/http/api-error'
 import type {
   CalendarEventResponse,
   EquipmentResponse,
@@ -19,6 +20,11 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { SmartImageComponent } from '../../shared/ui/smart-image'
 import { ToastService } from '../../shared/ui/toast.service'
+import {
+  isAvailableEquipmentStatus,
+  isAvailableLabStatus,
+  isInactiveLabStatus,
+} from '../../shared/utils/presentation'
 
 @Component({
   selector: 'app-lab-detail-page',
@@ -69,7 +75,7 @@ import { ToastService } from '../../shared/ui/toast.service'
               ><app-icon name="wrench" [size]="17" /> Lên lịch bảo trì</a
             >
           }
-          @if (store.isAdmin()) {
+          @if (store.isAdmin() && !isInactiveLabStatus(lab()!.status)) {
             <button class="btn-secondary" (click)="openEdit()">
               <app-icon name="edit" [size]="17" /> Chỉnh sửa
             </button>
@@ -353,6 +359,7 @@ export class LabDetailPage implements OnInit {
   private readonly router = inject(Router)
   private readonly toast = inject(ToastService)
   protected readonly store = inject(AuthStore)
+  protected readonly isInactiveLabStatus = isInactiveLabStatus
   protected readonly lab = signal<LabRoomDetailResponse | null>(null)
   protected readonly equipments = signal<EquipmentResponse[]>([])
   protected readonly maintenances = signal<MaintenanceResponse[]>([])
@@ -452,7 +459,13 @@ export class LabDetailPage implements OnInit {
         this.toast.success('Đã ngừng sử dụng phòng lab')
         void this.router.navigate(['/app/labs'])
       },
-      error: () => this.toast.error('Không thể ngừng sử dụng phòng'),
+      error: (error) =>
+        this.toast.error(
+          apiErrorMessage(
+            error,
+            'Không thể ngừng sử dụng phòng. Hãy kiểm tra booking, lượt sử dụng, bảo trì hoặc hàng chờ đang hoạt động.',
+          ),
+        ),
     })
   }
   protected openEvent(event: CalendarEventResponse): void {
@@ -466,6 +479,13 @@ export class LabDetailPage implements OnInit {
     if (showSkeleton) this.loading.set(true)
     this.api.lab(this.id).subscribe({
       next: (lab) => {
+        if (this.store.isRequester() && !isAvailableLabStatus(lab.status)) {
+          this.loading.set(false)
+          this.lab.set(null)
+          this.toast.info('Phòng lab này đã ngừng hoạt động và không còn nhận booking mới.')
+          void this.router.navigate(['/app/labs'], { replaceUrl: true })
+          return
+        }
         this.lab.set(lab)
         const from = new Date()
         const to = new Date()
@@ -477,10 +497,13 @@ export class LabDetailPage implements OnInit {
             .calendar(from.toISOString(), to.toISOString(), this.id)
             .pipe(catchError(() => of([]))),
         }).subscribe(({ equipments, maintenances, events }) => {
-          this.equipments.set(equipments)
+          const visibleEquipments = this.store.isRequester()
+            ? equipments.filter((item) => isAvailableEquipmentStatus(item.status))
+            : equipments
+          this.equipments.set(visibleEquipments)
           this.maintenances.set(maintenances)
           this.events.set(events)
-          this.tabs[0].count = equipments.length
+          this.tabs[0].count = visibleEquipments.length
           this.tabs[1].count = events.length
           this.tabs[2].count = maintenances.length
           this.loading.set(false)

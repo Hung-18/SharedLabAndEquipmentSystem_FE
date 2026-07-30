@@ -13,6 +13,11 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { SmartImageComponent } from '../../shared/ui/smart-image'
 import { ToastService } from '../../shared/ui/toast.service'
+import {
+  isAvailableEquipmentStatus,
+  isAvailableLabStatus,
+  isInactiveLabStatus,
+} from '../../shared/utils/presentation'
 
 @Component({
   selector: 'app-equipments-page',
@@ -61,22 +66,24 @@ import { ToastService } from '../../shared/ui/toast.service'
           <label class="field-label">Phòng lab</label
           ><select class="input-shell" [(ngModel)]="labId" (ngModelChange)="page.set(1); load()">
             <option [ngValue]="null">Tất cả phòng</option>
-            @for (lab of labs(); track lab.labId) {
+            @for (lab of visibleLabs(); track lab.labId) {
               <option [ngValue]="lab.labId">{{ lab.labName }}</option>
             }
           </select>
         </div>
-        <div>
-          <label class="field-label">Trạng thái</label
-          ><select class="input-shell" [(ngModel)]="status" (ngModelChange)="page.set(1); load()">
-            <option value="">Tất cả</option>
-            <option [value]="1">Sẵn sàng</option>
-            <option [value]="2">Đang sử dụng</option>
-            <option [value]="3">Bảo trì</option>
-            <option [value]="4">Bị hỏng</option>
-            <option [value]="5">Ngừng sử dụng</option>
-          </select>
-        </div>
+        @if (!store.isRequester()) {
+          <div>
+            <label class="field-label">Trạng thái</label
+            ><select class="input-shell" [(ngModel)]="status" (ngModelChange)="page.set(1); load()">
+              <option value="">Tất cả</option>
+              <option [value]="1">Sẵn sàng</option>
+              <option [value]="2">Đang sử dụng</option>
+              <option [value]="3">Bảo trì</option>
+              <option [value]="4">Bị hỏng</option>
+              <option [value]="5">Ngừng sử dụng</option>
+            </select>
+          </div>
+        }
         <div class="flex items-end">
           <button class="btn-primary w-full" (click)="load()">
             <app-icon name="filter" [size]="17" /> Lọc
@@ -188,7 +195,7 @@ import { ToastService } from '../../shared/ui/toast.service'
             <label class="field-label">Phòng lab *</label
             ><select class="input-shell" required [(ngModel)]="form.labId" name="labId">
               <option [ngValue]="null">Chọn phòng lab</option>
-              @for (lab of labs(); track lab.labId) {
+              @for (lab of manageableLabs(); track lab.labId) {
                 <option [ngValue]="lab.labId">{{ lab.labName }} · {{ lab.roomCode }}</option>
               }
             </select>
@@ -264,6 +271,15 @@ export class EquipmentsPage implements OnInit {
   protected readonly labMap = computed(
     () => new Map(this.labs().map((lab) => [lab.labId, lab.labName])),
   )
+  protected readonly bookableLabs = computed(() =>
+    this.labs().filter((lab) => isAvailableLabStatus(lab.status)),
+  )
+  protected readonly manageableLabs = computed(() =>
+    this.labs().filter((lab) => !isInactiveLabStatus(lab.status)),
+  )
+  protected readonly visibleLabs = computed(() =>
+    this.store.isRequester() ? this.bookableLabs() : this.labs(),
+  )
   private loadVersion = 0
 
   ngOnInit(): void {
@@ -280,7 +296,7 @@ export class EquipmentsPage implements OnInit {
       .searchEquipments({
         keyword: this.keyword || undefined,
         labId: this.labId ?? undefined,
-        status: this.status || undefined,
+        status: this.store.isRequester() ? 1 : this.status || undefined,
         pageNumber: this.page(),
         pageSize: 16,
       })
@@ -292,8 +308,11 @@ export class EquipmentsPage implements OnInit {
       .subscribe({
         next: (result) => {
           if (version !== this.loadVersion) return
-          this.items.set(result.items)
-          this.hydrateImages(result.items, version)
+          const visibleItems = this.store.isRequester()
+            ? result.items.filter((item) => isAvailableEquipmentStatus(item.status))
+            : result.items
+          this.items.set(visibleItems)
+          this.hydrateImages(visibleItems, version)
           this.totalPages.set(result.totalPages || 1)
         },
         error: () => {

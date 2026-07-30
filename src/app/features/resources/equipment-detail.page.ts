@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { catchError, forkJoin, of } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
+import { apiErrorMessage } from '../../core/http/api-error'
 import type {
   CalendarEventResponse,
   EquipmentDetailResponse,
@@ -19,6 +20,12 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { SmartImageComponent } from '../../shared/ui/smart-image'
 import { ToastService } from '../../shared/ui/toast.service'
+import {
+  isAvailableEquipmentStatus,
+  isAvailableLabStatus,
+  isInactiveLabStatus,
+  isRetiredEquipmentStatus,
+} from '../../shared/utils/presentation'
 
 @Component({
   selector: 'app-equipment-detail-page',
@@ -74,7 +81,7 @@ import { ToastService } from '../../shared/ui/toast.service'
               ><app-icon name="wrench" [size]="17" /> Lên lịch bảo trì</a
             >
           }
-          @if (store.isAdmin()) {
+          @if (store.isAdmin() && !isRetiredEquipmentStatus(item()!.status)) {
             <button class="btn-secondary" (click)="openEdit()">
               <app-icon name="edit" [size]="17" /> Chỉnh sửa
             </button>
@@ -305,6 +312,7 @@ export class EquipmentDetailPage implements OnInit {
   private readonly router = inject(Router)
   private readonly toast = inject(ToastService)
   protected readonly store = inject(AuthStore)
+  protected readonly isRetiredEquipmentStatus = isRetiredEquipmentStatus
   protected readonly item = signal<EquipmentDetailResponse | null>(null)
   protected readonly lab = signal<LabRoomDetailResponse | null>(null)
   protected readonly labs = signal<LabRoomResponse[]>([])
@@ -331,7 +339,10 @@ export class EquipmentDetailPage implements OnInit {
       usageGuideline: item.usageGuideline ?? '',
     }
     this.editOpen.set(true)
-    if (!this.labs().length) this.api.labs().subscribe((items) => this.labs.set(items))
+    if (!this.labs().length)
+      this.api
+        .labs()
+        .subscribe((items) => this.labs.set(items.filter((lab) => !isInactiveLabStatus(lab.status))))
   }
   protected save(): void {
     this.saving.set(true)
@@ -360,6 +371,13 @@ export class EquipmentDetailPage implements OnInit {
     if (showSkeleton) this.loading.set(true)
     this.api.equipment(this.id).subscribe({
       next: (item) => {
+        if (this.store.isRequester() && !isAvailableEquipmentStatus(item.status)) {
+          this.loading.set(false)
+          this.item.set(null)
+          this.toast.info('Thiết bị này không còn sẵn sàng và không nhận booking mới.')
+          void this.router.navigate(['/app/equipments'], { replaceUrl: true })
+          return
+        }
         this.item.set(item)
         const from = new Date()
         const to = new Date()
@@ -371,6 +389,13 @@ export class EquipmentDetailPage implements OnInit {
             .calendar(from.toISOString(), to.toISOString(), undefined, this.id)
             .pipe(catchError(() => of([]))),
         }).subscribe(({ lab, maintenances, events }) => {
+          if (this.store.isRequester() && lab && !isAvailableLabStatus(lab.status)) {
+            this.loading.set(false)
+            this.item.set(null)
+            this.toast.info('Phòng chứa thiết bị đã ngừng hoạt động nên tài nguyên không còn nhận booking mới.')
+            void this.router.navigate(['/app/equipments'], { replaceUrl: true })
+            return
+          }
           this.lab.set(lab)
           this.maintenances.set(maintenances)
           this.events.set(events)
@@ -391,7 +416,13 @@ export class EquipmentDetailPage implements OnInit {
         this.toast.success('Đã ngừng sử dụng thiết bị')
         void this.router.navigate(['/app/equipments'])
       },
-      error: () => this.toast.error('Không thể ngừng sử dụng thiết bị'),
+      error: (error) =>
+        this.toast.error(
+          apiErrorMessage(
+            error,
+            'Không thể ngừng sử dụng thiết bị. Hãy kiểm tra booking, lượt sử dụng, bảo trì hoặc hàng chờ đang hoạt động.',
+          ),
+        ),
     })
   }
   protected openEvent(event: CalendarEventResponse): void {

@@ -12,6 +12,7 @@ import { WorkspaceService } from '../../core/api/workspace.service'
 import { AuthStore } from '../../core/auth/auth.store'
 import { IconComponent } from '../../shared/ui/icon'
 import { ToastService } from '../../shared/ui/toast.service'
+import { normalizeUserStatus } from '../../shared/utils/presentation'
 
 @Component({
   selector: 'app-requester-home-page',
@@ -431,15 +432,9 @@ export class RequesterHomePage implements OnInit {
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
       .slice(0, 5),
   )
-  protected readonly statusText = computed(() => {
-    const status = this.store.user()?.status
-    if (typeof status === 'string') return status
-    return (
-      ({ 1: 'Active', 2: 'Restricted', 3: 'Inactive', 4: 'Locked' } as Record<number, string>)[
-        status ?? 1
-      ] ?? 'Active'
-    )
-  })
+  protected readonly statusText = computed(() =>
+    normalizeUserStatus(this.store.user()?.status) || 'Active',
+  )
   protected readonly healthScore = computed(() =>
     Math.max(
       0,
