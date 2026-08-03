@@ -309,7 +309,7 @@ export class TrendCardComponent {
                 ? 'bg-violet-600 text-white shadow-lg shadow-violet-200'
                 : 'text-slate-500 hover:bg-slate-50'
             "
-            (click)="tab.set(item.key)"
+            (click)="selectTab(item.key)"
           >
             {{ item.label }}
           </button>
@@ -608,111 +608,288 @@ export class ReportsPage implements OnInit {
     this.load()
   }
 
+  protected selectTab(key: string): void {
+    if (this.tab() === key) return
+    this.tab.set(key)
+    this.load()
+  }
+
   protected load(): void {
     if (!this.from || !this.to) return
-    this.loading.set(true)
-    const from = new Date(`${this.from}T00:00:00`).toISOString()
-    const to = new Date(`${this.to}T23:59:59`).toISOString()
-    let failedRequests = 0
-    const safe = <T>(request: Observable<T>, fallback: T): Observable<T> =>
-      request.pipe(
-        catchError(() => {
-          failedRequests += 1
-          return of(fallback)
-        }),
-      )
 
+    const fromDate = new Date(`${this.from}T00:00:00`)
+    const toDate = new Date(`${this.to}T23:59:59`)
+    if (fromDate > toDate) {
+      this.toast.error('Khoảng ngày không hợp lệ', 'Ngày bắt đầu phải trước ngày kết thúc.')
+      return
+    }
+
+    const from = fromDate.toISOString()
+    const to = toDate.toISOString()
+    this.loading.set(true)
+
+    switch (this.tab()) {
+      case 'resources':
+        this.loadResources(from, to)
+        break
+      case 'department':
+        this.loadDepartment(from, to)
+        break
+      case 'top':
+        this.loadTopResources(from, to)
+        break
+      case 'maintenance':
+        this.loadMaintenanceCosts(from, to)
+        break
+      case 'history':
+        this.loadMaintenanceHistory(from, to)
+        break
+      case 'violations':
+        this.loadViolations(from, to)
+        break
+      case 'trend':
+        this.loadTrend(from, to)
+        break
+      default:
+        this.loadOverview(from, to)
+        break
+    }
+  }
+
+  private loadOverview(from: string, to: string): void {
+    const failed = { count: 0 }
     forkJoin({
-      status: safe(this.api.reportBookingsByStatus(from, to), [] as CategoryCountResponse[]),
-      purpose: safe(this.api.reportBookingsByPurpose(from, to), [] as CategoryCountResponse[]),
-      departments: safe(
-        this.api.reportBookingsByDepartment(from, to),
+      status: this.safe(
+        this.api.reportBookingsByStatus(from, to),
         [] as CategoryCountResponse[],
+        failed,
       ),
-      labUtil: safe(this.api.reportLabUtilization(from, to), [] as ResourceUtilizationResponse[]),
-      equipmentUtil: safe(
-        this.api.reportEquipmentUtilization(from, to),
-        [] as ResourceUtilizationResponse[],
+      purpose: this.safe(
+        this.api.reportBookingsByPurpose(from, to),
+        [] as CategoryCountResponse[],
+        failed,
       ),
-      departmentUtil: safe(
-        this.api.reportDepartmentUtilization(from, to),
-        [] as DepartmentUtilizationResponse[],
+      noShow: this.safe(
+        this.api.reportNoShow(from, to),
+        {
+          noShowCount: 0,
+          completedCount: 0,
+          concludedBookingCount: 0,
+          noShowRate: 0,
+        } as NoShowRateResponse,
+        failed,
       ),
-      mostLabs: safe(
-        this.api.reportMostUsedLabs(from, to, this.top),
-        [] as MostUsedResourceResponse[],
+      trend: this.safe(
+        this.api.reportUsageTrend(from, to, this.groupBy),
+        [] as UsageTrendResponse[],
+        failed,
       ),
-      mostEquipments: safe(
-        this.api.reportMostUsedEquipments(from, to, this.top),
-        [] as MostUsedResourceResponse[],
-      ),
-      maintenanceLabs: safe(
-        this.api.reportMaintenanceByLab(from, to),
-        [] as MaintenanceCostResponse[],
-      ),
-      maintenanceEquipments: safe(
-        this.api.reportMaintenanceByEquipment(from, to),
-        [] as MaintenanceCostResponse[],
-      ),
-      history: safe(this.api.reportMaintenanceHistory({ from, to, pageNumber: 1, pageSize: 50 }), {
-        items: [],
-        pageNumber: 1,
-        pageSize: 50,
-        totalCount: 0,
-        totalPages: 0,
-        from,
-        to,
-        totalCost: 0,
-      } as PagedMaintenanceHistoryResponse),
-      violations: safe(this.api.reportViolations(from, to), {
-        totalCount: 0,
-        activeCount: 0,
-        resolvedCount: 0,
-        cancelledCount: 0,
-        violationTypeCounts: [],
-        items: [],
-      } as ViolationSummaryResponse),
-      penaltyUsers: safe(
-        this.api.reportPenaltyUsers(from, to, this.top),
-        [] as PenaltyUserReportResponse[],
-      ),
-      noShow: safe(this.api.reportNoShow(from, to), {
-        noShowCount: 0,
-        completedCount: 0,
-        concludedBookingCount: 0,
-        noShowRate: 0,
-      } as NoShowRateResponse),
-      trend: safe(this.api.reportUsageTrend(from, to, this.groupBy), [] as UsageTrendResponse[]),
     }).subscribe({
       next: (response) => {
         this.statusCounts.set(response.status)
         this.purposeCounts.set(response.purpose)
-        this.departmentCounts.set(response.departments)
-        this.labUtilization.set(response.labUtil)
-        this.equipmentUtilization.set(response.equipmentUtil)
-        this.departmentUtilization.set(response.departmentUtil)
-        this.mostLabs.set(response.mostLabs)
-        this.mostEquipments.set(response.mostEquipments)
-        this.maintenanceLabs.set(response.maintenanceLabs)
-        this.maintenanceEquipments.set(response.maintenanceEquipments)
-        this.history.set(response.history)
-        this.violations.set(response.violations)
-        this.penaltyUsers.set(response.penaltyUsers)
         this.noShow.set(response.noShow)
         this.usageTrend.set(response.trend)
-        this.loading.set(false)
-        if (failedRequests > 0) {
-          this.toast.info(
-            'Một phần báo cáo chưa tải được',
-            `${failedRequests} nhóm dữ liệu chưa tải được; các phần còn lại vẫn được hiển thị.`,
-          )
-        }
+        this.completeLoad(failed.count, 4)
       },
-      error: () => {
-        this.loading.set(false)
-        this.toast.error('Không tải được báo cáo')
-      },
+      error: () => this.failLoad(),
     })
+  }
+
+  private loadResources(from: string, to: string): void {
+    const failed = { count: 0 }
+    forkJoin({
+      labs: this.safe(
+        this.api.reportLabUtilization(from, to),
+        [] as ResourceUtilizationResponse[],
+        failed,
+      ),
+      equipments: this.safe(
+        this.api.reportEquipmentUtilization(from, to),
+        [] as ResourceUtilizationResponse[],
+        failed,
+      ),
+    }).subscribe({
+      next: (response) => {
+        this.labUtilization.set(response.labs)
+        this.equipmentUtilization.set(response.equipments)
+        this.completeLoad(failed.count, 2)
+      },
+      error: () => this.failLoad(),
+    })
+  }
+
+  private loadDepartment(from: string, to: string): void {
+    const failed = { count: 0 }
+    forkJoin({
+      counts: this.safe(
+        this.api.reportBookingsByDepartment(from, to),
+        [] as CategoryCountResponse[],
+        failed,
+      ),
+      utilization: this.safe(
+        this.api.reportDepartmentUtilization(from, to),
+        [] as DepartmentUtilizationResponse[],
+        failed,
+      ),
+    }).subscribe({
+      next: (response) => {
+        this.departmentCounts.set(response.counts)
+        this.departmentUtilization.set(response.utilization)
+        this.completeLoad(failed.count, 2)
+      },
+      error: () => this.failLoad(),
+    })
+  }
+
+  private loadTopResources(from: string, to: string): void {
+    const failed = { count: 0 }
+    forkJoin({
+      labs: this.safe(
+        this.api.reportMostUsedLabs(from, to, this.top),
+        [] as MostUsedResourceResponse[],
+        failed,
+      ),
+      equipments: this.safe(
+        this.api.reportMostUsedEquipments(from, to, this.top),
+        [] as MostUsedResourceResponse[],
+        failed,
+      ),
+    }).subscribe({
+      next: (response) => {
+        this.mostLabs.set(response.labs)
+        this.mostEquipments.set(response.equipments)
+        this.completeLoad(failed.count, 2)
+      },
+      error: () => this.failLoad(),
+    })
+  }
+
+  private loadMaintenanceCosts(from: string, to: string): void {
+    const failed = { count: 0 }
+    forkJoin({
+      labs: this.safe(
+        this.api.reportMaintenanceByLab(from, to),
+        [] as MaintenanceCostResponse[],
+        failed,
+      ),
+      equipments: this.safe(
+        this.api.reportMaintenanceByEquipment(from, to),
+        [] as MaintenanceCostResponse[],
+        failed,
+      ),
+    }).subscribe({
+      next: (response) => {
+        this.maintenanceLabs.set(response.labs)
+        this.maintenanceEquipments.set(response.equipments)
+        this.completeLoad(failed.count, 2)
+      },
+      error: () => this.failLoad(),
+    })
+  }
+
+  private loadMaintenanceHistory(from: string, to: string): void {
+    const failed = { count: 0 }
+    const fallback = {
+      items: [],
+      pageNumber: 1,
+      pageSize: 50,
+      totalCount: 0,
+      totalPages: 0,
+      from,
+      to,
+      totalCost: 0,
+    } as PagedMaintenanceHistoryResponse
+
+    this.safe(
+      this.api.reportMaintenanceHistory({ from, to, pageNumber: 1, pageSize: 50 }),
+      fallback,
+      failed,
+    ).subscribe({
+      next: (response) => {
+        this.history.set(response)
+        this.completeLoad(failed.count, 1)
+      },
+      error: () => this.failLoad(),
+    })
+  }
+
+  private loadViolations(from: string, to: string): void {
+    const failed = { count: 0 }
+    forkJoin({
+      summary: this.safe(
+        this.api.reportViolations(from, to),
+        {
+          totalCount: 0,
+          activeCount: 0,
+          resolvedCount: 0,
+          cancelledCount: 0,
+          violationTypeCounts: [],
+          items: [],
+        } as ViolationSummaryResponse,
+        failed,
+      ),
+      users: this.safe(
+        this.api.reportPenaltyUsers(from, to, this.top),
+        [] as PenaltyUserReportResponse[],
+        failed,
+      ),
+    }).subscribe({
+      next: (response) => {
+        this.violations.set(response.summary)
+        this.penaltyUsers.set(response.users)
+        this.completeLoad(failed.count, 2)
+      },
+      error: () => this.failLoad(),
+    })
+  }
+
+  private loadTrend(from: string, to: string): void {
+    const failed = { count: 0 }
+    this.safe(
+      this.api.reportUsageTrend(from, to, this.groupBy),
+      [] as UsageTrendResponse[],
+      failed,
+    ).subscribe({
+      next: (response) => {
+        this.usageTrend.set(response)
+        this.completeLoad(failed.count, 1)
+      },
+      error: () => this.failLoad(),
+    })
+  }
+
+  private safe<T>(
+    request: Observable<T>,
+    fallback: T,
+    failed: { count: number },
+  ): Observable<T> {
+    return request.pipe(
+      catchError(() => {
+        failed.count += 1
+        return of(fallback)
+      }),
+    )
+  }
+
+  private completeLoad(failedRequests: number, totalRequests: number): void {
+    this.loading.set(false)
+    if (failedRequests === 0) return
+
+    if (failedRequests >= totalRequests) {
+      this.toast.error('Không tải được báo cáo')
+      return
+    }
+
+    this.toast.info(
+      'Một phần báo cáo chưa tải được',
+      `${failedRequests} nhóm dữ liệu chưa tải được; các phần còn lại vẫn được hiển thị.`,
+    )
+  }
+
+  private failLoad(): void {
+    this.loading.set(false)
+    this.toast.error('Không tải được báo cáo')
   }
 
   protected exportCurrent(): void {
