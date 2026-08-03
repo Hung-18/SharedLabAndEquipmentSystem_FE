@@ -154,6 +154,8 @@ import {
                       routerLink="/app/bookings/new"
                       [queryParams]="{ equipmentId: item.equipmentId, labId: item.labId }"
                       class="btn-secondary px-3"
+                      title="Đặt phòng với thiết bị này"
+                      [attr.aria-label]="'Đặt phòng với thiết bị ' + item.equipmentName"
                       ><app-icon name="calendar-plus" [size]="18"
                     /></a>
                   }

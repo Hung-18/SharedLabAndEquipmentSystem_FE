@@ -70,7 +70,7 @@ import {
               routerLink="/app/bookings/new"
               [queryParams]="{ labId: item()!.labId, equipmentId: item()!.equipmentId }"
               class="btn-primary"
-              ><app-icon name="calendar-plus" [size]="17" /> Đặt thiết bị</a
+              ><app-icon name="calendar-plus" [size]="17" /> Đặt phòng với thiết bị này</a
             >
           }
           @if (store.isManager()) {

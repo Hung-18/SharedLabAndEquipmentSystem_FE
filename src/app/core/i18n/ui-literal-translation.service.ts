@@ -204,6 +204,47 @@ const UI_EN_OVERRIDES: Readonly<Record<string, string>> = {
     'This time range has no blocking resource event and does not overlap your other bookings.',
   'Khung giờ cố định': 'Fixed time slot',
   'Chưa chọn slot': 'No slot selected',
+  'Chọn một phòng, tích thiết bị cần mượn, chọn thời gian rồi gửi một booking duy nhất để duyệt.':
+    'Select one laboratory, choose any required equipment, select a time, and submit one booking for approval.',
+  'Chọn phòng và thiết bị sử dụng': 'Select a laboratory and equipment',
+  'Mỗi booking bắt buộc có một phòng. Thiết bị trong phòng là tùy chọn; chỉ tích những thiết bị cần mượn.':
+    'Each booking must include one laboratory. Equipment is optional; select only the items you need.',
+  'Phòng là tài nguyên chính và luôn được gửi trong booking.':
+    'The laboratory is the primary resource and is always included in the booking.',
+  'Không bắt buộc. Không tích thiết bị nếu chỉ cần sử dụng phòng.':
+    'Optional. Leave all equipment unselected when you only need the laboratory.',
+  'Phòng chưa có thiết bị khả dụng': 'No available equipment in this laboratory',
+  'Bạn vẫn có thể tiếp tục và tạo booking chỉ gồm phòng.':
+    'You can continue and create a laboratory-only booking.',
+  'Phòng & thiết bị': 'Laboratory & equipment',
+  'Phòng và thiết bị đã chọn': 'Selected laboratory and equipment',
+  'Thiết bị mượn': 'Selected equipment',
+  'Hàng chờ hiện chỉ hỗ trợ một tài nguyên. Booking có thiết bị đi kèm chưa thể tham gia hàng chờ; hãy bỏ chọn thiết bị hoặc chọn slot khác.':
+    'The waitlist currently supports one resource only. Remove the selected equipment or choose another slot.',
+  'Hàng chờ chỉ hỗ trợ booking gồm một phòng và không kèm thiết bị':
+    'The waitlist only supports a laboratory-only booking.',
+  'Phòng và thiết bị trong booking': 'Laboratory and equipment in this booking',
+  'Check-in một lần cho toàn bộ booking; check-out sẽ trả toàn bộ phòng và thiết bị.':
+    'Check in once for the entire booking; check-out releases the laboratory and all equipment.',
+  'Check-in booking': 'Check in booking',
+  'Check-out toàn bộ': 'Check out all',
+  'Đang sử dụng toàn bộ booking': 'Entire booking in use',
+  'Đã check-out toàn bộ': 'All resources checked out',
+  'Đã trả tài nguyên': 'Resource returned',
+  'Booking chưa đủ điều kiện để check-in': 'This booking is not eligible for check-in yet.',
+  'Booking chưa đủ điều kiện để check-out toàn bộ':
+    'This booking is not eligible for full check-out yet.',
+  'Check-in booking thành công': 'Booking check-in successful',
+  'Phòng và toàn bộ thiết bị đã chọn được check-in cùng một lần.':
+    'The laboratory and all selected equipment were checked in together.',
+  'Không thể check-in booking': 'Unable to check in the booking',
+  'Xác nhận check-out toàn bộ phòng và thiết bị trong booking?':
+    'Check out the laboratory and all equipment in this booking?',
+  'Check-out booking thành công': 'Booking check-out successful',
+  'Toàn bộ phòng và thiết bị đã được trả; booking đã hoàn tất.':
+    'The laboratory and all equipment were returned; the booking is complete.',
+  'Không thể check-out toàn bộ booking': 'Unable to check out the entire booking',
+  'Đặt phòng với thiết bị này': 'Book the laboratory with this equipment',
 }
 
 const PHRASE_FALLBACKS: readonly [RegExp, string][] = [
@@ -447,6 +488,7 @@ function translateDynamic(value: string): string | null {
   }
   if ((match = value.match(/^(\d+)\s+chưa đọc$/))) return `${match[1]} unread`
   if ((match = value.match(/^(\d+)\s+đã chọn$/))) return `${match[1]} selected`
+  if ((match = value.match(/^(\d+)\s+thiết bị đã chọn$/))) return `${match[1]} equipment selected`
   if ((match = value.match(/^(\d+(?:[.,]\d+)?)\s+giờ$/))) return `${match[1]} hours`
   if ((match = value.match(/^(\d+)\s+lượt$/))) return `${match[1]} uses`
   if ((match = value.match(/^(\d+)\s+người$/))) return `${match[1]} people`
