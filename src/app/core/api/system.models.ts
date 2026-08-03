@@ -136,6 +136,13 @@ export interface UsageLogResponse {
   incidentReviewNote: string | null
 }
 
+export interface BookingUsageSessionResponse {
+  bookingId: number
+  bookingStatus: string
+  actionTime: string
+  logs: UsageLogResponse[]
+}
+
 export interface WaitlistResponse {
   waitlistId: number
   userId: number

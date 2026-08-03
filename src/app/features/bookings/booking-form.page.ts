@@ -69,7 +69,7 @@ interface SlotRangeSelection {
         [subtitle]="
           editing()
             ? 'Cập nhật thời gian và mục đích của booking đang chờ duyệt. Tài nguyên không thay đổi.'
-            : 'Quy trình 4 bước giúp chọn đúng tài nguyên, thời gian và mức ưu tiên trước khi gửi duyệt.'
+            : 'Chọn một phòng, tích thiết bị cần mượn, chọn thời gian rồi gửi một booking duy nhất để duyệt.'
         "
       >
         <a routerLink="/app/calendar" class="btn-secondary"
@@ -127,60 +127,17 @@ interface SlotRangeSelection {
                 <div
                   class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-600"
                 >
-                  <app-icon name="microscope" [size]="23" />
+                  <app-icon name="building" [size]="23" />
                 </div>
                 <div>
-                  <h2 class="text-xl font-black text-slate-950">Chọn tài nguyên</h2>
+                  <h2 class="text-xl font-black text-slate-950">Chọn phòng và thiết bị sử dụng</h2>
                   <p class="mt-1 text-sm text-slate-500">
-                    Một booking chỉ được chứa tài nguyên thuộc cùng một phòng lab.
+                    Mỗi booking bắt buộc có một phòng. Thiết bị trong phòng là tùy chọn; chỉ tích
+                    những thiết bị cần mượn.
                   </p>
                 </div>
               </div>
-              <div class="mt-6 grid gap-4 md:grid-cols-2">
-                <button
-                  type="button"
-                  class="rounded-[24px] border p-5 text-left transition"
-                  [ngClass]="
-                    mode() === 'lab'
-                      ? 'border-violet-300 bg-violet-50 shadow-lg shadow-violet-100'
-                      : 'border-slate-200 bg-white hover:border-violet-200'
-                  "
-                  [disabled]="editing()"
-                  (click)="setMode('lab')"
-                >
-                  <div class="flex items-center gap-3">
-                    <span
-                      class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-violet-600 shadow-sm"
-                      ><app-icon name="building" [size]="22"
-                    /></span>
-                    <div>
-                      <p class="font-black text-slate-900">Đặt cả phòng</p>
-                      <p class="mt-1 text-xs text-slate-500">Sử dụng toàn bộ không gian</p>
-                    </div>
-                  </div></button
-                ><button
-                  type="button"
-                  class="rounded-[24px] border p-5 text-left transition"
-                  [ngClass]="
-                    mode() === 'equipment'
-                      ? 'border-cyan-300 bg-cyan-50 shadow-lg shadow-cyan-100'
-                      : 'border-slate-200 bg-white hover:border-cyan-200'
-                  "
-                  [disabled]="editing()"
-                  (click)="setMode('equipment')"
-                >
-                  <div class="flex items-center gap-3">
-                    <span
-                      class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-cyan-600 shadow-sm"
-                      ><app-icon name="microscope" [size]="22"
-                    /></span>
-                    <div>
-                      <p class="font-black text-slate-900">Đặt thiết bị</p>
-                      <p class="mt-1 text-xs text-slate-500">Có thể chọn nhiều thiết bị</p>
-                    </div>
-                  </div>
-                </button>
-              </div>
+
               <div class="mt-6">
                 <label class="field-label">Phòng lab *</label
                 ><select
@@ -191,43 +148,55 @@ interface SlotRangeSelection {
                 >
                   <option [ngValue]="null">Chọn phòng lab</option>
                   @for (lab of labs(); track lab.labId) {
-                    <option [ngValue]="lab.labId" [disabled]="lab.status !== 'Available'">
+                    <option [ngValue]="lab.labId">
                       {{ lab.labName }} · {{ lab.roomCode }} · {{ lab.status }}
                     </option>
                   }
                 </select>
               </div>
-              @if (mode() === 'lab' && selected().length) {
+
+              @if (selectedRoom(); as room) {
                 <div class="mt-5 rounded-[24px] border border-violet-200 bg-violet-50 p-5">
-                  <p class="font-black text-violet-900">{{ selected()[0].name }}</p>
+                  <div class="flex items-start gap-3">
+                    <span
+                      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm"
+                      ><app-icon name="building" [size]="19" /></span
+                    >
+                    <div class="min-w-0 flex-1">
+                      <p class="font-black text-violet-900">{{ room.name }}</p>
+                      <p class="mt-1 text-xs text-violet-700/70">
+                        Phòng là tài nguyên chính và luôn được gửi trong booking.
+                      </p>
+                    </div>
+                  </div>
                   <label class="field-label mt-4">Ghi chú cho phòng</label
                   ><input
                     class="input-shell"
-                    [ngModel]="selected()[0].note"
-                    (ngModelChange)="updateNote(0, $event)"
+                    [ngModel]="room.note"
+                    (ngModelChange)="updateRoomNote($event)"
                     placeholder="Yêu cầu bố trí, lưu ý khi sử dụng..."
                   />
                 </div>
-              }
-              @if (mode() === 'equipment' && labId) {
+
                 <div class="mt-6">
-                  <div class="flex items-center justify-between">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p class="font-black text-slate-900">Thiết bị trong phòng</p>
                       <p class="mt-1 text-xs text-slate-400">
-                        Chọn một hoặc nhiều thiết bị sẵn sàng
+                        Không bắt buộc. Không tích thiết bị nếu chỉ cần sử dụng phòng.
                       </p>
                     </div>
                     <span
                       class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600"
-                      >{{ selected().length }} đã chọn</span
+                      >{{ selectedEquipmentCount() }} thiết bị đã chọn</span
                     >
                   </div>
+
                   @if (availableEquipments().length === 0) {
                     <div class="mt-4">
                       <app-data-state
-                        title="Không có thiết bị"
-                        message="Phòng này chưa có thiết bị hoặc không thể tải dữ liệu."
+                        title="Phòng chưa có thiết bị khả dụng"
+                        message="Bạn vẫn có thể tiếp tục và tạo booking chỉ gồm phòng."
                         icon="microscope"
                       />
                     </div>
@@ -242,7 +211,7 @@ interface SlotRangeSelection {
                               ? 'border-cyan-300 bg-cyan-50 shadow-sm'
                               : 'border-slate-200 hover:border-cyan-200'
                           "
-                          [disabled]="editing() || equipment.status !== 'Available'"
+                          [disabled]="editing()"
                           (click)="toggleEquipment(equipment)"
                         >
                           <span
@@ -256,21 +225,24 @@ interface SlotRangeSelection {
                               equipment.status
                             }}</span></span
                           >
-                          @if (isSelected(equipment.equipmentId)) {
-                            <span class="text-cyan-600"><app-icon name="check" [size]="18" /></span>
-                          }
+                          <span
+                            class="flex h-6 w-6 items-center justify-center rounded-lg border"
+                            [ngClass]="
+                              isSelected(equipment.equipmentId)
+                                ? 'border-cyan-500 bg-cyan-500 text-white'
+                                : 'border-slate-300 bg-white text-transparent'
+                            "
+                            ><app-icon name="check" [size]="15" /></span
+                          >
                         </button>
                       }
                     </div>
                   }
                 </div>
               }
+
               <div class="mt-7 flex justify-end">
-                <button
-                  class="btn-primary"
-                  [disabled]="selected().length === 0"
-                  (click)="step.set(2)"
-                >
+                <button class="btn-primary" [disabled]="!hasSelectedLab()" (click)="step.set(2)">
                   Tiếp tục <app-icon name="arrow-right" [size]="17" />
                 </button>
               </div>
@@ -408,7 +380,7 @@ interface SlotRangeSelection {
                       <button
                         type="button"
                         class="btn-secondary shrink-0"
-                        [disabled]="joiningWaitlist() || selected().length !== 1 || !validTime()"
+                        [disabled]="joiningWaitlist() || selectedEquipmentCount() > 0 || !validTime()"
                         (click)="joinWaitlist()"
                       >
                         <app-icon name="hourglass" [size]="16" />
@@ -416,10 +388,10 @@ interface SlotRangeSelection {
                       </button>
                     }
                   </div>
-                  @if (!available() && selected().length > 1) {
+                  @if (!available() && selectedEquipmentCount() > 0) {
                     <p class="mt-3 text-xs leading-5 opacity-75">
-                      Hàng chờ hiện chỉ nhận một phòng hoặc một thiết bị mỗi lượt. Hãy giữ lại một
-                      thiết bị nếu muốn tham gia.
+                      Hàng chờ hiện chỉ hỗ trợ một tài nguyên. Booking có thiết bị đi kèm chưa thể
+                      tham gia hàng chờ; hãy bỏ chọn thiết bị hoặc chọn slot khác.
                     </p>
                   }
                 </div>
@@ -570,7 +542,7 @@ interface SlotRangeSelection {
                 </div>
               </div>
               <div class="mt-4 rounded-2xl border border-slate-200 p-5">
-                <p class="text-xs font-black text-slate-700">Tài nguyên đã chọn</p>
+                <p class="text-xs font-black text-slate-700">Phòng và thiết bị đã chọn</p>
                 <div class="mt-3 space-y-3">
                   @for (resource of selected(); track resource.key) {
                     <div class="flex items-center gap-3">
@@ -632,8 +604,8 @@ interface SlotRangeSelection {
               </div>
               <div class="h-px bg-slate-100"></div>
               <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-500">Tài nguyên</span
-                ><strong class="text-slate-900">{{ selected().length }}</strong>
+                <span class="text-slate-500">Thiết bị mượn</span
+                ><strong class="text-slate-900">{{ selectedEquipmentCount() }}</strong>
               </div>
               <div class="h-px bg-slate-100"></div>
               <div class="flex items-center justify-between text-sm">
@@ -671,7 +643,6 @@ export class BookingFormPage implements OnInit {
   protected readonly equipments = signal<EquipmentResponse[]>([])
   protected readonly rules = signal<PriorityRuleResponse[]>([])
   protected readonly selected = signal<SelectedResource[]>([])
-  protected readonly mode = signal<'lab' | 'equipment'>('lab')
   protected readonly step = signal(1)
   protected readonly suggestions = signal<SuggestedSlotResponse[]>([])
   protected readonly selectedSlotIds = signal<number[]>([])
@@ -707,7 +678,7 @@ export class BookingFormPage implements OnInit {
   private sourceWaitlistId: number | null = null
   private bookingId = 0
   protected readonly steps = [
-    { id: 1, label: 'Tài nguyên' },
+    { id: 1, label: 'Phòng & thiết bị' },
     { id: 2, label: 'Thời gian' },
     { id: 3, label: 'Mục đích' },
     { id: 4, label: 'Xác nhận' },
@@ -742,6 +713,18 @@ export class BookingFormPage implements OnInit {
     return this.equipments().filter(
       (item) => item.labId === this.labId && isAvailableEquipmentStatus(item.status),
     )
+  }
+
+  protected selectedRoom(): SelectedResource | null {
+    return this.selected().find((item) => item.resourceType === 1) ?? null
+  }
+
+  protected selectedEquipmentCount(): number {
+    return this.selected().filter((item) => item.resourceType === 2).length
+  }
+
+  protected hasSelectedLab(): boolean {
+    return Boolean(this.labId && this.selectedRoom())
   }
 
   protected selectedLabName(): string {
@@ -792,15 +775,15 @@ export class BookingFormPage implements OnInit {
           }
         }
 
-        if (qLab) {
-          this.labId = qLab
-          this.mode.set(qEquipment ? 'equipment' : 'lab')
+        const preselectedEquipment = qEquipment
+          ? availableEquipments.find((equipment) => equipment.equipmentId === qEquipment)
+          : undefined
+        const targetLabId = qLab || preselectedEquipment?.labId || 0
+        if (targetLabId) {
+          this.labId = targetLabId
           this.onLabChange()
-          if (qEquipment) {
-            const item = availableEquipments.find(
-              (equipment) => equipment.equipmentId === qEquipment,
-            )
-            if (item) this.toggleEquipment(item)
+          if (preselectedEquipment && preselectedEquipment.labId === targetLabId) {
+            this.toggleEquipment(preselectedEquipment)
           }
         }
       },
@@ -821,7 +804,6 @@ export class BookingFormPage implements OnInit {
     }
 
     const equipmentItems = booking.items.filter((item) => item.equipmentId !== null)
-    this.mode.set(equipmentItems.length ? 'equipment' : 'lab')
     this.labId =
       booking.items.find((item) => item.labId !== null)?.labId ??
       equipments.find((equipment) => equipment.equipmentId === equipmentItems[0]?.equipmentId)
@@ -850,32 +832,36 @@ export class BookingFormPage implements OnInit {
     this.step.set(2)
   }
 
-  protected setMode(mode: 'lab' | 'equipment'): void {
-    if (this.editing()) return
-    this.mode.set(mode)
-    this.selected.set([])
-    this.invalidateAvailability()
-    if (this.labId) this.onLabChange()
-  }
   protected onLabChange(): void {
     if (this.editing()) return
-    this.selected.set([])
     this.invalidateAvailability()
     const lab = this.labs().find((item) => item.labId === this.labId)
-    if (lab && this.mode() === 'lab')
-      this.selected.set([
-        {
-          key: `lab-${lab.labId}`,
-          resourceType: 1,
-          labId: lab.labId,
-          equipmentId: null,
-          name: lab.labName,
-          note: '',
-        },
-      ])
+    this.selected.set(
+      lab
+        ? [
+            {
+              key: `lab-${lab.labId}`,
+              resourceType: 1,
+              labId: lab.labId,
+              equipmentId: null,
+              name: lab.labName,
+              note: '',
+            },
+          ]
+        : [],
+    )
   }
+
   protected toggleEquipment(item: EquipmentResponse): void {
-    if (this.editing() || !isAvailableEquipmentStatus(item.status)) return
+    if (
+      this.editing() ||
+      !this.hasSelectedLab() ||
+      item.labId !== this.labId ||
+      !isAvailableEquipmentStatus(item.status)
+    ) {
+      return
+    }
+
     this.selected.update((current) =>
       current.some((selected) => selected.equipmentId === item.equipmentId)
         ? current.filter((selected) => selected.equipmentId !== item.equipmentId)
@@ -893,14 +879,17 @@ export class BookingFormPage implements OnInit {
     )
     this.invalidateAvailability()
   }
+
   protected isSelected(id: number): boolean {
     return this.selected().some((item) => item.equipmentId === id)
   }
-  protected updateNote(index: number, note: string): void {
+
+  protected updateRoomNote(note: string): void {
     this.selected.update((items) =>
-      items.map((item, itemIndex) => (itemIndex === index ? { ...item, note } : item)),
+      items.map((item) => (item.resourceType === 1 ? { ...item, note } : item)),
     )
   }
+
   protected canCreateBooking(): boolean {
     return normalizeUserStatus(this.store.user()?.status) === 'Active'
   }
@@ -1028,7 +1017,7 @@ export class BookingFormPage implements OnInit {
   }
 
   protected checkAvailability(): void {
-    if (!this.validTime() || !this.selected().length) {
+    if (!this.validTime() || !this.hasSelectedLab()) {
       this.toast.info('Hãy chọn thời gian và tài nguyên hợp lệ')
       return
     }
@@ -1042,24 +1031,14 @@ export class BookingFormPage implements OnInit {
       next: ({ events, userBookings }) => {
         this.currentUserBookings.set(userBookings)
         const userConflict = this.hasCurrentUserBookingConflict(userBookings)
-        const selectedEquipmentIds = new Set(
-          this.selected()
-            .map((item) => item.equipmentId)
-            .filter((id): id is number => id !== null),
-        )
         const resourceConflict = events.some((event) => {
           const overlapsTime =
             event.blocking &&
             new Date(event.startTime) < new Date(this.endTime) &&
             new Date(event.endTime) > new Date(this.startTime)
-          if (!overlapsTime) return false
-          if (this.mode() === 'lab')
-            return event.resources.some((resource) => resource.labId === this.labId)
-          return event.resources.some(
-            (resource) =>
-              (resource.resourceType === 'LabRoom' && resource.labId === this.labId) ||
-              (resource.resourceType === 'Equipment' &&
-                selectedEquipmentIds.has(resource.resourceId)),
+          return (
+            overlapsTime &&
+            event.resources.some((resource) => resource.labId === this.labId)
           )
         })
         const blocking = userConflict || resourceConflict
@@ -1110,7 +1089,7 @@ export class BookingFormPage implements OnInit {
       this.toast.info('Tài khoản hiện không được phép tạo hoặc chỉnh sửa lịch đặt')
       return
     }
-    if (!this.validTime() || !this.selected().length || !this.purposeDescription.trim()) {
+    if (!this.validTime() || !this.hasSelectedLab() || !this.purposeDescription.trim()) {
       this.toast.info('Thông tin booking chưa đầy đủ')
       return
     }
@@ -1194,16 +1173,16 @@ export class BookingFormPage implements OnInit {
   }
 
   protected joinWaitlist(): void {
-    if (this.selected().length !== 1 || !this.validTime()) {
-      this.toast.info('Hãy chọn đúng một tài nguyên và khung giờ hợp lệ')
+    const room = this.selectedRoom()
+    if (!room || this.selectedEquipmentCount() > 0 || !this.validTime()) {
+      this.toast.info('Hàng chờ chỉ hỗ trợ booking gồm một phòng và không kèm thiết bị')
       return
     }
-    const resource = this.selected()[0]
     this.joiningWaitlist.set(true)
     this.api
       .createWaitlist({
-        labId: resource.resourceType === 1 ? resource.labId : null,
-        equipmentId: resource.resourceType === 2 ? resource.equipmentId : null,
+        labId: room.labId,
+        equipmentId: null,
         requestedStart: toIso(this.startTime),
         requestedEnd: toIso(this.endTime),
       })
@@ -1249,7 +1228,7 @@ export class BookingFormPage implements OnInit {
       'Khung giờ vừa phát sinh xung đột',
       apiErrorMessage(error, 'Hãy kiểm tra lại và chọn một khung giờ thay thế.'),
     )
-    if (this.validTime() && this.selected().length) {
+    if (this.validTime() && this.hasSelectedLab()) {
       this.checking.set(true)
       this.loadSuggestions()
     }
@@ -1381,7 +1360,7 @@ export class BookingFormPage implements OnInit {
       .map((item) => `${item.resourceType}:${item.labId ?? 0}:${item.equipmentId ?? 0}`)
       .sort()
       .join('|')
-    return [this.mode(), this.labId ?? 0, resources, this.startTime, this.endTime].join('::')
+    return [this.labId ?? 0, resources, this.startTime, this.endTime].join('::')
   }
 
   private itemPayload(): BookingItemRequest[] {

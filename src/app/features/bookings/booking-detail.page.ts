@@ -146,12 +146,53 @@ import { apiErrorMessage } from '../../core/http/api-error'
             </article>
 
             <article class="card-surface overflow-hidden">
-              <header class="border-b border-slate-100 px-5 py-5 sm:px-6">
-                <h2 class="text-lg font-black text-slate-950">Tài nguyên trong booking</h2>
-                <p class="mt-1 text-xs text-slate-400">
-                  Check-in, check-out và báo sự cố theo từng BookingItem
-                </p>
+              <header
+                class="flex flex-col gap-4 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+              >
+                <div>
+                  <h2 class="text-lg font-black text-slate-950">Phòng và thiết bị trong booking</h2>
+                  <p class="mt-1 text-xs text-slate-400">
+                    Check-in một lần cho toàn bộ booking; check-out sẽ trả toàn bộ phòng và thiết bị.
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  @if (canCheckInBooking()) {
+                    <button class="btn-primary" [disabled]="acting()" (click)="checkInBooking()">
+                      <app-icon name="login" [size]="16" />
+                      {{ acting() ? 'Đang xử lý...' : 'Check-in booking' }}
+                    </button>
+                  }
+                  @if (canCheckOutBooking()) {
+                    <button class="btn-primary" [disabled]="acting()" (click)="checkOutBooking()">
+                      <app-icon name="logout" [size]="16" />
+                      {{ acting() ? 'Đang xử lý...' : 'Check-out toàn bộ' }}
+                    </button>
+                  }
+                </div>
               </header>
+              <div class="border-b border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-6">
+                <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
+                  <span class="font-black text-slate-700">Trạng thái sử dụng</span>
+                  <span
+                    class="rounded-full px-3 py-1.5 text-xs font-black"
+                    [ngClass]="
+                      hasOpenUsage()
+                        ? 'bg-amber-100 text-amber-800'
+                        : logs().length
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-slate-200 text-slate-600'
+                    "
+                  >
+                    {{
+                      hasOpenUsage()
+                        ? 'Đang sử dụng toàn bộ booking'
+                        : logs().length
+                          ? 'Đã check-out toàn bộ'
+                          : 'Chưa check-in'
+                    }}
+                  </span>
+                </div>
+              </div>
               <div class="divide-y divide-slate-100">
                 @for (item of booking()!.items; track item.bookingItemId) {
                   <div class="p-5 sm:p-6">
@@ -187,29 +228,26 @@ import { apiErrorMessage } from '../../core/http/api-error'
                         </p>
                       </div>
                       <div class="flex flex-wrap gap-2">
-                        @if (!logFor(item.bookingItemId) && canCheckIn()) {
-                          <button class="btn-primary" (click)="checkIn(item.bookingItemId)">
-                            <app-icon name="login" [size]="16" /> Check-in
-                          </button>
-                        }
                         @if (logFor(item.bookingItemId); as log) {
-                          @if (!log.actualCheckout) {
-                            @if (canCheckOut(log)) {
-                              <button class="btn-primary" (click)="checkOut(log.logId)">
-                                <app-icon name="logout" [size]="16" /> Check-out
-                              </button>
-                            }
-                            @if (canReportIncident(log)) {
-                              <button class="btn-secondary" (click)="openIncident(log)">
-                                <app-icon name="alert" [size]="16" /> Báo sự cố
-                              </button>
-                            }
-                          } @else {
-                            <span
-                              class="rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700"
-                              >Đã hoàn tất</span
-                            >
+                          @if (!log.actualCheckout && canReportIncident(log)) {
+                            <button class="btn-secondary" (click)="openIncident(log)">
+                              <app-icon name="alert" [size]="16" /> Báo sự cố
+                            </button>
                           }
+                          <span
+                            class="rounded-full px-3 py-2 text-xs font-black"
+                            [ngClass]="
+                              log.actualCheckout
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-amber-50 text-amber-700'
+                            "
+                            >{{ log.actualCheckout ? 'Đã trả tài nguyên' : 'Đang sử dụng' }}</span
+                          >
+                        } @else {
+                          <span
+                            class="rounded-full bg-slate-100 px-3 py-2 text-xs font-black text-slate-500"
+                            >Chưa check-in</span
+                          >
                         }
                       </div>
                     </div>
@@ -416,6 +454,7 @@ export class BookingDetailPage implements OnInit {
   protected readonly logs = signal<UsageLogResponse[]>([])
   protected readonly violations = signal<ViolationResponse[]>([])
   protected readonly loading = signal(true)
+  protected readonly acting = signal(false)
   protected readonly rejectOpen = signal(false)
   protected readonly incidentOpen = signal(false)
   protected rejectionReason = ''
@@ -463,21 +502,44 @@ export class BookingDetailPage implements OnInit {
     const hasActiveUsage = this.logs().some((log) => !log.actualCheckout)
     return Date.now() < +new Date(item.startTime) && !hasActiveUsage
   }
-  protected canCheckIn(): boolean {
+  protected canCheckInBooking(): boolean {
     const item = this.booking()
-    if (!item || !this.isOwnerRequester() || item.status !== 'Approved') return false
+    if (!item || !this.isOwnerRequester() || item.status !== 'Approved' || this.acting()) {
+      return false
+    }
+    if (this.logs().some((log) => Boolean(log.actualCheckout))) return false
+
+    const loggedItemIds = new Set(this.logs().map((log) => log.bookingItemId))
+    const needsBatchCheckIn = item.items.some(
+      (resource) => !loggedItemIds.has(resource.bookingItemId),
+    )
+    if (!needsBatchCheckIn) return false
+
     const now = Date.now()
     return (
       now >= +new Date(item.startTime) - 15 * 60_000 &&
       now <= Math.min(+new Date(item.startTime) + 30 * 60_000, +new Date(item.endTime))
     )
   }
-  protected canManageConcluded(): boolean {
-    return Boolean(this.store.isManager() && this.booking()?.status === 'Approved')
+
+  protected hasOpenUsage(): boolean {
+    return this.logs().some((log) => !log.actualCheckout)
   }
 
-  protected canCheckOut(log: UsageLogResponse): boolean {
-    return this.isOwnerRequester() && !log.actualCheckout
+  protected canCheckOutBooking(): boolean {
+    const item = this.booking()
+    if (!item || !this.isOwnerRequester() || item.status !== 'Approved' || this.acting()) {
+      return false
+    }
+    const loggedItemIds = new Set(this.logs().map((log) => log.bookingItemId))
+    return (
+      this.hasOpenUsage() &&
+      item.items.length > 0 &&
+      item.items.every((resource) => loggedItemIds.has(resource.bookingItemId))
+    )
+  }
+  protected canManageConcluded(): boolean {
+    return Boolean(this.store.isManager() && this.booking()?.status === 'Approved')
   }
 
   protected canReportIncident(log: UsageLogResponse): boolean {
@@ -575,35 +637,55 @@ export class BookingDetailPage implements OnInit {
       error: () => this.toast.error('Không thể từ chối booking'),
     })
   }
-  protected checkIn(itemId: number): void {
-    if (!this.canCheckIn()) {
-      this.toast.info('Bạn không có quyền check-in booking này')
+  protected checkInBooking(): void {
+    if (!this.canCheckInBooking()) {
+      this.toast.info('Booking chưa đủ điều kiện để check-in')
       return
     }
-    this.api.checkIn(itemId).subscribe({
+    this.acting.set(true)
+    this.api.checkInBooking(this.id).subscribe({
       next: () => {
-        this.toast.success('Check-in thành công')
+        this.acting.set(false)
+        this.toast.success(
+          'Check-in booking thành công',
+          'Phòng và toàn bộ thiết bị đã chọn được check-in cùng một lần.',
+        )
         this.load()
       },
-      error: () =>
-        this.toast.error('Không thể check-in', 'Kiểm tra khung giờ và trạng thái booking.'),
+      error: (error: unknown) => {
+        this.acting.set(false)
+        this.toast.error(
+          'Không thể check-in booking',
+          apiErrorMessage(error, 'Kiểm tra khung giờ và trạng thái booking.'),
+        )
+      },
     })
   }
-  protected checkOut(logId: number): void {
-    const log = this.logs().find((item) => item.logId === logId)
-    if (!log || !this.canCheckOut(log)) {
-      this.toast.info('Bạn không có quyền check-out booking này')
+
+  protected checkOutBooking(): void {
+    if (!this.canCheckOutBooking()) {
+      this.toast.info('Booking chưa đủ điều kiện để check-out toàn bộ')
       return
     }
-    if (!confirm('Xác nhận check-out tài nguyên này?')) return
-    this.api.checkOut(logId).subscribe({
+    if (!confirm('Xác nhận check-out toàn bộ phòng và thiết bị trong booking?')) return
+
+    this.acting.set(true)
+    this.api.checkOutBooking(this.id).subscribe({
       next: () => {
-        this.toast.success('Check-out thành công')
+        this.acting.set(false)
+        this.toast.success(
+          'Check-out booking thành công',
+          'Toàn bộ phòng và thiết bị đã được trả; booking đã hoàn tất.',
+        )
         this.load()
       },
-      error: () => this.toast.error('Không thể check-out'),
+      error: (error: unknown) => {
+        this.acting.set(false)
+        this.toast.error('Không thể check-out toàn bộ booking', apiErrorMessage(error))
+      },
     })
   }
+
   protected openIncident(log: UsageLogResponse): void {
     if (!this.canReportIncident(log)) {
       this.toast.info('Bạn không có quyền báo sự cố cho booking này')
