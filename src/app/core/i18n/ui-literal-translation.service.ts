@@ -167,6 +167,43 @@ const UI_EN_OVERRIDES: Readonly<Record<string, string>> = {
   'Đánh dấu không đến': 'Mark as no-show',
   'Đổi quản lý phòng thí nghiệm': 'Change lab manager',
   'Sửa booking': 'Edit booking',
+  'Chọn ngày và slot sử dụng': 'Select a date and time slots',
+  'Chọn một hoặc hai slot liên tiếp trong cùng một buổi. Hệ thống tự tính giờ bắt đầu và kết thúc.':
+    'Select one or two consecutive slots in the same session. The system calculates the start and end times automatically.',
+  'Ngày sử dụng *': 'Booking date *',
+  'Buổi sáng': 'Morning',
+  'Buổi chiều': 'Afternoon',
+  'Slot 1 và Slot 2': 'Slots 1 and 2',
+  'Slot 3 và Slot 4': 'Slots 3 and 4',
+  '2 giờ': '2 hours',
+  'Tạo một booking duy nhất từ': 'Create one booking from',
+  'Nhắc check-in lúc': 'Check-in reminder at',
+  'và nhắc check-out lúc': 'and check-out reminder at',
+  'Không gửi lại thông báo tại ranh giới giữa hai slot.':
+    'No additional reminder is sent at the boundary between two slots.',
+  'Chưa chọn slot. Có thể chọn Slot 1 + 2 hoặc Slot 3 + 4 để tạo một khoảng thời gian liên tục.':
+    'No slot selected. Select Slots 1 + 2 or Slots 3 + 4 to create one continuous time range.',
+  'Khung giờ thay thế theo slot cố định': 'Alternative fixed time slots',
+  'Các gợi ý hiện tại không khớp bốn slot cố định. Hãy chọn ngày hoặc slot khác.':
+    'The current suggestions do not match the four fixed slots. Select another date or slot.',
+  'Chỉ chọn các slot liên tiếp trong cùng một buổi':
+    'Select consecutive slots within the same session only.',
+  'Khung giờ được truyền vào không thuộc bốn slot cố định':
+    'The provided time range does not match the four fixed slots.',
+  'Hãy chọn lại một hoặc hai slot liên tiếp trong cùng một buổi.':
+    'Select one or two consecutive slots in the same session.',
+  'Booking cũ chưa thuộc bốn slot cố định':
+    'This legacy booking does not match the four fixed slots.',
+  'Hãy chọn lại slot trước khi lưu thay đổi.': 'Select valid slots before saving changes.',
+  'Gợi ý này không thuộc bốn slot cố định': 'This suggestion does not match the four fixed slots.',
+  'Đã chọn khung giờ thay thế. Hệ thống đang kiểm tra lại.':
+    'The alternative slot was selected. The system is checking it again.',
+  'Bạn đã có một booking khác trùng với khung giờ này.':
+    'You already have another booking that overlaps this time range.',
+  'Khung giờ hiện chưa có sự kiện chặn tài nguyên và không trùng lịch cá nhân.':
+    'This time range has no blocking resource event and does not overlap your other bookings.',
+  'Khung giờ cố định': 'Fixed time slot',
+  'Chưa chọn slot': 'No slot selected',
 }
 
 const PHRASE_FALLBACKS: readonly [RegExp, string][] = [

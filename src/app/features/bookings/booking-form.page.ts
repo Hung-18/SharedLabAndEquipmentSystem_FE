@@ -7,6 +7,7 @@ import { SystemService } from '../../core/api/system.service'
 import type {
   BookingDetailResponse,
   BookingItemRequest,
+  BookingResponse,
   EquipmentResponse,
   LabRoomResponse,
   PriorityRuleResponse,
@@ -22,8 +23,8 @@ import {
   isAvailableLabStatus,
   labelOf,
   normalizeUserStatus,
+  toDateInput,
   toIso,
-  toLocalDateTimeInput,
 } from '../../shared/utils/presentation'
 import { ApiError, apiErrorMessage } from '../../core/http/api-error'
 
@@ -34,6 +35,20 @@ interface SelectedResource {
   equipmentId: number | null
   name: string
   note: string
+}
+
+type BookingSlotPeriod = 'morning' | 'afternoon'
+
+interface FixedBookingSlot {
+  id: number
+  start: string
+  end: string
+  period: BookingSlotPeriod
+}
+
+interface SlotRangeSelection {
+  date: string
+  slotIds: number[]
 }
 
 @Component({
@@ -271,24 +286,101 @@ interface SelectedResource {
                   <app-icon name="clock" [size]="23" />
                 </div>
                 <div>
-                  <h2 class="text-xl font-black text-slate-950">Chọn thời gian</h2>
+                  <h2 class="text-xl font-black text-slate-950">Chọn ngày và slot sử dụng</h2>
                   <p class="mt-1 text-sm text-slate-500">
-                    Kiểm tra kỹ thời gian bắt đầu và kết thúc trước khi tiếp tục.
+                    Chọn một hoặc hai slot liên tiếp trong cùng một buổi. Hệ thống tự tính giờ bắt đầu và kết thúc.
                   </p>
                 </div>
               </div>
-              <div class="mt-6 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label class="field-label">Bắt đầu *</label
-                  ><input class="input-shell" type="datetime-local" [(ngModel)]="startTime" (ngModelChange)="onTimeChange()" />
-                </div>
-                <div>
-                  <label class="field-label">Kết thúc *</label
-                  ><input class="input-shell" type="datetime-local" [(ngModel)]="endTime" (ngModelChange)="onTimeChange()" />
-                </div>
+
+              <div class="mt-6">
+                <label class="field-label">Ngày sử dụng *</label>
+                <input
+                  class="input-shell max-w-md"
+                  type="date"
+                  [min]="minimumBookingDate()"
+                  [(ngModel)]="bookingDate"
+                  (ngModelChange)="onBookingDateChange()"
+                />
               </div>
+
+              <div class="mt-6 grid gap-4 lg:grid-cols-2">
+                @for (period of slotPeriods; track period.key) {
+                  <section class="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <p class="font-black text-slate-900">{{ period.label }}</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ period.description }}</p>
+                      </div>
+                      <span
+                        class="rounded-full bg-white px-3 py-1 text-[10px] font-black tracking-[.08em] text-slate-500 uppercase shadow-sm"
+                        >{{ slotsForPeriod(period.key).length }} slot</span
+                      >
+                    </div>
+
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                      @for (slot of slotsForPeriod(period.key); track slot.id) {
+                        <button
+                          type="button"
+                          class="rounded-2xl border p-4 text-left transition"
+                          [ngClass]="
+                            isTimeSlotSelected(slot.id)
+                              ? 'border-violet-400 bg-violet-600 text-white shadow-lg shadow-violet-200'
+                              : isSlotDisabled(slot)
+                                ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300'
+                                : 'border-slate-200 bg-white text-slate-900 hover:border-violet-300 hover:bg-violet-50'
+                          "
+                          [disabled]="isSlotDisabled(slot)"
+                          (click)="toggleTimeSlot(slot)"
+                        >
+                          <span class="block text-[10px] font-black tracking-[.12em] uppercase"
+                            >Slot {{ slot.id }}</span
+                          >
+                          <span class="mt-2 block text-lg font-black"
+                            >{{ slot.start }}–{{ slot.end }}</span
+                          >
+                          <span class="mt-1 block text-xs opacity-70">2 giờ</span>
+                        </button>
+                      }
+                    </div>
+                  </section>
+                }
+              </div>
+
+              @if (hasSelectedSlotRange()) {
+                <div class="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
+                  <div class="flex items-start gap-3">
+                    <span
+                      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm"
+                      ><app-icon name="check" [size]="19" /></span
+                    >
+                    <div class="min-w-0 flex-1">
+                      <p class="font-black">{{ selectedSlotSummary() }}</p>
+                      <p class="mt-1 text-sm leading-6 text-emerald-800/80">
+                        Tạo một booking duy nhất từ
+                        <strong>{{ startTime | date: 'HH:mm dd/MM/yyyy' }}</strong> đến
+                        <strong>{{ endTime | date: 'HH:mm dd/MM/yyyy' }}</strong>.
+                      </p>
+                      <p class="mt-2 text-xs leading-5 text-emerald-800/70">
+                        Nhắc check-in lúc <strong>{{ checkInReminderTime() }}</strong> và nhắc check-out lúc
+                        <strong>{{ checkOutReminderTime() }}</strong>. Không gửi lại thông báo tại ranh giới giữa hai slot.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                  Chưa chọn slot. Có thể chọn Slot 1 + 2 hoặc Slot 3 + 4 để tạo một khoảng thời gian liên tục.
+                </div>
+              }
+
               <div class="mt-5 flex flex-wrap gap-2">
-                <button class="btn-secondary" (click)="checkAvailability()" [disabled]="checking()">
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  (click)="checkAvailability()"
+                  [disabled]="checking() || !validTime()"
+                >
                   <app-icon name="search" [size]="17" />
                   {{ checking() ? 'Đang kiểm tra...' : 'Kiểm tra khung giờ' }}</button
                 ><a
@@ -312,11 +404,11 @@ interface SelectedResource {
                       <app-icon [name]="available() ? 'check' : 'alert'" [size]="18" />
                       {{ availabilityMessage() }}
                     </p>
-                    @if (!available()) {
+                    @if (!available() && !personalTimeConflict()) {
                       <button
                         type="button"
                         class="btn-secondary shrink-0"
-                        [disabled]="joiningWaitlist() || selected().length !== 1"
+                        [disabled]="joiningWaitlist() || selected().length !== 1 || !validTime()"
                         (click)="joinWaitlist()"
                       >
                         <app-icon name="hourglass" [size]="16" />
@@ -332,30 +424,37 @@ interface SelectedResource {
                   }
                 </div>
               }
-              @if (suggestions().length) {
+              @if (fixedSlotSuggestions().length) {
                 <div class="mt-6">
-                  <p class="font-black text-slate-900">Khung giờ thay thế</p>
+                  <p class="font-black text-slate-900">Khung giờ thay thế theo slot cố định</p>
                   <div class="mt-3 grid gap-3 md:grid-cols-2">
-                    @for (slot of suggestions(); track slot.startTime) {
+                    @for (slot of fixedSlotSuggestions(); track slot.startTime) {
                       <button
+                        type="button"
                         class="rounded-2xl border border-violet-200 bg-violet-50 p-4 text-left hover:bg-violet-100"
                         (click)="chooseSlot(slot)"
                       >
                         <p class="text-sm font-black text-violet-900">
-                          {{ slot.startTime | date: 'HH:mm dd/MM/yyyy' }}
+                          {{ suggestedSlotLabel(slot) }}
                         </p>
                         <p class="mt-1 text-xs text-violet-700">
-                          đến {{ slot.endTime | date: 'HH:mm dd/MM/yyyy' }}
+                          {{ slot.startTime | date: 'HH:mm dd/MM/yyyy' }} đến
+                          {{ slot.endTime | date: 'HH:mm dd/MM/yyyy' }}
                         </p>
                       </button>
                     }
                   </div>
                 </div>
+              } @else if (suggestions().length) {
+                <div class="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+                  Các gợi ý hiện tại không khớp bốn slot cố định. Hãy chọn ngày hoặc slot khác.
+                </div>
               }
               <div class="mt-7 flex justify-between">
-                <button class="btn-secondary" (click)="step.set(1)">
+                <button type="button" class="btn-secondary" (click)="step.set(1)">
                   <app-icon name="arrow-left" [size]="17" /> Quay lại</button
                 ><button
+                  type="button"
                   class="btn-primary"
                   [disabled]="!availabilityIsCurrent()"
                   (click)="continueToPurpose()"
@@ -455,6 +554,9 @@ interface SelectedResource {
                   </p>
                   <p class="mt-1 text-sm text-slate-500">
                     đến {{ endTime | date: 'HH:mm dd/MM/yyyy' }}
+                  </p>
+                  <p class="mt-3 text-xs font-black text-violet-700">
+                    {{ selectedSlotSummary() }}
                   </p>
                 </div>
                 <div class="rounded-2xl bg-slate-50 p-5">
@@ -572,6 +674,7 @@ export class BookingFormPage implements OnInit {
   protected readonly mode = signal<'lab' | 'equipment'>('lab')
   protected readonly step = signal(1)
   protected readonly suggestions = signal<SuggestedSlotResponse[]>([])
+  protected readonly selectedSlotIds = signal<number[]>([])
   protected readonly checking = signal(false)
   protected readonly submitting = signal(false)
   protected readonly joiningWaitlist = signal(false)
@@ -579,9 +682,26 @@ export class BookingFormPage implements OnInit {
   protected readonly editing = signal(false)
   protected readonly availabilityMessage = signal('')
   private readonly availabilityFingerprint = signal<string | null>(null)
+  private readonly currentUserBookings = signal<BookingResponse[]>([])
+  protected readonly personalTimeConflict = signal(false)
+  protected readonly timeSlots: readonly FixedBookingSlot[] = [
+    { id: 1, start: '07:00', end: '09:00', period: 'morning' },
+    { id: 2, start: '09:00', end: '11:00', period: 'morning' },
+    { id: 3, start: '13:00', end: '15:00', period: 'afternoon' },
+    { id: 4, start: '15:00', end: '17:00', period: 'afternoon' },
+  ]
+  protected readonly slotPeriods: readonly {
+    key: BookingSlotPeriod
+    label: string
+    description: string
+  }[] = [
+    { key: 'morning', label: 'Buổi sáng', description: 'Slot 1 và Slot 2' },
+    { key: 'afternoon', label: 'Buổi chiều', description: 'Slot 3 và Slot 4' },
+  ]
   protected labId: number | null = null
-  protected startTime = toLocalDateTimeInput(new Date(Date.now() + 24 * 60 * 60 * 1000))
-  protected endTime = toLocalDateTimeInput(new Date(Date.now() + 26 * 60 * 60 * 1000))
+  protected bookingDate = toDateInput(new Date(Date.now() + 24 * 60 * 60 * 1000))
+  protected startTime = ''
+  protected endTime = ''
   protected purposeType = 1
   protected purposeDescription = ''
   private sourceWaitlistId: number | null = null
@@ -658,11 +778,19 @@ export class BookingFormPage implements OnInit {
         const qStart = query.get('start')
         const qEnd = query.get('end')
         const qWaitlist = Number(query.get('waitlistId'))
-        if (qStart && !Number.isNaN(new Date(qStart).getTime()))
-          this.startTime = toLocalDateTimeInput(qStart)
-        if (qEnd && !Number.isNaN(new Date(qEnd).getTime()))
-          this.endTime = toLocalDateTimeInput(qEnd)
         this.sourceWaitlistId = qWaitlist > 0 ? qWaitlist : null
+        if (qStart && !Number.isNaN(new Date(qStart).getTime())) {
+          this.bookingDate = toDateInput(new Date(qStart))
+          if (qEnd && !Number.isNaN(new Date(qEnd).getTime())) {
+            const applied = this.applyRangeToFixedSlots(qStart, qEnd)
+            if (!applied) {
+              this.toast.info(
+                'Khung giờ được truyền vào không thuộc bốn slot cố định',
+                'Hãy chọn lại một hoặc hai slot liên tiếp trong cùng một buổi.',
+              )
+            }
+          }
+        }
 
         if (qLab) {
           this.labId = qLab
@@ -709,8 +837,13 @@ export class BookingFormPage implements OnInit {
         note: item.note ?? '',
       })),
     )
-    this.startTime = toLocalDateTimeInput(booking.startTime)
-    this.endTime = toLocalDateTimeInput(booking.endTime)
+    if (!this.applyRangeToFixedSlots(booking.startTime, booking.endTime)) {
+      this.bookingDate = toDateInput(new Date(booking.startTime))
+      this.toast.info(
+        'Booking cũ chưa thuộc bốn slot cố định',
+        'Hãy chọn lại slot trước khi lưu thay đổi.',
+      )
+    }
     this.purposeType =
       this.purposes.find((purpose) => purpose.key === booking.purposeType)?.value ?? 4
     this.purposeDescription = booking.purposeDescription
@@ -773,7 +906,10 @@ export class BookingFormPage implements OnInit {
   }
 
   protected validTime(): boolean {
+    const selectedSlots = this.selectedTimeSlots()
     return Boolean(
+      this.bookingDate &&
+      this.isValidConsecutiveSelection(selectedSlots) &&
       this.startTime &&
       this.endTime &&
       new Date(this.startTime) < new Date(this.endTime) &&
@@ -784,8 +920,96 @@ export class BookingFormPage implements OnInit {
     if (target <= this.step()) this.step.set(target)
   }
 
-  protected onTimeChange(): void {
+  protected minimumBookingDate(): string {
+    return toDateInput(new Date())
+  }
+
+  protected slotsForPeriod(period: BookingSlotPeriod): readonly FixedBookingSlot[] {
+    return this.timeSlots.filter((slot) => slot.period === period)
+  }
+
+  protected isTimeSlotSelected(slotId: number): boolean {
+    return this.selectedSlotIds().includes(slotId)
+  }
+
+  protected isSlotDisabled(slot: FixedBookingSlot): boolean {
+    return !this.bookingDate || (!this.isTimeSlotSelected(slot.id) && this.slotStartsInPast(slot))
+  }
+
+  protected toggleTimeSlot(slot: FixedBookingSlot): void {
+    if (this.isSlotDisabled(slot)) return
+
+    const current = this.selectedSlotIds()
+    if (current.includes(slot.id)) {
+      this.selectedSlotIds.set(current.filter((slotId) => slotId !== slot.id))
+      this.syncTimeRangeFromSelectedSlots()
+      this.invalidateAvailability()
+      return
+    }
+
+    const currentSlots = this.selectedTimeSlots()
+    if (currentSlots.length && currentSlots.some((item) => item.period !== slot.period)) {
+      this.selectedSlotIds.set([slot.id])
+      this.toast.info('Chỉ chọn các slot liên tiếp trong cùng một buổi')
+    } else {
+      const nextIds = [...current, slot.id].sort((left, right) => left - right)
+      const nextSlots = this.timeSlots.filter((item) => nextIds.includes(item.id))
+      if (!this.isValidConsecutiveSelection(nextSlots)) {
+        this.toast.info('Chỉ chọn các slot liên tiếp trong cùng một buổi')
+        return
+      }
+      this.selectedSlotIds.set(nextIds)
+    }
+
+    this.syncTimeRangeFromSelectedSlots()
     this.invalidateAvailability()
+  }
+
+  protected onBookingDateChange(): void {
+    this.selectedSlotIds.update((slotIds) =>
+      slotIds.filter((slotId) => {
+        const slot = this.timeSlots.find((item) => item.id === slotId)
+        return slot ? !this.slotStartsInPast(slot) : false
+      }),
+    )
+    this.syncTimeRangeFromSelectedSlots()
+    this.invalidateAvailability()
+  }
+
+  protected hasSelectedSlotRange(): boolean {
+    return Boolean(this.startTime && this.endTime && this.selectedSlotIds().length)
+  }
+
+  protected selectedSlotSummary(): string {
+    const slots = this.selectedTimeSlots()
+    if (!slots.length) return 'Chưa chọn slot'
+    const names = slots.map((slot) => `Slot ${slot.id}`).join(' + ')
+    return `${names} · ${slots[0].start}–${slots[slots.length - 1].end}`
+  }
+
+  protected checkInReminderTime(): string {
+    return this.reminderTime(this.startTime)
+  }
+
+  protected checkOutReminderTime(): string {
+    return this.reminderTime(this.endTime)
+  }
+
+  protected fixedSlotSuggestions(): SuggestedSlotResponse[] {
+    const unique = new Map<string, SuggestedSlotResponse>()
+    for (const suggestion of this.suggestions()) {
+      const selection = this.slotSelectionForRange(suggestion.startTime, suggestion.endTime)
+      if (!selection) continue
+      const key = `${selection.date}:${selection.slotIds.join('-')}`
+      if (!unique.has(key)) unique.set(key, suggestion)
+    }
+    return [...unique.values()]
+  }
+
+  protected suggestedSlotLabel(slot: SuggestedSlotResponse): string {
+    const selection = this.slotSelectionForRange(slot.startTime, slot.endTime)
+    if (!selection) return 'Khung giờ cố định'
+    return selection.slotIds.map((slotId) => `Slot ${slotId}`).join(' + ')
   }
 
   protected availabilityIsCurrent(): boolean {
@@ -810,54 +1034,64 @@ export class BookingFormPage implements OnInit {
     }
     this.invalidateAvailability()
     this.checking.set(true)
-    this.api
-      .calendar(toIso(this.startTime), toIso(this.endTime), this.labId ?? undefined)
-      .subscribe({
-        next: (events) => {
-          const selectedEquipmentIds = new Set(
-            this.selected()
-              .map((item) => item.equipmentId)
-              .filter((id): id is number => id !== null),
+    const userId = this.store.user()?.userId
+    forkJoin({
+      events: this.api.calendar(toIso(this.startTime), toIso(this.endTime), this.labId ?? undefined),
+      userBookings: userId ? this.api.bookingsByUser(userId) : of([] as BookingResponse[]),
+    }).subscribe({
+      next: ({ events, userBookings }) => {
+        this.currentUserBookings.set(userBookings)
+        const userConflict = this.hasCurrentUserBookingConflict(userBookings)
+        const selectedEquipmentIds = new Set(
+          this.selected()
+            .map((item) => item.equipmentId)
+            .filter((id): id is number => id !== null),
+        )
+        const resourceConflict = events.some((event) => {
+          const overlapsTime =
+            event.blocking &&
+            new Date(event.startTime) < new Date(this.endTime) &&
+            new Date(event.endTime) > new Date(this.startTime)
+          if (!overlapsTime) return false
+          if (this.mode() === 'lab')
+            return event.resources.some((resource) => resource.labId === this.labId)
+          return event.resources.some(
+            (resource) =>
+              (resource.resourceType === 'LabRoom' && resource.labId === this.labId) ||
+              (resource.resourceType === 'Equipment' &&
+                selectedEquipmentIds.has(resource.resourceId)),
           )
-          const blocking = events.some((event) => {
-            const overlapsTime =
-              event.blocking &&
-              new Date(event.startTime) < new Date(this.endTime) &&
-              new Date(event.endTime) > new Date(this.startTime)
-            if (!overlapsTime) return false
-            if (this.mode() === 'lab')
-              return event.resources.some((resource) => resource.labId === this.labId)
-            return event.resources.some(
-              (resource) =>
-                (resource.resourceType === 'LabRoom' && resource.labId === this.labId) ||
-                (resource.resourceType === 'Equipment' &&
-                  selectedEquipmentIds.has(resource.resourceId)),
-            )
-          })
-          this.available.set(!blocking)
-          this.availabilityFingerprint.set(
-            blocking ? null : this.currentAvailabilityFingerprint(),
-          )
-          this.availabilityMessage.set(
-            blocking
+        })
+        const blocking = userConflict || resourceConflict
+        this.personalTimeConflict.set(userConflict)
+        this.available.set(!blocking)
+        this.availabilityFingerprint.set(
+          blocking ? null : this.currentAvailabilityFingerprint(),
+        )
+        this.availabilityMessage.set(
+          userConflict
+            ? 'Bạn đã có một booking khác trùng với khung giờ này.'
+            : resourceConflict
               ? 'Khung giờ đang có sự kiện chặn tài nguyên. Hãy xem các gợi ý bên dưới.'
-              : 'Khung giờ hiện chưa có sự kiện chặn tài nguyên.',
-          )
-          if (blocking) this.loadSuggestions()
-          else this.checking.set(false)
-        },
-        error: () => {
-          this.checking.set(false)
-          this.toast.error('Không kiểm tra được lịch')
-        },
-      })
+              : 'Khung giờ hiện chưa có sự kiện chặn tài nguyên và không trùng lịch cá nhân.',
+        )
+        if (blocking) this.loadSuggestions()
+        else this.checking.set(false)
+      },
+      error: () => {
+        this.checking.set(false)
+        this.toast.error('Không kiểm tra được lịch')
+      },
+    })
   }
   protected chooseSlot(slot: SuggestedSlotResponse): void {
-    this.startTime = toLocalDateTimeInput(slot.startTime)
-    this.endTime = toLocalDateTimeInput(slot.endTime)
-    this.available.set(true)
-    this.availabilityFingerprint.set(this.currentAvailabilityFingerprint())
-    this.availabilityMessage.set('Đã chọn một khung giờ thay thế đã được kiểm tra.')
+    if (!this.applyRangeToFixedSlots(slot.startTime, slot.endTime)) {
+      this.toast.info('Gợi ý này không thuộc bốn slot cố định')
+      return
+    }
+    this.invalidateAvailability()
+    this.availabilityMessage.set('Đã chọn khung giờ thay thế. Hệ thống đang kiểm tra lại.')
+    this.checkAvailability()
   }
   protected priorityFor(purpose: string): number {
     return (
@@ -883,6 +1117,12 @@ export class BookingFormPage implements OnInit {
     if (!this.availabilityIsCurrent()) {
       this.step.set(2)
       this.toast.info('Khung giờ chưa được kiểm tra hoặc kết quả kiểm tra đã hết hiệu lực')
+      return
+    }
+    if (this.hasCurrentUserBookingConflict(this.currentUserBookings())) {
+      this.invalidateAvailability()
+      this.step.set(2)
+      this.toast.info('Bạn đã có một booking khác trùng với khung giờ này.')
       return
     }
     this.submitting.set(true)
@@ -989,7 +1229,7 @@ export class BookingFormPage implements OnInit {
         items: this.itemPayload(),
         maxSuggestions: 4,
         searchDays: 14,
-        stepMinutes: 30,
+        stepMinutes: 120,
       })
       .subscribe({
         next: (slots) => {
@@ -1015,8 +1255,122 @@ export class BookingFormPage implements OnInit {
     }
   }
 
+  private selectedTimeSlots(): FixedBookingSlot[] {
+    return this.timeSlots
+      .filter((slot) => this.selectedSlotIds().includes(slot.id))
+      .sort((left, right) => left.id - right.id)
+  }
+
+  private isValidConsecutiveSelection(slots: readonly FixedBookingSlot[]): boolean {
+    if (!slots.length) return false
+    const ordered = [...slots].sort((left, right) => left.id - right.id)
+    const period = ordered[0].period
+    return ordered.every(
+      (slot, index) =>
+        slot.period === period && (index === 0 || slot.id === ordered[index - 1].id + 1),
+    )
+  }
+
+  private slotStartsInPast(slot: FixedBookingSlot): boolean {
+    if (!this.bookingDate) return true
+    return new Date(`${this.bookingDate}T${slot.start}`) <= new Date()
+  }
+
+  private syncTimeRangeFromSelectedSlots(): void {
+    const slots = this.selectedTimeSlots()
+    if (!this.bookingDate || !this.isValidConsecutiveSelection(slots)) {
+      this.startTime = ''
+      this.endTime = ''
+      return
+    }
+    this.startTime = `${this.bookingDate}T${slots[0].start}`
+    this.endTime = `${this.bookingDate}T${slots[slots.length - 1].end}`
+  }
+
+  private reminderTime(localDateTime: string): string {
+    if (!localDateTime) return '—'
+    const value = new Date(localDateTime)
+    if (Number.isNaN(value.getTime())) return '—'
+    value.setMinutes(value.getMinutes() - 15)
+    return new Intl.DateTimeFormat('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(value)
+  }
+
+  private slotSelectionForRange(startValue: string, endValue: string): SlotRangeSelection | null {
+    const start = new Date(startValue)
+    const end = new Date(endValue)
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      start.getTime() >= end.getTime()
+    )
+      return null
+    if (toDateInput(start) !== toDateInput(end)) return null
+    if (start.getSeconds() !== 0 || end.getSeconds() !== 0) return null
+
+    const startClock = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+    const endClock = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+
+    for (const period of this.slotPeriods) {
+      const periodSlots = this.slotsForPeriod(period.key)
+      for (let firstIndex = 0; firstIndex < periodSlots.length; firstIndex += 1) {
+        for (let lastIndex = firstIndex; lastIndex < periodSlots.length; lastIndex += 1) {
+          const first = periodSlots[firstIndex]
+          const last = periodSlots[lastIndex]
+          if (first.start === startClock && last.end === endClock) {
+            return {
+              date: toDateInput(start),
+              slotIds: periodSlots
+                .slice(firstIndex, lastIndex + 1)
+                .map((slot) => slot.id),
+            }
+          }
+        }
+      }
+    }
+    return null
+  }
+
+  private applyRangeToFixedSlots(startValue: string, endValue: string): boolean {
+    const start = new Date(startValue)
+    if (!Number.isNaN(start.getTime())) this.bookingDate = toDateInput(start)
+
+    const selection = this.slotSelectionForRange(startValue, endValue)
+    if (!selection) {
+      this.selectedSlotIds.set([])
+      this.startTime = ''
+      this.endTime = ''
+      return false
+    }
+
+    this.bookingDate = selection.date
+    this.selectedSlotIds.set(selection.slotIds)
+    this.syncTimeRangeFromSelectedSlots()
+    return true
+  }
+
+  private hasCurrentUserBookingConflict(bookings: readonly BookingResponse[]): boolean {
+    if (!this.startTime || !this.endTime) return false
+    const start = new Date(this.startTime)
+    const end = new Date(this.endTime)
+    return bookings.some((booking) => {
+      if (booking.bookingId === this.bookingId) return false
+      const status = String(booking.status ?? '').trim().toLowerCase()
+      const blocksUser = status === 'pending' || status === 'approved' || status === '1' || status === '2'
+      return (
+        blocksUser &&
+        new Date(booking.startTime) < end &&
+        new Date(booking.endTime) > start
+      )
+    })
+  }
+
   private invalidateAvailability(): void {
     this.available.set(false)
+    this.personalTimeConflict.set(false)
     this.availabilityFingerprint.set(null)
     this.availabilityMessage.set('')
     this.suggestions.set([])
