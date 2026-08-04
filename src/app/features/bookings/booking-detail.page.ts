@@ -50,7 +50,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
         >
       } @else {
         <app-page-header
-          [title]="'Booking #BK-' + booking()!.bookingId.toString().padStart(5, '0')"
+          [title]="pageTitle()"
           [subtitle]="
             labelOf('purpose', booking()!.purposeType) +
             ' · Tạo lúc ' +
@@ -471,6 +471,12 @@ export class BookingDetailPage implements OnInit {
       : 0
   })
 
+  protected pageTitle(): string {
+    const item = this.booking()
+    if (!item || this.store.isRequester()) return 'Chi tiết lịch đặt'
+    return `Booking #BK-${item.bookingId.toString().padStart(5, '0')}`
+  }
+
   ngOnInit(): void {
     this.id = Number(this.route.snapshot.paramMap.get('bookingId'))
     this.load()
@@ -604,7 +610,8 @@ export class BookingDetailPage implements OnInit {
       this.toast.info(this.noShowHint())
       return
     }
-    if (!confirm(`Xác nhận thao tác ${action} booking #${this.id}?`)) return
+    const bookingLabel = this.store.isRequester() ? 'booking này' : `booking #${this.id}`
+    if (!confirm(`Xác nhận thao tác ${action} ${bookingLabel}?`)) return
     const request =
       action === 'approve'
         ? this.api.approveBooking(this.id)

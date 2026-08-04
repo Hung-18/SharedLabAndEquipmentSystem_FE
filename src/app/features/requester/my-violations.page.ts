@@ -136,7 +136,7 @@ import { labelOf } from '../../shared/utils/presentation'
                       <a
                         [routerLink]="['/app/bookings', item.bookingId]"
                         class="font-black text-violet-600"
-                        >#BK-{{ item.bookingId }}</a
+                        >Xem lịch đặt</a
                       >
                     </td>
                     <td>{{ labelOf('violationType', item.violationType) }}</td>

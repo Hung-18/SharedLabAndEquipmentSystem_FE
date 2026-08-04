@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
+import { catchError, forkJoin, map, of } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type { BookingResponse } from '../../core/api/system.models'
 import { DataStateComponent } from '../../shared/ui/data-state'
@@ -10,6 +11,8 @@ import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf } from '../../shared/utils/presentation'
+
+type PendingBookingView = BookingResponse & { userName: string }
 
 @Component({
   selector: 'app-pending-bookings-page',
@@ -86,7 +89,7 @@ import { labelOf } from '../../shared/utils/presentation'
                   >
                 </div>
                 <p class="mt-2 text-sm font-bold text-slate-600">
-                  {{ labelOf('purpose', item.purposeType) }} · User #{{ item.userId }}
+                  {{ labelOf('purpose', item.purposeType) }} · {{ item.userName }}
                 </p>
                 <p class="mt-2 flex items-center gap-2 text-xs text-slate-400">
                   <app-icon name="clock" [size]="15" />
@@ -134,16 +137,16 @@ import { labelOf } from '../../shared/utils/presentation'
 export class PendingBookingsPage implements OnInit {
   private readonly api = inject(SystemService)
   private readonly toast = inject(ToastService)
-  protected readonly items = signal<BookingResponse[]>([])
+  protected readonly items = signal<PendingBookingView[]>([])
   protected readonly loading = signal(true)
   protected readonly rejectOpen = signal(false)
-  protected readonly selected = signal<BookingResponse | null>(null)
+  protected readonly selected = signal<PendingBookingView | null>(null)
   protected reason = ''
   protected readonly labelOf = labelOf
   ngOnInit(): void {
     this.load()
   }
-  protected approve(item: BookingResponse): void {
+  protected approve(item: PendingBookingView): void {
     if (!confirm(`Duyệt booking #${item.bookingId}?`)) return
     this.api.approveBooking(item.bookingId).subscribe({
       next: () => {
@@ -157,7 +160,7 @@ export class PendingBookingsPage implements OnInit {
         ),
     })
   }
-  protected openReject(item: BookingResponse): void {
+  protected openReject(item: PendingBookingView): void {
     this.selected.set(item)
     this.reason = ''
     this.rejectOpen.set(true)
@@ -178,14 +181,36 @@ export class PendingBookingsPage implements OnInit {
     this.loading.set(true)
     this.api.pendingBookings().subscribe({
       next: (items) => {
-        this.items.set(
-          [...items].sort(
-            (a, b) =>
-              (a.priorityLevel ?? 999) - (b.priorityLevel ?? 999) ||
-              +new Date(a.createdAt) - +new Date(b.createdAt),
-          ),
+        const sortedItems = [...items].sort(
+          (a, b) =>
+            (a.priorityLevel ?? 999) - (b.priorityLevel ?? 999) ||
+            +new Date(a.createdAt) - +new Date(b.createdAt),
         )
-        this.loading.set(false)
+        if (sortedItems.length === 0) {
+          this.items.set([])
+          this.loading.set(false)
+          return
+        }
+        forkJoin(
+          sortedItems.map((item) =>
+            this.api.booking(item.bookingId).pipe(
+              map((detail) => ({
+                ...item,
+                userName: detail.userName?.trim() || 'Chưa xác định người dùng',
+              })),
+              catchError(() => of({ ...item, userName: 'Chưa xác định người dùng' })),
+            ),
+          ),
+        ).subscribe({
+          next: (resolvedItems) => {
+            this.items.set(resolvedItems)
+            this.loading.set(false)
+          },
+          error: () => {
+            this.loading.set(false)
+            this.toast.error('Không tải được tên người dùng')
+          },
+        })
       },
       error: () => {
         this.loading.set(false)
