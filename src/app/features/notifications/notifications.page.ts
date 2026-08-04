@@ -178,14 +178,16 @@ type NotificationTab = 'all' | 'unread'
                     <div class="flex items-start gap-3">
                       <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center gap-2">
-                          <p class="font-semibold text-slate-900">{{ notification.title }}</p>
+                          <p class="font-semibold text-slate-900">
+                            {{ displayNotificationText(notification.title) }}
+                          </p>
                           <span
                             class="rounded-full bg-white px-2.5 py-1 text-[9px] font-bold tracking-wider text-slate-500 uppercase shadow-sm"
                             >{{ typeLabel(notification.notificationType) }}</span
                           >
                         </div>
                         <p class="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
-                          {{ notification.message }}
+                          {{ displayNotificationText(notification.message) }}
                         </p>
                         <p class="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
                           <app-icon name="clock" [size]="13" />{{
@@ -357,10 +359,10 @@ type NotificationTab = 'all' | 'unread'
             >{{ typeLabel(notification.notificationType) }}</span
           >
           <h2 class="mt-4 text-2xl leading-tight font-bold tracking-[-0.025em] text-slate-950">
-            {{ notification.title }}
+            {{ displayNotificationText(notification.title) }}
           </h2>
           <p class="mt-4 text-sm leading-7 whitespace-pre-line text-slate-600">
-            {{ notification.message }}
+            {{ displayNotificationText(notification.message) }}
           </p>
           <div class="mt-7 rounded-2xl bg-slate-50 p-4">
             <div class="flex items-center justify-between gap-4 text-sm">
@@ -533,6 +535,13 @@ export class NotificationsPage implements OnInit {
   protected clearFilters(): void {
     this.searchText = ''
     this.typeFilter = 'all'
+  }
+
+  protected displayNotificationText(value: string): string {
+    if (!this.store.isRequester()) return value
+    return value.replace(/\bbooking\s*#(?:BK-)?\d+\b/gi, (match) =>
+      match.startsWith('B') ? 'Booking' : 'booking',
+    )
   }
 
   protected typeLabel(type: string): string {

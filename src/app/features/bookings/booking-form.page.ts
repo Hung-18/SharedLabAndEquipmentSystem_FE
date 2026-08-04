@@ -1141,8 +1141,8 @@ export class BookingFormPage implements OnInit {
           const finish = (): void => {
             this.submitting.set(false)
             this.toast.success(
-              'Đã gửi yêu cầu booking',
-              `Booking #${booking.bookingId} đang chờ duyệt.`,
+              'Đã gửi yêu cầu đặt lịch',
+              'Yêu cầu của bạn đang chờ quản lý duyệt.',
             )
             void this.router.navigate(['/app/bookings', booking.bookingId])
           }

@@ -81,7 +81,7 @@ import { labelOf } from '../../shared/utils/presentation'
             ><input
               class="input-shell h-11 pl-10"
               [(ngModel)]="keyword"
-              placeholder="Tìm theo mã hoặc mục đích"
+              placeholder="Tìm theo mục đích"
             />
           </div>
         </div>
@@ -103,7 +103,6 @@ import { labelOf } from '../../shared/utils/presentation'
             <table class="table-shell">
               <thead>
                 <tr>
-                  <th>Mã booking</th>
                   <th>Mục đích</th>
                   <th>Thời gian</th>
                   <th>Ưu tiên</th>
@@ -115,11 +114,6 @@ import { labelOf } from '../../shared/utils/presentation'
               <tbody>
                 @for (booking of filtered(); track booking.bookingId) {
                   <tr>
-                    <td>
-                      <span class="font-black text-slate-900"
-                        >#BK-{{ booking.bookingId.toString().padStart(5, '0') }}</span
-                      >
-                    </td>
                     <td>
                       <p class="font-bold text-slate-800">
                         {{ labelOf('purpose', booking.purposeType) }}
@@ -182,7 +176,6 @@ export class MyBookingsPage implements OnInit {
         (item) =>
           (!this.status || item.status === this.status) &&
           (!needle ||
-            String(item.bookingId).includes(needle) ||
             labelOf('purpose', item.purposeType).toLowerCase().includes(needle)),
       )
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
