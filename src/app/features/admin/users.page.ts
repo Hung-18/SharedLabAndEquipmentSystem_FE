@@ -180,7 +180,7 @@ import { ToastService } from '../../shared/ui/toast.service'
                         >{{ roleLabel(user.roleName) }}</span
                       >
                     </td>
-                    <td>{{ user.departmentName }}</td>
+                    <td>{{ user.roleName === 'Admin' ? '—' : user.departmentName }}</td>
                     <td>
                       <span
                         class="font-black"

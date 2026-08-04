@@ -108,7 +108,7 @@ interface NotificationRecipient {
                           } @else {
                             Mã người dùng #{{ user.userId }}
                           }
-                          @if (user.departmentName) {
+                          @if (user.roleName !== 'Admin' && user.departmentName) {
                             · {{ user.departmentName }}
                           }
                         </span></span
@@ -251,7 +251,7 @@ interface NotificationRecipient {
                   }
                   <p class="mt-1 text-xs font-bold text-violet-600">
                     {{ recipient.roleName }}
-                    @if (recipient.departmentName) {
+                    @if (recipient.roleName !== 'Admin' && recipient.departmentName) {
                       · {{ recipient.departmentName }}
                     }
                   </p>
