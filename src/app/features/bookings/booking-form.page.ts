@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { forkJoin, of } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type {
+  ApiEnum,
   BookingDetailResponse,
   BookingItemRequest,
   BookingResponse,
@@ -19,7 +20,6 @@ import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
 import {
-  isAvailableEquipmentStatus,
   isAvailableLabStatus,
   labelOf,
   normalizeUserStatus,
@@ -49,6 +49,11 @@ interface FixedBookingSlot {
 interface SlotRangeSelection {
   date: string
   slotIds: number[]
+}
+
+function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
+  const status = String(value ?? '').trim().toLowerCase()
+  return ['1', '2', '3', 'available', 'inuse', 'maintenance'].includes(status)
 }
 
 @Component({
@@ -711,7 +716,7 @@ export class BookingFormPage implements OnInit {
   ]
   protected availableEquipments(): EquipmentResponse[] {
     return this.equipments().filter(
-      (item) => item.labId === this.labId && isAvailableEquipmentStatus(item.status),
+      (item) => item.labId === this.labId && isBookableEquipmentStatus(item.status),
     )
   }
 
@@ -744,7 +749,7 @@ export class BookingFormPage implements OnInit {
       next: ({ labs, equipments, rules, booking }) => {
         const availableLabs = labs.filter((lab) => isAvailableLabStatus(lab.status))
         const availableEquipments = equipments.filter((equipment) =>
-          isAvailableEquipmentStatus(equipment.status),
+          isBookableEquipmentStatus(equipment.status),
         )
         this.labs.set(booking ? labs : availableLabs)
         this.equipments.set(booking ? equipments : availableEquipments)
@@ -857,7 +862,7 @@ export class BookingFormPage implements OnInit {
       this.editing() ||
       !this.hasSelectedLab() ||
       item.labId !== this.labId ||
-      !isAvailableEquipmentStatus(item.status)
+      !isBookableEquipmentStatus(item.status)
     ) {
       return
     }
