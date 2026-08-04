@@ -99,7 +99,11 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                   </div>
                   <div class="min-w-0">
                     <p class="truncate text-xl font-black">{{ current.fullName }}</p>
-                    <p class="mt-1 truncate text-sm text-white/55">{{ current.departmentName }}</p>
+                    @if (current.roleName !== 'Admin') {
+                      <p class="mt-1 truncate text-sm text-white/55">
+                        {{ current.departmentName }}
+                      </p>
+                    }
                     <div class="mt-3">
                       <app-status-badge [value]="current.status" domain="user" />
                     </div>
@@ -127,7 +131,9 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
             <article class="card-surface p-6">
               <div class="flex items-center justify-between">
                 <div>
-                  <h2 class="font-black text-slate-950">Quyền và đơn vị</h2>
+                  <h2 class="font-black text-slate-950">
+                    {{ current.roleName === 'Admin' ? 'Vai trò' : 'Quyền và đơn vị' }}
+                  </h2>
                   <p class="mt-1 text-xs text-slate-400">Cấu hình phạm vi hoạt động</p>
                 </div>
                 <span class="rounded-2xl bg-indigo-50 p-3 text-indigo-600"
@@ -148,15 +154,20 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                     </button>
                   </div>
                 </div>
-                <div class="rounded-2xl border border-slate-100 p-4">
-                  <p class="text-xs font-bold text-slate-400">Khoa/phòng ban</p>
-                  <div class="mt-2 flex items-center justify-between gap-3">
-                    <p class="font-black text-slate-800">{{ current.departmentName }}</p>
-                    <button class="text-xs font-black text-violet-600" (click)="openDepartment()">
-                      Thay đổi
-                    </button>
+                @if (current.roleName !== 'Admin') {
+                  <div class="rounded-2xl border border-slate-100 p-4">
+                    <p class="text-xs font-bold text-slate-400">Khoa/phòng ban</p>
+                    <div class="mt-2 flex items-center justify-between gap-3">
+                      <p class="font-black text-slate-800">{{ current.departmentName }}</p>
+                      <button
+                        class="text-xs font-black text-violet-600"
+                        (click)="openDepartment()"
+                      >
+                        Thay đổi
+                      </button>
+                    </div>
                   </div>
-                </div>
+                }
               </div>
             </article>
           </div>

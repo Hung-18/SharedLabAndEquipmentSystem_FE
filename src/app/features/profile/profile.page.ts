@@ -275,17 +275,22 @@ export class ProfilePage {
     roleName: string
     departmentName: string
   }): { label: string; value: string; icon: string }[] {
-    return [
+    const items = [
       { label: 'Mã người dùng', value: `#${user.userId}`, icon: 'user' },
       { label: 'Họ và tên', value: user.fullName, icon: 'user' },
       { label: 'Tên đăng nhập', value: user.username, icon: 'shield' },
       { label: 'Email', value: user.email, icon: 'mail' },
       { label: 'Vai trò', value: this.roleLabel(user.roleName), icon: 'shield' },
-      {
+    ]
+
+    if (user.roleName !== 'Admin') {
+      items.push({
         label: 'Khoa / phòng ban',
         value: user.departmentName || 'Chưa cập nhật',
         icon: 'building',
-      },
-    ]
+      })
+    }
+
+    return items
   }
 }
