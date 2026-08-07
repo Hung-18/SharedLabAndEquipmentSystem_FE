@@ -6,6 +6,7 @@ import { AuthStore } from '../../core/auth/auth.store'
 import { landingPath } from '../../core/auth/auth.guard'
 import { IconComponent } from '../../shared/ui/icon'
 import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
+import { LanguageService } from '../../core/i18n/language.service'
 
 @Component({
   selector: 'app-login-page',
@@ -102,7 +103,7 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
               {{ 'auth.login.title' | translate }}
             </h2>
             <p class="mt-3 text-sm leading-6 text-slate-500">
-              {{ 'auth.login.subtitle' | translate }}
+              {{ language.locale() === 'en' ? 'Use the email or username provided by the administrator to access the system.' : 'Sử dụng email hoặc username do quản trị viên cấp để truy cập hệ thống.' }}
             </p>
 
             @if (resetSuccess) {
@@ -121,9 +122,7 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
 
             <form class="mt-9 space-y-5" (ngSubmit)="submit()" #form="ngForm">
               <label class="block">
-                <span class="mb-2 block text-sm font-semibold text-slate-700">{{
-                  'auth.login.email' | translate
-                }}</span>
+                <span class="mb-2 block text-sm font-semibold text-slate-700">{{ language.locale() === 'en' ? 'Email or username' : 'Email hoặc username' }}</span>
                 <div class="relative">
                   <span
                     class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"
@@ -136,7 +135,7 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
                     type="text"
                     autocomplete="username"
                     required
-                    [placeholder]="'auth.login.emailPlaceholder' | translate"
+                    [placeholder]="language.locale() === 'en' ? 'Email or username' : 'Email hoặc username'"
                     class="input-shell !pl-12"
                   />
                 </div>
@@ -229,6 +228,7 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
 })
 export class LoginPage {
   protected readonly store = inject(AuthStore)
+  protected readonly language = inject(LanguageService)
   private readonly router = inject(Router)
   private readonly route = inject(ActivatedRoute)
 
