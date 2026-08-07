@@ -8,6 +8,7 @@ import { AuthStore } from '../../core/auth/auth.store'
 import { ApiError } from '../../core/http/api-error'
 import { IconComponent } from '../../shared/ui/icon'
 import { ToastService } from '../../shared/ui/toast.service'
+import { isNotificationVisibleForRole } from '../../shared/utils/notification-visibility'
 
 type NotificationTab = 'all' | 'unread'
 
@@ -478,8 +479,11 @@ export class NotificationsPage implements OnInit {
     request.subscribe({
       next: (items) => {
         this.hasNextPage.set(this.tab() === 'all' && items.length > this.pageSize)
+        const visibleItems = items.filter((item) =>
+          isNotificationVisibleForRole(this.store.role(), item),
+        )
         this.notifications.set(
-          [...items]
+          [...visibleItems]
             .slice(0, this.pageSize)
             .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
         )
@@ -602,6 +606,18 @@ export class NotificationsPage implements OnInit {
   private loadUnreadCount(): void {
     const user = this.store.user()
     if (!user) return
+
+    if (this.store.isAdmin()) {
+      this.workspace.unreadNotifications(user.userId).subscribe({
+        next: (items) =>
+          this.badge.set(
+            items.filter((item) => isNotificationVisibleForRole(this.store.role(), item)).length,
+          ),
+        error: () => this.badge.clear(),
+      })
+      return
+    }
+
     this.workspace.unreadCount(user.userId).subscribe({
       next: (response) => this.badge.set(response.unreadCount),
       error: () => this.badge.clear(),

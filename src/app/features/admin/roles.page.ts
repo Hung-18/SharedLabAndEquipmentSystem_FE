@@ -123,11 +123,14 @@ export class RolesPage implements OnInit {
   protected readonly loading = signal(true)
   protected readonly matrix = [
     { name: 'Xem tài nguyên và lịch dùng chung', requester: true, manager: true, admin: true },
-    { name: 'Tạo và theo dõi booking cá nhân', requester: true, manager: true, admin: true },
-    { name: 'Duyệt booking, bảo trì, sự cố', requester: false, manager: true, admin: true },
+    { name: 'Tạo, sửa và theo dõi booking cá nhân', requester: true, manager: false, admin: false },
+    { name: 'Hàng chờ, check-in/check-out và báo sự cố cá nhân', requester: true, manager: false, admin: false },
+    { name: 'Duyệt/từ chối booking trong phạm vi phòng', requester: false, manager: true, admin: false },
+    { name: 'Bảo trì, usage log, sự cố, hàng chờ và vi phạm quản lý', requester: false, manager: true, admin: false },
     { name: 'Dashboard và báo cáo', requester: false, manager: true, admin: true },
-    { name: 'Quản trị người dùng và phòng ban', requester: false, manager: false, admin: true },
-    { name: 'Audit log và quy tắc ưu tiên', requester: false, manager: false, admin: true },
+    { name: 'Quản lý phòng lab và thiết bị', requester: false, manager: false, admin: true },
+    { name: 'Quản trị người dùng, phòng ban, vai trò và quy tắc ưu tiên', requester: false, manager: false, admin: true },
+    { name: 'Gửi thông báo hệ thống và xem Audit log', requester: false, manager: false, admin: true },
   ]
 
   ngOnInit(): void {
@@ -154,7 +157,7 @@ export class RolesPage implements OnInit {
   }
   protected fallbackDescription(role: string): string {
     return role === 'Admin'
-      ? 'Toàn quyền quản trị dữ liệu và nghiệp vụ hệ thống.'
+      ? 'Quản trị người dùng, tài nguyên, cấu hình hệ thống và báo cáo toàn cục.'
       : role === 'LabManager'
         ? 'Quản lý nghiệp vụ trong các phòng lab được phân công.'
         : 'Xem tài nguyên, tạo booking và theo dõi hoạt động cá nhân.'
@@ -162,20 +165,20 @@ export class RolesPage implements OnInit {
   protected permissions(role: string): string[] {
     if (role === 'Admin')
       return [
-        'Quản lý người dùng, đơn vị, tài nguyên',
-        'Xem toàn bộ báo cáo và audit log',
-        'Cấu hình quy tắc ưu tiên',
+        'Quản lý người dùng, phòng ban, vai trò, phòng lab và thiết bị',
+        'Cấu hình quy tắc ưu tiên và gửi thông báo hệ thống',
+        'Xem dashboard, báo cáo và audit log toàn hệ thống',
       ]
     if (role === 'LabManager')
       return [
-        'Duyệt booking trong phạm vi quản lý',
-        'Quản lý bảo trì và sự cố',
-        'Xem dashboard theo phòng phụ trách',
+        'Duyệt/từ chối booking trong đúng phòng được phân công',
+        'Quản lý bảo trì, usage log, sự cố, hàng chờ và vi phạm',
+        'Xem dashboard và báo cáo trong phạm vi quản lý',
       ]
     return [
-      'Tạo booking và tham gia hàng chờ',
-      'Check-in/check-out tài nguyên',
-      'Xem thông báo và vi phạm cá nhân',
+      'Tạo, sửa, hủy và theo dõi booking cá nhân',
+      'Tham gia hàng chờ, check-in/check-out và báo sự cố',
+      'Xem thông báo, vi phạm và điểm phạt cá nhân',
     ]
   }
 }

@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
+import { catchError, forkJoin, map, of } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type { BookingResponse } from '../../core/api/system.models'
 import { DataStateComponent } from '../../shared/ui/data-state'
@@ -10,6 +11,8 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf, toDateInput } from '../../shared/utils/presentation'
+
+type BookingManagementView = BookingResponse & { userName: string }
 
 @Component({
   selector: 'app-bookings-management-page',
@@ -53,7 +56,7 @@ import { labelOf, toDateInput } from '../../shared/utils/presentation'
           ><input
             class="input-shell"
             [(ngModel)]="keyword"
-            placeholder="Mã booking, user ID, mục đích..."
+            placeholder="Mã booking, tên người đặt, mục đích..."
           />
         </div>
         <div>
@@ -127,7 +130,7 @@ import { labelOf, toDateInput } from '../../shared/utils/presentation'
                       </p>
                     </td>
                     <td>
-                      <p class="font-bold text-slate-800">User #{{ item.userId }}</p>
+                      <p class="font-bold text-slate-800">{{ item.userName }}</p>
                     </td>
                     <td>{{ labelOf('purpose', item.purposeType) }}</td>
                     <td>
@@ -192,7 +195,7 @@ import { labelOf, toDateInput } from '../../shared/utils/presentation'
 export class BookingsManagementPage implements OnInit {
   private readonly api = inject(SystemService)
   private readonly toast = inject(ToastService)
-  protected readonly items = signal<BookingResponse[]>([])
+  protected readonly items = signal<BookingManagementView[]>([])
   protected readonly loading = signal(true)
   protected keyword = ''
   protected status = ''
@@ -207,7 +210,7 @@ export class BookingsManagementPage implements OnInit {
     { value: 'Completed', label: 'Hoàn thành' },
     { value: 'NoShow', label: 'Không đến' },
   ]
-  protected filtered(): BookingResponse[] {
+  protected filtered(): BookingManagementView[] {
     const needle = this.keyword.trim().toLowerCase()
     return [...this.items()]
       .filter((item) => {
@@ -218,7 +221,7 @@ export class BookingsManagementPage implements OnInit {
           (!this.to || date <= this.to) &&
           (!needle ||
             String(item.bookingId).includes(needle) ||
-            String(item.userId).includes(needle) ||
+            item.userName.toLowerCase().includes(needle) ||
             labelOf('purpose', item.purposeType).toLowerCase().includes(needle))
         )
       })
@@ -247,8 +250,32 @@ export class BookingsManagementPage implements OnInit {
     this.loading.set(true)
     this.api.bookings().subscribe({
       next: (items) => {
-        this.items.set(items)
-        this.loading.set(false)
+        if (items.length === 0) {
+          this.items.set([])
+          this.loading.set(false)
+          return
+        }
+
+        forkJoin(
+          items.map((item) =>
+            this.api.booking(item.bookingId).pipe(
+              map((detail) => ({
+                ...item,
+                userName: detail.userName?.trim() || 'Chưa xác định người đặt',
+              })),
+              catchError(() => of({ ...item, userName: 'Chưa xác định người đặt' })),
+            ),
+          ),
+        ).subscribe({
+          next: (resolvedItems) => {
+            this.items.set(resolvedItems)
+            this.loading.set(false)
+          },
+          error: () => {
+            this.loading.set(false)
+            this.toast.error('Không tải được tên người đặt')
+          },
+        })
       },
       error: () => {
         this.loading.set(false)
