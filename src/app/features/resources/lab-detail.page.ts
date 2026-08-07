@@ -342,9 +342,15 @@ import {
                     <app-icon name="trash" [size]="16" /> Ngừng sử dụng
                   </button>
                 } @else {
-                  <span class="inline-flex h-10 items-center rounded-xl bg-slate-100 px-3 text-xs font-black text-slate-500">
-                    Phòng đang ngừng hoạt động
-                  </span>
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    [disabled]="saving()"
+                    (click)="reactivate()"
+                  >
+                    <app-icon name="refresh" [size]="16" />
+                    {{ saving() ? 'Đang kích hoạt...' : 'Kích hoạt lại' }}
+                  </button>
                 }
               </div>
               <div class="flex gap-2">
@@ -460,6 +466,49 @@ export class LabDetailPage implements OnInit {
         },
       })
   }
+  protected reactivate(): void {
+    const lab = this.lab()
+    if (!lab || !isInactiveLabStatus(lab.status)) return
+    if (!confirm('Kích hoạt lại phòng lab này?')) return
+
+    const payload = {
+      labName: lab.labName,
+      location: lab.location,
+      capacity: lab.capacity,
+      description: lab.description ?? null,
+      imageUrl: lab.imageUrl ?? null,
+      usageGuideline: lab.usageGuideline ?? null,
+      status: 1,
+    }
+
+    this.saving.set(true)
+    this.api.updateLab(this.id, payload).subscribe({
+        next: () => {
+          this.api.lab(this.id).subscribe({
+            next: (updated) => {
+              this.saving.set(false)
+              this.lab.set(updated)
+              if (isAvailableLabStatus(updated.status)) {
+                this.toast.success('Đã kích hoạt lại phòng lab. Bây giờ có thể chỉnh sửa.')
+              } else {
+                this.toast.error(
+                  'Backend chưa cho phép đổi Inactive → Available bằng API cập nhật hiện tại.',
+                )
+              }
+            },
+            error: () => {
+              this.saving.set(false)
+              this.toast.error('Đã gửi yêu cầu kích hoạt nhưng không tải lại được trạng thái phòng lab')
+            },
+          })
+        },
+        error: (error) => {
+          this.saving.set(false)
+          this.toast.error(apiErrorMessage(error, 'Không thể kích hoạt lại phòng lab'))
+        },
+      })
+  }
+
   protected remove(): void {
     if (!confirm('Ngừng sử dụng phòng lab này?')) return
     this.api.deleteLab(this.id).subscribe({
