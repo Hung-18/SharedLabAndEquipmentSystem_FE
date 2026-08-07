@@ -18,7 +18,14 @@ export class AuthService {
   private readonly baseUrl = `${env.apiBaseUrl}/Auth`
 
   login(payload: LoginPayload): Observable<AuthTokens> {
-    return this.http.post<AuthTokens>(`${this.baseUrl}/login`, payload)
+    const identifier = (payload.email ?? payload.username ?? '').trim()
+    const request: LoginPayload = {
+      email: identifier,
+      username: identifier,
+      password: payload.password,
+    }
+
+    return this.http.post<AuthTokens>(`${this.baseUrl}/login`, request)
   }
 
   me(): Observable<AuthUser> {
