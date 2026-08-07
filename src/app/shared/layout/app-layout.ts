@@ -8,6 +8,7 @@ import { WorkspaceService } from '../../core/api/workspace.service'
 import { AuthStore } from '../../core/auth/auth.store'
 import { IconComponent } from '../ui/icon'
 import { LanguageSwitcherComponent } from '../ui/language-switcher'
+import { isNotificationVisibleForRole } from '../utils/notification-visibility'
 
 interface NavItem {
   labelKey: string
@@ -348,6 +349,19 @@ export class AppLayoutComponent implements OnInit {
   ngOnInit(): void {
     const user = this.store.user()
     if (!user) return
+
+    if (this.store.isAdmin()) {
+      this.workspace
+        .unreadNotifications(user.userId)
+        .pipe(catchError(() => of([])))
+        .subscribe((items) =>
+          this.badge.set(
+            items.filter((item) => isNotificationVisibleForRole(this.store.role(), item)).length,
+          ),
+        )
+      return
+    }
+
     this.workspace
       .unreadCount(user.userId)
       .pipe(catchError(() => of({ userId: user.userId, unreadCount: 0 })))

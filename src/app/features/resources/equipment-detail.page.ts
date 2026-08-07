@@ -81,7 +81,7 @@ import {
               ><app-icon name="wrench" [size]="17" /> Lên lịch bảo trì</a
             >
           }
-          @if (store.isAdmin() && !isRetiredEquipmentStatus(item()!.status)) {
+          @if (store.isAdmin()) {
             <button class="btn-secondary" (click)="openEdit()">
               <app-icon name="edit" [size]="17" /> Chỉnh sửa
             </button>
@@ -289,9 +289,17 @@ import {
               ></textarea>
             </div>
             <div class="flex justify-between gap-2">
-              <button type="button" class="btn-secondary btn-danger" (click)="remove()">
-                <app-icon name="trash" [size]="16" /> Ngừng sử dụng
-              </button>
+              <div>
+                @if (!isRetiredEquipmentStatus(item()!.status)) {
+                  <button type="button" class="btn-secondary btn-danger" (click)="remove()">
+                    <app-icon name="trash" [size]="16" /> Ngừng sử dụng
+                  </button>
+                } @else {
+                  <span class="inline-flex h-10 items-center rounded-xl bg-slate-100 px-3 text-xs font-black text-slate-500">
+                    Thiết bị đã ngừng sử dụng
+                  </span>
+                }
+              </div>
               <div class="flex gap-2">
                 <button type="button" class="btn-secondary" (click)="editOpen.set(false)">
                   Hủy</button

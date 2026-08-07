@@ -326,9 +326,8 @@ import { apiErrorMessage } from '../../core/http/api-error'
                 </div>
                 <div>
                   <p class="font-black text-slate-900">
-                    {{ booking()!.userName || 'User #' + booking()!.userId }}
+                    {{ booking()!.userName || 'Chưa xác định người đặt' }}
                   </p>
-                  <p class="mt-1 text-xs text-slate-400">User ID {{ booking()!.userId }}</p>
                 </div>
               </div>
             </article>
