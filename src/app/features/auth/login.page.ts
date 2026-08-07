@@ -103,7 +103,7 @@ import { LanguageService } from '../../core/i18n/language.service'
               {{ 'auth.login.title' | translate }}
             </h2>
             <p class="mt-3 text-sm leading-6 text-slate-500">
-              {{ language.locale() === 'en' ? 'Use the email or username provided by the administrator to access the system.' : 'Sử dụng email hoặc username do quản trị viên cấp để truy cập hệ thống.' }}
+              {{ language.locale() === 'en' ? 'Sign in with either your email address or username.' : 'Đăng nhập bằng email hoặc username của tài khoản.' }}
             </p>
 
             @if (resetSuccess) {
@@ -122,7 +122,7 @@ import { LanguageService } from '../../core/i18n/language.service'
 
             <form class="mt-9 space-y-5" (ngSubmit)="submit()" #form="ngForm">
               <label class="block">
-                <span class="mb-2 block text-sm font-semibold text-slate-700">{{ language.locale() === 'en' ? 'Email or username' : 'Email hoặc username' }}</span>
+                <span class="mb-2 block text-sm font-semibold text-slate-700">{{ language.locale() === 'en' ? 'Email / Username' : 'Email / Username' }}</span>
                 <div class="relative">
                   <span
                     class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400"
@@ -135,10 +135,13 @@ import { LanguageService } from '../../core/i18n/language.service'
                     type="text"
                     autocomplete="username"
                     required
-                    [placeholder]="language.locale() === 'en' ? 'Email or username' : 'Email hoặc username'"
+                    [placeholder]="language.locale() === 'en' ? 'Enter email or username' : 'Nhập email hoặc username'"
                     class="input-shell !pl-12"
                   />
                 </div>
+                <p class="mt-2 text-xs text-slate-400">
+                  {{ language.locale() === 'en' ? 'Example: user@university.edu or nguyenvana' : 'Ví dụ: user@university.edu hoặc nguyenvana' }}
+                </p>
               </label>
 
               <label class="block">
@@ -249,9 +252,13 @@ export class LoginPage {
     const identifier = this.identifier.trim()
     if (!identifier || !this.password) return
 
-    const payload = identifier.includes('@')
-      ? { email: identifier, password: this.password }
-      : { username: identifier, password: this.password }
+    // Send the same identifier in both fields. The backend login contract supports
+    // both Email and Username, so this works for either input without guessing its type.
+    const payload = {
+      email: identifier,
+      username: identifier,
+      password: this.password,
+    }
 
     try {
       const user = await this.store.login(payload, this.remember)
