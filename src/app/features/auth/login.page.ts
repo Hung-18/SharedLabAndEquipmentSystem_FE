@@ -131,13 +131,12 @@ import { LanguageSwitcherComponent } from '../../shared/ui/language-switcher'
                     <app-icon name="mail" [size]="19" />
                   </span>
                   <input
-                    [(ngModel)]="email"
-                    name="email"
-                    type="email"
-                    autocomplete="email"
+                    [(ngModel)]="identifier"
+                    name="identifier"
+                    type="text"
+                    autocomplete="username"
                     required
-                    email
-                    placeholder="name@university.edu.vn"
+                    [placeholder]="'auth.login.emailPlaceholder' | translate"
                     class="input-shell !pl-12"
                   />
                 </div>
@@ -233,7 +232,7 @@ export class LoginPage {
   private readonly router = inject(Router)
   private readonly route = inject(ActivatedRoute)
 
-  protected email = ''
+  protected identifier = ''
   protected password = ''
   protected remember = true
   protected showPassword = false
@@ -247,12 +246,15 @@ export class LoginPage {
   ]
 
   protected async submit(): Promise<void> {
-    if (!this.email || !this.password) return
+    const identifier = this.identifier.trim()
+    if (!identifier || !this.password) return
+
+    const payload = identifier.includes('@')
+      ? { email: identifier, password: this.password }
+      : { username: identifier, password: this.password }
+
     try {
-      const user = await this.store.login(
-        { email: this.email.trim(), password: this.password },
-        this.remember,
-      )
+      const user = await this.store.login(payload, this.remember)
       const requestedRedirect = this.route.snapshot.queryParamMap.get('redirect')
       const destination =
         requestedRedirect && requestedRedirect !== '/'

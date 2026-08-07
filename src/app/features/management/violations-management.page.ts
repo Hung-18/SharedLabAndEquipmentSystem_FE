@@ -51,7 +51,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
         ><input
           class="input-shell"
           [(ngModel)]="keyword"
-          placeholder="Violation ID, User ID, Booking ID..."
+          placeholder="Violation ID, tên người dùng, Booking ID..."
         />
       </div>
       <div>
@@ -112,7 +112,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
                     <a
                       [routerLink]="['/app/admin/users', item.userId]"
                       class="font-black text-violet-700"
-                      >User #{{ item.userId }}</a
+                      >{{ item.userName || 'Chưa xác định người dùng' }}</a
                     >
                   </td>
                   <td>
@@ -254,6 +254,7 @@ export class ViolationsManagementPage implements OnInit {
           (!needle ||
             String(item.violationId).includes(needle) ||
             String(item.userId).includes(needle) ||
+            (item.userName ?? '').toLowerCase().includes(needle.toLowerCase()) ||
             String(item.bookingId).includes(needle)),
       )
       .sort((a, b) => +new Date(b.loggedAt) - +new Date(a.loggedAt))

@@ -143,7 +143,7 @@ import { formatMoney, labelOf } from '../../shared/utils/presentation'
         <aside class="space-y-5">
           <article class="card-surface p-5">
             <p class="text-xs font-black tracking-[.16em] text-violet-500 uppercase">Người tạo</p>
-            <p class="mt-3 text-lg font-black text-slate-900">User #{{ item()!.createdById }}</p>
+            <p class="mt-3 text-lg font-black text-slate-900">{{ item()!.createdByName || 'Chưa xác định người tạo' }}</p>
           </article>
           @if (canManage() && ['Scheduled', 'InProgress'].includes(item()!.status)) {
             <article class="rounded-[24px] border border-rose-200 bg-rose-50 p-5">

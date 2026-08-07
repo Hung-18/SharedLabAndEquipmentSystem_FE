@@ -127,7 +127,7 @@ import { toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
                     >
                   </td>
                   <td class="font-black text-slate-900">#WL-{{ item.waitlistId }}</td>
-                  <td>User #{{ item.userId }}</td>
+                  <td class="font-bold text-slate-800">{{ item.userName || 'Chưa xác định người dùng' }}</td>
                   <td>
                     <p class="font-bold text-slate-800">{{ resourceName(item) }}</p>
                   </td>

@@ -106,7 +106,7 @@ interface NotificationRecipient {
                           @if (user.email) {
                             {{ user.email }}
                           } @else {
-                            Mã người dùng #{{ user.userId }}
+                            Chưa có email
                           }
                           @if (user.roleName !== 'Admin' && user.departmentName) {
                             · {{ user.departmentName }}
@@ -247,7 +247,7 @@ interface NotificationRecipient {
                   @if (recipient.email) {
                     <p class="mt-1 text-xs text-slate-400">{{ recipient.email }}</p>
                   } @else {
-                    <p class="mt-1 text-xs text-slate-400">Mã người dùng #{{ recipient.userId }}</p>
+                    <p class="mt-1 text-xs text-slate-400">Chưa có email</p>
                   }
                   <p class="mt-1 text-xs font-bold text-violet-600">
                     {{ recipient.roleName }}
@@ -456,7 +456,7 @@ export class SendNotificationPage implements OnInit {
       if (!detail || recipients.has(detail.userId)) continue
       recipients.set(detail.userId, {
         userId: detail.userId,
-        fullName: detail.userName?.trim() || `Người dùng #${detail.userId}`,
+        fullName: detail.userName?.trim() || 'Chưa xác định người dùng',
         username: '',
         email: '',
         roleName: 'Requester',

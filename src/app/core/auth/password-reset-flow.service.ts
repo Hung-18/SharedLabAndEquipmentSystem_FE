@@ -13,19 +13,26 @@ const STORAGE_KEY = 'shared-lab.password-reset.completed'
 @Injectable({ providedIn: 'root' })
 export class PasswordResetFlowService {
   private readonly eventsSubject = new Subject<PasswordResetEvent>()
+  private readonly remoteEventsSubject = new Subject<PasswordResetEvent>()
   readonly events$ = this.eventsSubject.asObservable()
+  readonly remoteEvents$ = this.remoteEventsSubject.asObservable()
   private readonly channel =
     typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(CHANNEL_NAME) : null
 
   constructor() {
     this.channel?.addEventListener('message', (event: MessageEvent<PasswordResetEvent>) => {
-      if (event.data?.type === 'completed') this.eventsSubject.next(event.data)
+      if (event.data?.type !== 'completed') return
+      this.eventsSubject.next(event.data)
+      this.remoteEventsSubject.next(event.data)
     })
     window.addEventListener('storage', (event) => {
       if (event.key !== STORAGE_KEY || !event.newValue) return
       try {
         const value = JSON.parse(event.newValue) as PasswordResetEvent
-        if (value.type === 'completed') this.eventsSubject.next(value)
+        if (value.type === 'completed') {
+          this.eventsSubject.next(value)
+          this.remoteEventsSubject.next(value)
+        }
       } catch {
         // Ignore malformed cross-tab values.
       }

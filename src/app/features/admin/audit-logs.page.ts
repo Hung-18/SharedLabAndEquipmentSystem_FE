@@ -146,7 +146,7 @@ import { toDateInput } from '../../shared/utils/presentation'
                     </td>
                     <td>
                       <p class="font-black text-slate-800">
-                        {{ log.userName || 'User #' + log.userId }}
+                        {{ log.userName || 'Chưa xác định người dùng' }}
                       </p>
                       <p class="mt-1 text-xs text-slate-400">ID {{ log.userId }}</p>
                     </td>
@@ -349,7 +349,7 @@ export class AuditLogsPage implements OnInit {
   protected selectedSubtitle(): string {
     const log = this.selected()
     return log
-      ? `${log.userName || `User #${log.userId}`} · ${new Date(log.createdAt).toLocaleString('vi-VN')}`
+      ? `${log.userName || 'Chưa xác định người dùng'} · ${new Date(log.createdAt).toLocaleString('vi-VN')}`
       : ''
   }
   protected pretty(value: string | null): string {

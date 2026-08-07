@@ -1,7 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core'
+import { Router } from '@angular/router'
 import { firstValueFrom, timeout } from 'rxjs'
 import { ApiError } from '../http/api-error'
 import { AuthService } from './auth.service'
+import { PasswordResetFlowService } from './password-reset-flow.service'
 import { TokenStorage } from './token-storage'
 import type { AuthUser, LoginPayload, UserRole, UserStatus } from './auth.types'
 
@@ -13,6 +15,8 @@ const STATUS_HINT_TTL_MS = 24 * 60 * 60 * 1000
 export class AuthStore {
   private readonly auth = inject(AuthService)
   private readonly tokens = inject(TokenStorage)
+  private readonly resetFlow = inject(PasswordResetFlowService)
+  private readonly router = inject(Router)
 
   private readonly _user = signal<AuthUser | null>(this.restore())
   private readonly _status = signal<'idle' | 'loading' | 'error'>('idle')
@@ -26,6 +30,18 @@ export class AuthStore {
   readonly isRequester = computed(() => this.role() === 'Requester')
   readonly isManager = computed(() => this.role() === 'LabManager')
   readonly isAdmin = computed(() => this.role() === 'Admin')
+
+  constructor() {
+    // Password reset in another tab invalidates the browser session immediately.
+    // Backend token-version validation is still the source of truth if this event is missed.
+    this.resetFlow.remoteEvents$.subscribe(() => {
+      this.clearLocalSession()
+      void this.router.navigate(['/login'], {
+        replaceUrl: true,
+        queryParams: { reason: 'password-reset' },
+      })
+    })
+  }
 
   async login(payload: LoginPayload, remember = true): Promise<AuthUser> {
     this._status.set('loading')
@@ -41,7 +57,7 @@ export class AuthStore {
     } catch (error) {
       this.tokens.clear()
       this._status.set('error')
-      this._error.set(this.resolveMessage(error, payload.email))
+      this._error.set(this.resolveMessage(error, payload.email ?? payload.username ?? ''))
       throw error
     }
   }

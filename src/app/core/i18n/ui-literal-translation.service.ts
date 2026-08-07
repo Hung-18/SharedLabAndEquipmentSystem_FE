@@ -498,7 +498,7 @@ function translateDynamic(value: string): string | null {
   if ((match = value.match(/^#(\d+)\s+trong hàng chờ$/))) return `#${match[1]} in the waitlist`
   if ((match = value.match(/^Phòng\s+#(\d+)$/))) return `Laboratory #${match[1]}`
   if ((match = value.match(/^Thiết bị\s+#(\d+)$/))) return `Equipment #${match[1]}`
-  if ((match = value.match(/^(?:Người dùng|Mã người dùng)\s+#(\d+)$/))) return `User #${match[1]}`
+  if ((match = value.match(/^(?:Người dùng|Mã người dùng)\s+#(\d+)$/))) return 'User'
   if ((match = value.match(/^Bảo trì\s+#(?:MT-)?(\d+)$/))) return `Maintenance #${match[1]}`
   if ((match = value.match(/^Trang\s+(\d+)\s*\/\s*(\d+)$/))) return `Page ${match[1]} / ${match[2]}`
   if ((match = value.match(/^Đang hiển thị\s+(.+)$/))) return `Showing ${match[1]}`

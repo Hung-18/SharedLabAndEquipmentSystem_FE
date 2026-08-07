@@ -471,7 +471,7 @@ export const UI_EN_LITERAL_MAP: Readonly<Record<string, string>> = {
   "Mã booking": "Booking ID",
   "Mã booking, user ID, mục đích...": "Booking ID, user ID, purpose...",
   "Mã người dùng": "User ID",
-  "Mã người dùng #": "User ID #",
+  "Mã người dùng #": "User",
   "Mã phòng *": "Room code *",
   "Mã thiết bị": "Equipment ID",
   "Mô tả": "Description",
