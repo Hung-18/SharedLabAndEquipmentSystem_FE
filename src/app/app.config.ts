@@ -43,7 +43,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideTranslateService({
       fallbackLang: env.defaultLocale,
-      loader: provideTranslateHttpLoader({ prefix: './i18n/', suffix: '.json' }),
+      loader: provideTranslateHttpLoader({ prefix: './i18n/', suffix: '.json?v=20260807-login-username-v2' }),
     }),
     // Load the initial language before the app renders to avoid flashes.
     provideAppInitializer(() => {
