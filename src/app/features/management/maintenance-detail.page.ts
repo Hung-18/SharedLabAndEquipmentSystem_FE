@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common'
-import { Component, OnInit, computed, inject, signal } from '@angular/core'
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { SystemService } from '../../core/api/system.service'
 import type {
@@ -50,14 +50,7 @@ import { formatMoney, labelOf } from '../../shared/utils/presentation'
             [routerLink]="['/app/management/maintenances', item()!.maintenanceId, 'edit']"
             class="btn-secondary"
             ><app-icon name="edit" [size]="17" /> Chỉnh sửa</a
-          ><button
-            class="btn-primary"
-            [disabled]="!canStart()"
-            [title]="startHint()"
-            (click)="action('start')"
           >
-            <app-icon name="play" [size]="17" /> Bắt đầu
-          </button>
         }
         @if (canManage() && item()!.status === 'InProgress') {
           <button class="btn-primary" (click)="action('complete')">
@@ -107,6 +100,22 @@ import { formatMoney, labelOf } from '../../shared/utils/presentation'
                 {{ item()!.notes || 'Không có ghi chú.' }}
               </p>
             </div>
+            @if (item()!.status === 'Scheduled') {
+              <div class="mt-5 rounded-2xl border border-violet-200 bg-violet-50 p-5 text-violet-900">
+                <p class="font-black">Tự động bắt đầu</p>
+                <p class="mt-2 text-sm leading-6 text-violet-800/75">
+                  Hệ thống sẽ tự chuyển lịch sang InProgress đúng giờ bắt đầu và gửi nhắc trước 15 phút. Không cần bấm Start thủ công.
+                </p>
+              </div>
+            }
+            @if (isOverdue()) {
+              <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-rose-900">
+                <p class="font-black">Đã quá thời gian kết thúc dự kiến</p>
+                <p class="mt-2 text-sm leading-6 text-rose-800/75">
+                  Tài nguyên vẫn giữ trạng thái Maintenance. LabManager hoặc Admin cần kiểm tra thực tế và bấm Hoàn thành khi bảo trì đã xong.
+                </p>
+              </div>
+            }
           </article>
           <article class="card-surface p-6">
             <h2 class="font-black text-slate-950">Cấu hình định kỳ</h2>
@@ -169,7 +178,7 @@ import { formatMoney, labelOf } from '../../shared/utils/presentation'
     }
   </section>`,
 })
-export class MaintenanceDetailPage implements OnInit {
+export class MaintenanceDetailPage implements OnInit, OnDestroy {
   private readonly api = inject(SystemService)
   private readonly route = inject(ActivatedRoute)
   private readonly router = inject(Router)
@@ -182,7 +191,8 @@ export class MaintenanceDetailPage implements OnInit {
   protected readonly labelOf = labelOf
   protected readonly formatMoney = formatMoney
   private id = 0
-  protected readonly canManage = computed(() => this.store.isManager())
+  private refreshTimer: ReturnType<typeof setInterval> | null = null
+  protected readonly canManage = computed(() => this.store.isManager() || this.store.isAdmin())
   protected readonly resourceName = computed(() => {
     const item = this.item()
     if (!item) return ''
@@ -198,41 +208,34 @@ export class MaintenanceDetailPage implements OnInit {
     this.api.labs().subscribe((x) => this.labs.set(x))
     this.api.equipments().subscribe((x) => this.equipments.set(x))
     this.load()
+    this.refreshTimer = setInterval(() => {
+      if (['Scheduled', 'InProgress'].includes(this.item()?.status ?? '')) this.load(false)
+    }, 30_000)
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer) clearInterval(this.refreshTimer)
   }
   protected duration(): number {
     const x = this.item()
     return x ? Math.round((+new Date(x.endTime) - +new Date(x.startTime)) / 360000) / 10 : 0
   }
 
-  protected canStart(): boolean {
+  protected isOverdue(): boolean {
     const current = this.item()
-    if (!current || current.status !== 'Scheduled') return false
-    const now = Date.now()
-    return now >= +new Date(current.startTime) && now < +new Date(current.endTime)
+    return Boolean(
+      current && current.status === 'InProgress' && Date.now() > +new Date(current.endTime),
+    )
   }
 
-  protected startHint(): string {
-    if (this.canStart()) return 'Bắt đầu lịch bảo trì'
-    const current = this.item()
-    if (!current) return ''
-    if (Date.now() < +new Date(current.startTime)) return 'Chưa đến thời gian bắt đầu'
-    return 'Lịch bảo trì đã quá thời gian kết thúc'
-  }
-
-  protected action(action: 'start' | 'complete' | 'cancel' | 'cancel-series'): void {
-    if (action === 'start' && !this.canStart()) {
-      this.toast.info(this.startHint())
-      return
-    }
+  protected action(action: 'complete' | 'cancel' | 'cancel-series'): void {
     if (!confirm(`Xác nhận ${action} lịch bảo trì #${this.id}?`)) return
     const request =
-      action === 'start'
-        ? this.api.startMaintenance(this.id)
-        : action === 'complete'
-          ? this.api.completeMaintenance(this.id)
-          : action === 'cancel'
-            ? this.api.cancelMaintenance(this.id)
-            : this.api.cancelMaintenanceSeries(this.id)
+      action === 'complete'
+        ? this.api.completeMaintenance(this.id)
+        : action === 'cancel'
+          ? this.api.cancelMaintenance(this.id)
+          : this.api.cancelMaintenanceSeries(this.id)
     request.subscribe({
       next: () => {
         this.toast.success('Đã cập nhật lịch bảo trì')
@@ -241,8 +244,8 @@ export class MaintenanceDetailPage implements OnInit {
       error: () => this.toast.error('Không thể cập nhật lịch bảo trì'),
     })
   }
-  private load(): void {
-    this.loading.set(true)
+  private load(showLoading = true): void {
+    if (showLoading) this.loading.set(true)
     this.api.maintenance(this.id).subscribe({
       next: (x) => {
         this.item.set(x)

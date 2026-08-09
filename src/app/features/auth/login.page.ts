@@ -106,6 +106,18 @@ import { LanguageService } from '../../core/i18n/language.service'
               {{ language.locale() === 'en' ? 'Sign in with either your email address or username.' : 'Đăng nhập bằng email hoặc username của tài khoản.' }}
             </p>
 
+            @if (sessionNotice; as notice) {
+              <div
+                class="mt-7 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+              >
+                <span class="mt-0.5 text-amber-600"><app-icon name="alert" [size]="18" /></span>
+                <p>
+                  <strong>{{ notice.title }}</strong><br />
+                  <span class="text-amber-800/80">{{ notice.message }}</span>
+                </p>
+              </div>
+            }
+
             @if (resetSuccess) {
               <div
                 class="mt-7 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800"
@@ -247,6 +259,52 @@ export class LoginPage {
     { value: '1', labelKey: 'auth.login.stats.central' },
     { value: 'Realtime', labelKey: 'auth.login.stats.realtime' },
   ]
+
+  protected get sessionNotice(): { title: string; message: string } | null {
+    const reason = this.route.snapshot.queryParamMap.get('reason')
+    const isEnglish = this.language.locale() === 'en'
+
+    if (reason === 'session-invalidated') {
+      return isEnglish
+        ? {
+            title: 'Your sign-in session is no longer active',
+            message:
+              'This account may have been signed in on another device or browser, so this session has ended. Please sign in again to continue.',
+          }
+        : {
+            title: 'Phiên đăng nhập không còn hiệu lực',
+            message:
+              'Tài khoản có thể vừa được đăng nhập trên thiết bị hoặc trình duyệt khác, nên phiên này đã kết thúc. Vui lòng đăng nhập lại để tiếp tục.',
+          }
+    }
+
+    if (reason === 'session-expired') {
+      return isEnglish
+        ? {
+            title: 'Your session has expired',
+            message: 'Please sign in again to continue using the system.',
+          }
+        : {
+            title: 'Phiên đăng nhập đã hết hạn',
+            message: 'Vui lòng đăng nhập lại để tiếp tục sử dụng hệ thống.',
+          }
+    }
+
+    if (reason === 'password-reset') {
+      return isEnglish
+        ? {
+            title: 'Your previous session has ended',
+            message: 'The account password was changed. Please sign in again with the new password.',
+          }
+        : {
+            title: 'Phiên đăng nhập đã được kết thúc',
+            message:
+              'Mật khẩu của tài khoản vừa được thay đổi. Vui lòng đăng nhập lại bằng mật khẩu mới.',
+          }
+    }
+
+    return null
+  }
 
   protected async submit(): Promise<void> {
     const identifier = this.identifier.trim()
