@@ -24,7 +24,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
         >
       </app-page-header>
 
-      <div class="grid gap-6 xl:grid-cols-[1.3fr_.7fr]">
+      <div>
         <form class="card-surface overflow-hidden" (ngSubmit)="submit()">
           <div
             class="border-b border-slate-100 bg-linear-to-r from-violet-50/80 to-cyan-50/60 px-6 py-5"
@@ -39,7 +39,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
               class="mx-6 mt-6 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <p class="text-sm font-semibold text-amber-900">
-                Không tải được vai trò hoặc khoa/phòng ban. Hãy kiểm tra API rồi tải lại dữ liệu.
+                Không tải được vai trò hoặc khoa/phòng ban. Vui lòng tải lại dữ liệu.
               </p>
               <button
                 type="button"
@@ -165,43 +165,6 @@ import { apiErrorMessage } from '../../core/http/api-error'
           </div>
         </form>
 
-        <aside class="space-y-5">
-          <article
-            class="relative overflow-hidden rounded-[28px] bg-[#111a3a] p-6 text-white shadow-2xl shadow-indigo-950/15"
-          >
-            <div
-              class="absolute -top-12 -right-12 h-36 w-36 rounded-full bg-violet-500/30 blur-2xl"
-            ></div>
-            <div class="relative">
-              <span
-                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-cyan-300"
-                ><app-icon name="shield" [size]="23"
-              /></span>
-              <h2 class="mt-5 text-lg font-black">Phân quyền an toàn</h2>
-              <p class="mt-2 text-sm leading-6 text-white/60">
-                Quản trị viên quản lý hệ thống; quản lý phòng thí nghiệm xử lý tài nguyên được phân công; người đặt lịch sử
-                dụng luồng đặt lịch cá nhân.
-              </p>
-            </div>
-          </article>
-          <article class="card-surface p-6">
-            <h3 class="font-black text-slate-900">Checklist trước khi tạo</h3>
-            <div class="mt-5 space-y-4">
-              @for (item of checklist(); track item.label) {
-                <div class="flex items-start gap-3">
-                  <span
-                    class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                    [ngClass]="
-                      item.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
-                    "
-                    ><app-icon [name]="item.ok ? 'check' : 'clock'" [size]="14"
-                  /></span>
-                  <p class="text-sm font-semibold text-slate-600">{{ item.label }}</p>
-                </div>
-              }
-            </div>
-          </article>
-        </aside>
       </div>
     </section>
   `,

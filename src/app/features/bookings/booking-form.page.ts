@@ -619,20 +619,6 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
               </div>
             </div>
           </article>
-          <article
-            class="rounded-[24px] border border-cyan-200 bg-linear-to-br from-cyan-50 to-indigo-50 p-5"
-          >
-            <div
-              class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-cyan-600 shadow-sm"
-            >
-              <app-icon name="lightbulb" [size]="21" />
-            </div>
-            <p class="mt-4 font-black text-slate-900">Mẹo đặt lịch</p>
-            <p class="mt-2 text-sm leading-6 text-slate-600">
-              Kiểm tra lịch trước khi gửi. Yêu cầu chờ duyệt không khóa tài nguyên; lịch đặt chỉ giữ khung giờ sau
-              khi được duyệt.
-            </p>
-          </article>
         </aside>
       </div>
     </section>

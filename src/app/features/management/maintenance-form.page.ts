@@ -41,7 +41,7 @@ interface ResolvedSchedule {
       ></app-page-header
     >
 
-    <div class="grid gap-6 xl:grid-cols-[1fr_360px]">
+    <div>
       <form class="card-surface p-5 sm:p-7" (ngSubmit)="submit()">
         <div class="flex items-start gap-4">
           <div
@@ -52,7 +52,7 @@ interface ResolvedSchedule {
           <div>
             <h2 class="text-xl font-black text-slate-950">Tài nguyên & thời gian</h2>
             <p class="mt-1 text-sm text-slate-500">
-              Backend sẽ kiểm tra booking Approved, lịch bảo trì khác và lượt sử dụng đang mở trước khi lưu.
+              Hệ thống sẽ kiểm tra xung đột tài nguyên và thời gian trước khi lưu.
             </p>
           </div>
         </div>
@@ -133,7 +133,7 @@ interface ResolvedSchedule {
               <span>
                 <strong class="text-sm text-rose-900">Bảo trì khẩn cấp — bắt đầu ngay</strong>
                 <span class="mt-1 block text-xs leading-5 text-rose-800/75">
-                  Tài nguyên chuyển sang Maintenance ngay sau khi tạo. Không dùng lặp định kỳ và backend sẽ chặn nếu còn lượt sử dụng chưa checkout.
+                  Tài nguyên chuyển sang trạng thái bảo trì ngay sau khi tạo. Không áp dụng lặp định kỳ.
                 </span>
               </span>
             </label>
@@ -241,7 +241,7 @@ interface ResolvedSchedule {
               <strong class="text-slate-900">{{ slotScheduleSummary() }}</strong>
               @if (isMultiDaySlotSchedule()) {
                 <p class="mt-1 text-xs text-slate-500">
-                  Backend lưu chuỗi Daily để chỉ khóa đúng khoảng slot của từng ngày, không khóa liên tục qua đêm.
+                  Chỉ khóa tài nguyên trong các khung giờ đã chọn của từng ngày.
                 </p>
               }
             </div>
@@ -330,27 +330,6 @@ interface ResolvedSchedule {
         </div>
       </form>
 
-      <aside class="space-y-5">
-        <article class="card-surface p-5">
-          <p class="text-[10px] font-black tracking-[.16em] text-violet-500 uppercase">
-            Luồng tự động
-          </p>
-          <div class="mt-4 space-y-3">
-            @for (rule of rules; track rule) {
-              <div class="flex gap-3 text-sm text-slate-600">
-                <span class="mt-0.5 text-emerald-500"><app-icon name="check" [size]="16" /></span>
-                <span>{{ rule }}</span>
-              </div>
-            }
-          </div>
-        </article>
-        <article class="rounded-[24px] border border-amber-200 bg-amber-50 p-5">
-          <p class="font-black text-amber-900">Tác động tài nguyên</p>
-          <p class="mt-2 text-sm leading-6 text-amber-800/75">
-            Lịch thường tự chuyển sang InProgress đúng StartTime. Đến EndTime hệ thống chỉ cảnh báo; tài nguyên vẫn Maintenance cho tới khi người quản lý xác nhận Complete.
-          </p>
-        </article>
-      </aside>
     </div>
   </section>`,
 })
@@ -392,13 +371,6 @@ export class MaintenanceFormPage implements OnInit {
     { id: 2, start: '09:00', end: '11:00', period: 'morning' },
     { id: 3, start: '13:00', end: '15:00', period: 'afternoon' },
     { id: 4, start: '15:00', end: '17:00', period: 'afternoon' },
-  ]
-
-  protected readonly rules = [
-    'Trước 15 phút: LabManager nhận notification + email; Admin nhận notification.',
-    'Đến StartTime: backend tự Start và chuyển tài nguyên sang Maintenance.',
-    'Đến EndTime: không tự Complete; hệ thống cảnh báo để người quản lý xác nhận.',
-    'Admin và LabManager đều có thể quản lý maintenance theo phạm vi backend cho phép.',
   ]
 
   ngOnInit(): void {

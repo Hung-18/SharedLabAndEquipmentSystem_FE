@@ -72,8 +72,7 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
             <div>
               <p class="font-black">Đây là tài khoản đang đăng nhập</p>
               <p class="mt-1 text-xs leading-5 text-amber-700">
-                Frontend khóa thao tác đổi vai trò và vô hiệu hóa chính mình để tránh mất quyền quản
-                trị ngoài ý muốn.
+                Không thể tự đổi vai trò hoặc vô hiệu hóa tài khoản đang đăng nhập.
               </p>
             </div>
           </div>
