@@ -500,7 +500,7 @@ export class LabDetailPage implements OnInit {
                 this.toast.success('Đã kích hoạt lại phòng lab. Bây giờ có thể chỉnh sửa.')
               } else {
                 this.toast.error(
-                  'Backend chưa cho phép đổi Inactive → Available bằng API cập nhật hiện tại.',
+                  'Không thể kích hoạt lại phòng bằng phiên bản hiện tại.',
                 )
               }
             },

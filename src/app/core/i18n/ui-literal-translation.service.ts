@@ -245,6 +245,224 @@ const UI_EN_OVERRIDES: Readonly<Record<string, string>> = {
     'The laboratory and all equipment were returned; the booking is complete.',
   'Không thể check-out toàn bộ booking': 'Unable to check out the entire booking',
   'Đặt phòng với thiết bị này': 'Book the laboratory with this equipment',
+  'Chưa xác định người dùng': 'Unknown user',
+  'Chưa xác định người đặt': 'Unknown requester',
+  'Chưa xác định người tạo': 'Unknown creator',
+  'Chưa có email': 'No email address',
+  'Phòng quản lý': 'Managed laboratories',
+  'Phòng đang quản lý': 'Managed laboratories',
+  'Giới hạn booking': 'Booking restrictions',
+  'Phạm vi dựa trên LabRoom.ManagerId': 'Scope based on assigned laboratories',
+  'Chưa được phân công quản lý phòng lab nào.': 'No laboratories assigned.',
+  'Không thể tự đổi vai trò hoặc vô hiệu hóa tài khoản đang đăng nhập.':
+    'You cannot change the role or deactivate the account currently in use.',
+  'Đăng nhập bằng email hoặc username của tài khoản.':
+    'Sign in with the account email address or username.',
+  'Ví dụ: user@university.edu hoặc nguyenvana':
+    'Example: user@university.edu or nguyenvana',
+  'Phiên đăng nhập không còn hiệu lực': 'Your session is no longer valid',
+  'Tài khoản có thể vừa được đăng nhập trên thiết bị hoặc trình duyệt khác, nên phiên này đã kết thúc. Vui lòng đăng nhập lại để tiếp tục.':
+    'This account may have been used to sign in on another device or browser, so this session has ended. Sign in again to continue.',
+  'Phiên đăng nhập đã hết hạn': 'Your session has expired',
+  'Vui lòng đăng nhập lại để tiếp tục sử dụng hệ thống.':
+    'Sign in again to continue using the system.',
+  'Phiên đăng nhập đã được kết thúc': 'Your session has ended',
+  'Mật khẩu của tài khoản vừa được thay đổi. Vui lòng đăng nhập lại bằng mật khẩu mới.':
+    'The account password has changed. Sign in again with the new password.',
+  'Chi tiết lịch đặt': 'Booking details',
+  'Chưa check-in': 'Not checked in',
+  'Chưa checkout': 'Not checked out',
+  'Tài nguyên': 'Resource',
+  'booking này': 'this booking',
+  'Chỉnh sửa booking': 'Edit booking',
+  'Tạo yêu cầu booking': 'Create booking request',
+  'Đã gửi yêu cầu đặt lịch': 'Booking request submitted',
+  'Yêu cầu của bạn đang chờ quản lý duyệt.':
+    'Your request is pending manager approval.',
+  'Hãy chọn phòng và khung giờ hợp lệ trước khi tham gia hàng chờ':
+    'Select a laboratory and a valid time slot before joining the waitlist.',
+  'Đã tham gia hàng chờ của phòng': 'Joined the laboratory waitlist',
+  'Vị trí hiện tại của bạn': 'Your current position',
+  'Thiết bị không được giữ và sẽ chọn lại khi đến lượt.':
+    'Equipment is not reserved and must be selected again when your turn arrives.',
+  'Trạng thái hiện tại': 'Current status',
+  'thiết bị đã chọn': 'equipment selected',
+  'Hàng chờ chỉ giữ quyền ưu tiên cho phòng.':
+    'The waitlist reserves priority for the laboratory only.',
+  'Các thiết bị đang chọn sẽ không được giữ; khi đến lượt, bạn chọn lại thiết bị còn khả dụng rồi tạo booking.':
+    'Selected equipment will not be reserved. When your turn arrives, select from the available equipment and create the booking.',
+  'Gửi yêu cầu booking': 'Submit booking request',
+  'Tìm theo mục đích': 'Search by purpose',
+  'Mã booking, tên người đặt, mục đích...': 'Booking ID, requester name, purpose...',
+  'Không tải được tên người đặt': 'Unable to load requester names',
+  'Không tải được tên người dùng': 'Unable to load user names',
+  'Duyệt booking': 'Approve booking',
+  'Xác nhận sự cố': 'Confirm incident',
+  'Từ chối sự cố': 'Reject incident',
+  'Không xác định': 'Unknown',
+  'Sự cố được xác nhận có thể tạo vi phạm tự động và tăng điểm phạt người dùng.':
+    'A confirmed incident may automatically create a violation and add penalty points to the requester.',
+  'Thông tin lịch bảo trì': 'Maintenance details',
+  'Tự động bắt đầu': 'Automatic start',
+  'Hệ thống sẽ tự chuyển lịch sang InProgress đúng giờ bắt đầu và gửi nhắc trước 15 phút. Không cần bấm Start thủ công.':
+    'The schedule automatically changes to In Progress at the start time and sends a reminder 15 minutes beforehand. No manual start is required.',
+  'Đã quá thời gian kết thúc dự kiến': 'Past the expected end time',
+  'Tài nguyên vẫn giữ trạng thái Maintenance. LabManager hoặc Admin cần kiểm tra thực tế và bấm Hoàn thành khi bảo trì đã xong.':
+    'The resource remains under maintenance. A lab manager or administrator must verify the work and mark it complete.',
+  'Chỉnh sửa lịch bảo trì': 'Edit maintenance schedule',
+  'Tạo lịch bảo trì': 'Create maintenance schedule',
+  'Bảo trì có kế hoạch có thể chọn theo slot; trường hợp khẩn cấp có thể bắt đầu ngay.':
+    'Choose fixed slots for planned maintenance or start emergency maintenance immediately.',
+  'Tài nguyên & thời gian': 'Resource and time',
+  'Hệ thống sẽ kiểm tra xung đột tài nguyên và thời gian trước khi lưu.':
+    'The system checks resource and time conflicts before saving.',
+  'Bảo trì phòng lab': 'Laboratory maintenance',
+  'Khóa toàn bộ phòng trong thời gian thực hiện':
+    'Block the entire laboratory during maintenance',
+  'Bảo trì thiết bị': 'Equipment maintenance',
+  'Chỉ khóa thiết bị được chọn': 'Block only the selected equipment',
+  'Phòng chứa thiết bị': 'Equipment laboratory',
+  'Bảo trì khẩn cấp — bắt đầu ngay': 'Emergency maintenance — start now',
+  'Tài nguyên chuyển sang trạng thái bảo trì ngay sau khi tạo. Không áp dụng lặp định kỳ.':
+    'The resource enters maintenance status immediately after creation. Recurrence does not apply.',
+  'Theo slot cố định': 'Fixed time slots',
+  '07–09, 09–11, 13–15, 15–17; hỗ trợ nhiều ngày.':
+    '07–09, 09–11, 13–15, and 15–17; supports multiple days.',
+  'Thời gian tùy chỉnh': 'Custom time',
+  'Dùng cho khoảng liên tục hoặc lịch tuần/tháng.':
+    'Use a continuous period or a weekly/monthly schedule.',
+  'Thời gian kết thúc dự kiến *': 'Expected end time *',
+  'Đây chỉ là thời gian dự kiến. Đến giờ hệ thống sẽ nhắc, nhưng không tự Complete; LabManager/Admin phải xác nhận hoàn thành.':
+    'This is an expected end time. The system sends a reminder but does not complete maintenance automatically; a lab manager or administrator must confirm completion.',
+  'Từ ngày *': 'From date *',
+  'Đến ngày *': 'To date *',
+  'Chọn slot mỗi ngày': 'Select daily slots',
+  'Có thể chọn 1–2 slot liên tiếp trong cùng một buổi.':
+    'Select one or two consecutive slots in the same session.',
+  'Cả ngày 07:00–17:00': 'Full day 07:00–17:00',
+  'Chỉ khóa tài nguyên trong các khung giờ đã chọn của từng ngày.':
+    'The resource is blocked only during the selected time slots each day.',
+  'Bắt đầu *': 'Start *',
+  'Kết thúc *': 'End *',
+  'Loại lặp': 'Recurrence type',
+  'Không lặp': 'No recurrence',
+  'Khoảng lặp': 'Recurrence interval',
+  'Ngày kết thúc chuỗi': 'Series end date',
+  'Chi phí bảo trì': 'Maintenance cost',
+  'Nội dung bảo trì, đơn vị thực hiện, linh kiện thay thế...':
+    'Maintenance work, service provider, replacement parts...',
+  'Đang lưu...': 'Saving...',
+  'Lưu thay đổi': 'Save changes',
+  'Bắt đầu bảo trì ngay': 'Start maintenance now',
+  'Chưa chọn lịch slot hợp lệ.': 'No valid slot schedule selected.',
+  'Kiểm tra tài nguyên, thời gian/slot, chi phí và cấu hình lặp.':
+    'Check the resource, time slot, cost, and recurrence settings.',
+  'Không xác định được thời gian bảo trì': 'Unable to determine the maintenance period',
+  'Đã bắt đầu bảo trì khẩn cấp': 'Emergency maintenance started',
+  'Không thể lưu lịch bảo trì': 'Unable to save the maintenance schedule',
+  'Kiểm tra xung đột và phạm vi quyền quản lý.':
+    'Check scheduling conflicts and your management scope.',
+  'Quản lý bảo trì': 'Maintenance management',
+  'Lịch bảo trì tài nguyên': 'Resource maintenance schedule',
+  'Tạm ngừng': 'Pause',
+  'Kích hoạt': 'Activate',
+  'Chỉnh sửa khoa/phòng ban': 'Edit department',
+  'Thêm khoa/phòng ban': 'Add department',
+  'Chỉnh sửa quy tắc ưu tiên': 'Edit priority rule',
+  'Thêm quy tắc ưu tiên': 'Add priority rule',
+  'Tạo, sửa và theo dõi booking cá nhân': 'Create, edit, and track personal bookings',
+  'Hàng chờ, check-in/check-out và báo sự cố cá nhân':
+    'Use the waitlist, check in or out, and report personal incidents',
+  'Duyệt/từ chối booking trong phạm vi phòng':
+    'Approve or reject bookings within assigned laboratories',
+  'Bảo trì, usage log, sự cố, hàng chờ và vi phạm quản lý':
+    'Manage maintenance, usage logs, incidents, waitlists, and violations',
+  'Quản lý phòng lab và thiết bị': 'Manage laboratories and equipment',
+  'Quản trị người dùng, phòng ban, vai trò và quy tắc ưu tiên':
+    'Manage users, departments, roles, and priority rules',
+  'Gửi thông báo hệ thống và xem Audit log':
+    'Send system notifications and view audit logs',
+  'Quản trị người dùng, tài nguyên, cấu hình hệ thống và báo cáo toàn cục.':
+    'Manage users, resources, system settings, and global reports.',
+  'Quản lý người dùng, phòng ban, vai trò, phòng lab và thiết bị':
+    'Manage users, departments, roles, laboratories, and equipment',
+  'Cấu hình quy tắc ưu tiên và gửi thông báo hệ thống':
+    'Configure priority rules and send system notifications',
+  'Xem dashboard, báo cáo và audit log toàn hệ thống':
+    'View system-wide dashboards, reports, and audit logs',
+  'Duyệt/từ chối booking trong đúng phòng được phân công':
+    'Approve or reject bookings in assigned laboratories',
+  'Quản lý bảo trì, usage log, sự cố, hàng chờ và vi phạm':
+    'Manage maintenance, usage logs, incidents, waitlists, and violations',
+  'Xem dashboard và báo cáo trong phạm vi quản lý':
+    'View dashboards and reports within the assigned scope',
+  'Tạo, sửa, hủy và theo dõi booking cá nhân':
+    'Create, edit, cancel, and track personal bookings',
+  'Tham gia hàng chờ, check-in/check-out và báo sự cố':
+    'Join waitlists, check in or out, and report incidents',
+  'Xem thông báo, vi phạm và điểm phạt cá nhân':
+    'View personal notifications, violations, and penalty points',
+  'Nội dung thông báo sẽ được hiển thị ở đây để bạn kiểm tra trước khi gửi.':
+    'The notification content appears here for review before sending.',
+  'Hiển thị': 'Showing',
+  'tài khoản': 'accounts',
+  'Thiết bị hiện không thể đặt': 'This equipment cannot be booked',
+  'Phòng hiện không thể đặt': 'This laboratory cannot be booked',
+  'Đang kích hoạt...': 'Reactivating...',
+  'Kích hoạt lại': 'Reactivate',
+  'Kích hoạt lại phòng lab này?': 'Reactivate this laboratory?',
+  'Đã kích hoạt lại phòng lab. Bây giờ có thể chỉnh sửa.':
+    'The laboratory has been reactivated and can now be edited.',
+  'Không thể kích hoạt lại phòng bằng phiên bản hiện tại.':
+    'This laboratory cannot be reactivated in the current version.',
+  'Đã gửi yêu cầu kích hoạt nhưng không tải lại được trạng thái phòng lab':
+    'The reactivation request was sent, but the laboratory status could not be refreshed.',
+  'Không thể kích hoạt lại phòng lab': 'Unable to reactivate the laboratory',
+  'Trang này chỉ dành cho một số vai trò nhất định. Hệ thống đã bảo vệ nội dung và không hiển thị bất kỳ thông tin kỹ thuật nào.':
+    'This page is available only to specific roles. Its content is protected.',
+  'Đường dẫn bạn đang mở không tồn tại, đã được di chuyển hoặc không còn khả dụng trong hệ thống.':
+    'The page you requested does not exist, has moved, or is no longer available.',
+  'Không tải được vai trò hoặc khoa/phòng ban. Vui lòng tải lại dữ liệu.':
+    'Unable to load roles or departments. Reload the data.',
+  'Ẩn mật khẩu': 'Hide password',
+  'Lịch đặt của thiết bị': 'Equipment bookings',
+  'Không thể đặt': 'Unavailable for booking',
+  'mỗi kỳ': 'per occurrence',
+  'sự kiện khác': 'more events',
+  'Violation ID, tên người dùng, Booking ID...': 'Violation ID, user name, booking ID...',
+  'Xử lý': 'Resolve',
+  'Cho hết hạn': 'Mark as expired',
+  'Hàng chờ giữ ưu tiên cho phòng. Khi đến lượt, bạn chọn lại thiết bị còn khả dụng rồi tạo booking.':
+    'The waitlist reserves laboratory priority. When your turn arrives, select from the available equipment and create a booking.',
+  'Phòng được giữ ưu tiên tối đa 30 phút kể từ':
+    'Laboratory priority is held for up to 30 minutes from',
+  'Thiết bị không được giữ và sẽ chọn lại khi tạo booking.':
+    'Equipment is not reserved and must be selected again when creating the booking.',
+  'Xem lịch đặt': 'View booking',
+  'Tổng quan hộp thư': 'Notification overview',
+  'Thông báo chưa đọc sẽ có nền tím nhạt và chấm trạng thái ở bên phải.':
+    'Unread notifications are highlighted and marked with a status dot.',
+  'Nhóm thông báo': 'Notification types',
+  'Phân loại nhanh': 'Quick filters',
+  'Chưa có dữ liệu phân loại.': 'No category data available.',
+  'Chi tiết thông báo': 'Notification details',
+  'Đóng chi tiết': 'Close details',
+  'Thời gian gửi': 'Sent at',
+  'Trước': 'Previous',
+  'Sau': 'Next',
+  'Hãy tạo booking trước khi thời gian giữ chỗ kết thúc.':
+    'Create the booking before the reservation expires.',
+  'Xem trạng thái và điểm phạt ở trang Tài khoản cá nhân.':
+    'View status and penalty points on the personal profile page.',
+  'Không tải được lịch bảo trì': 'Unable to load the maintenance schedule',
+  'Không có ghi chú.': 'No notes.',
+  'Cấu hình định kỳ': 'Recurrence settings',
+  'Kết thúc chuỗi': 'Series end',
+  'Hủy lịch bảo trì': 'Cancel maintenance',
+  'Hủy một kỳ không dừng các kỳ sau. Hủy cả chuỗi sẽ dừng toàn bộ lịch định kỳ còn hoạt động.':
+    'Cancelling one occurrence does not affect later occurrences. Cancelling the series stops every remaining recurring schedule.',
+  'Chỉ nhập thời gian lịch sử khi cần sửa dữ liệu. Luồng bình thường nên để trống.':
+    'Enter a historical time only when correcting data. Otherwise, leave it blank.',
 }
 
 const PHRASE_FALLBACKS: readonly [RegExp, string][] = [
@@ -483,6 +701,16 @@ function translateLiteral(value: string): string {
 
 function translateDynamic(value: string): string | null {
   let match: RegExpMatchArray | null
+  if ((match = value.match(/^(.+),\s+lặp hằng ngày từ\s+(.+)\s+đến\s+(.+)\.$/))) {
+    return `${match[1]}, repeats daily from ${match[2]} to ${match[3]}.`
+  }
+  if ((match = value.match(/^(.+)\s+ngày\s+(.+)\.$/))) return `${match[1]} on ${match[2]}.`
+  if ((match = value.match(/^(.+),\s+(.+)\s+\+(\d+)\s+phòng$/))) {
+    return `${match[1]}, ${match[2]} +${match[3]} laboratories`
+  }
+  if ((match = value.match(/^Vị trí hiện tại:\s*(\d+)\. Thiết bị không được giữ và sẽ chọn lại khi đến lượt\.$/))) {
+    return `Current position: ${match[1]}. Equipment is not reserved and must be selected again when your turn arrives.`
+  }
   if ((match = value.match(/^Chào\s+(.+),\s+sẵn sàng nghiên cứu chưa\?$/))) {
     return `Hello ${match[1]}, ready to start your research?`
   }
