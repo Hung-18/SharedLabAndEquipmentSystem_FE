@@ -207,3 +207,12 @@ export function formatMoney(value: number): string {
     maximumFractionDigits: 0,
   }).format(value || 0)
 }
+
+export function stripTechnicalIds(value: string): string {
+  return value
+    .replace(/\s*#(?:[A-Z]{1,12}-)?\d+\b/gi, '')
+    .replace(/\bID\s+\d+\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([.,;:!?])/g, '$1')
+    .trim()
+}

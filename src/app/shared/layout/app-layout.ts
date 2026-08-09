@@ -248,7 +248,7 @@ export class AppLayoutComponent implements OnInit {
           labelKey: 'layout.items.maintenance',
           icon: 'wrench',
           route: '/app/management/maintenances',
-          roles: ['Requester', 'LabManager', 'Admin'],
+          roles: ['Admin'],
         },
       ],
     },

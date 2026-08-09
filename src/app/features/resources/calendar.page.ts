@@ -87,14 +87,21 @@ interface CalendarDay {
             }
           </select>
         </div>
-        <div>
-          <label class="field-label">Loại sự kiện</label
-          ><select class="input-shell" [(ngModel)]="eventType">
-            <option value="">Lịch đặt và bảo trì</option>
-            <option value="Booking">Lịch đặt</option>
-            <option value="Maintenance">Bảo trì</option>
-          </select>
-        </div>
+        @if (!store.isRequester()) {
+          <div>
+            <label class="field-label">Loại sự kiện</label>
+            <select class="input-shell" [(ngModel)]="eventType">
+              <option value="">Lịch đặt và bảo trì</option>
+              <option value="Booking">Lịch đặt</option>
+              <option value="Maintenance">Bảo trì</option>
+            </select>
+          </div>
+        } @else {
+          <div>
+            <label class="field-label">Loại sự kiện</label>
+            <div class="input-shell flex items-center text-sm text-slate-600">Lịch đặt</div>
+          </div>
+        }
         <div class="flex items-end gap-2">
           <button class="btn-secondary" type="button" (click)="shift(-1)">
             <app-icon name="chevron-left" [size]="17" /></button
@@ -447,7 +454,11 @@ export class CalendarPage implements OnInit {
       )
       .subscribe({
         next: (items) => {
-          this.events.set(items)
+          this.events.set(
+            this.store.isRequester()
+              ? items.filter((item) => item.eventType !== 'Maintenance')
+              : items,
+          )
           this.loading.set(false)
         },
         error: () => {
@@ -515,6 +526,7 @@ export class CalendarPage implements OnInit {
   }
 
   protected openEvent(event: CalendarEventResponse): void {
+    if (this.store.isRequester() && event.eventType === 'Maintenance') return
     void this.router.navigate(
       event.eventType === 'Maintenance'
         ? ['/app/management/maintenances', event.sourceId]

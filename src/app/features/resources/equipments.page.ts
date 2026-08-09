@@ -1,8 +1,8 @@
 import { NgClass } from '@angular/common'
-import { Component, OnInit, computed, inject, signal } from '@angular/core'
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
-import { catchError, finalize, of } from 'rxjs'
+import { Subscription, catchError, finalize, interval, of } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type { EquipmentResponse, LabRoomResponse } from '../../core/api/system.models'
 import { AuthStore } from '../../core/auth/auth.store'
@@ -17,6 +17,7 @@ import {
   isAvailableEquipmentStatus,
   isAvailableLabStatus,
   isInactiveLabStatus,
+  isRetiredEquipmentStatus,
 } from '../../shared/utils/presentation'
 
 @Component({
@@ -149,7 +150,7 @@ import {
                   <a [routerLink]="['/app/equipments', item.equipmentId]" class="btn-primary flex-1"
                     >Chi tiết</a
                   >
-                  @if (store.isRequester()) {
+                  @if (store.isRequester() && canBook(item)) {
                     <a
                       routerLink="/app/bookings/new"
                       [queryParams]="{ equipmentId: item.equipmentId, labId: item.labId }"
@@ -158,6 +159,10 @@ import {
                       [attr.aria-label]="'Đặt phòng với thiết bị ' + item.equipmentName"
                       ><app-icon name="calendar-plus" [size]="18"
                     /></a>
+                  } @else if (store.isRequester()) {
+                    <span class="btn-secondary cursor-not-allowed px-3 text-rose-600" title="Thiết bị hiện không thể đặt">
+                      <app-icon name="lock" [size]="18" />
+                    </span>
                   }
                 </div>
               </div>
@@ -249,7 +254,7 @@ import {
     </section>
   `,
 })
-export class EquipmentsPage implements OnInit {
+export class EquipmentsPage implements OnInit, OnDestroy {
   private readonly api = inject(SystemService)
   private readonly toast = inject(ToastService)
   protected readonly store = inject(AuthStore)
@@ -273,16 +278,14 @@ export class EquipmentsPage implements OnInit {
   protected readonly labMap = computed(
     () => new Map(this.labs().map((lab) => [lab.labId, lab.labName])),
   )
-  protected readonly bookableLabs = computed(() =>
-    this.labs().filter((lab) => isAvailableLabStatus(lab.status)),
-  )
   protected readonly manageableLabs = computed(() =>
     this.labs().filter((lab) => !isInactiveLabStatus(lab.status)),
   )
   protected readonly visibleLabs = computed(() =>
-    this.store.isRequester() ? this.bookableLabs() : this.labs(),
+    this.store.isRequester() ? this.manageableLabs() : this.labs(),
   )
   private loadVersion = 0
+  private refreshSubscription?: Subscription
 
   ngOnInit(): void {
     this.load()
@@ -290,15 +293,19 @@ export class EquipmentsPage implements OnInit {
       .labs()
       .pipe(catchError(() => of([])))
       .subscribe((labs) => this.labs.set(labs))
+    this.refreshSubscription = interval(30_000).subscribe(() => this.load(false))
   }
-  protected load(): void {
+  ngOnDestroy(): void {
+    this.refreshSubscription?.unsubscribe()
+  }
+  protected load(showLoading = true): void {
     const version = ++this.loadVersion
-    this.loading.set(true)
+    if (showLoading) this.loading.set(true)
     this.api
       .searchEquipments({
         keyword: this.keyword || undefined,
         labId: this.labId ?? undefined,
-        status: this.store.isRequester() ? 1 : this.status || undefined,
+        status: this.store.isRequester() ? undefined : this.status || undefined,
         pageNumber: this.page(),
         pageSize: 16,
       })
@@ -311,7 +318,7 @@ export class EquipmentsPage implements OnInit {
         next: (result) => {
           if (version !== this.loadVersion) return
           const visibleItems = this.store.isRequester()
-            ? result.items.filter((item) => isAvailableEquipmentStatus(item.status))
+            ? result.items.filter((item) => !isRetiredEquipmentStatus(item.status))
             : result.items
           this.items.set(visibleItems)
           this.hydrateImages(visibleItems, version)
@@ -325,6 +332,10 @@ export class EquipmentsPage implements OnInit {
   }
   protected labName(id: number): string {
     return this.labMap().get(id) ?? `Phòng #${id}`
+  }
+  protected canBook(item: EquipmentResponse): boolean {
+    const lab = this.labs().find((candidate) => candidate.labId === item.labId)
+    return isAvailableEquipmentStatus(item.status) && Boolean(lab && isAvailableLabStatus(lab.status))
   }
   private hydrateImages(items: EquipmentResponse[], version: number): void {
     for (const item of items) {

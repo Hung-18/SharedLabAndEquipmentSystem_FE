@@ -1,8 +1,8 @@
 import { NgClass } from '@angular/common'
-import { Component, OnInit, inject, signal } from '@angular/core'
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
-import { finalize } from 'rxjs'
+import { Subscription, finalize, interval } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type { LabRoomResponse, UserManagementResponse } from '../../core/api/system.models'
 import { AuthStore } from '../../core/auth/auth.store'
@@ -187,7 +187,7 @@ interface LabForm {
                   <a [routerLink]="['/app/labs', lab.labId]" class="btn-primary flex-1"
                     >Xem chi tiết</a
                   >
-                  @if (store.isRequester()) {
+                  @if (store.isRequester() && isAvailableLabStatus(lab.status)) {
                     <a
                       [routerLink]="['/app/bookings/new']"
                       [queryParams]="{ labId: lab.labId }"
@@ -195,6 +195,10 @@ interface LabForm {
                       title="Tạo booking"
                       ><app-icon name="calendar-plus" [size]="18"
                     /></a>
+                  } @else if (store.isRequester()) {
+                    <span class="btn-secondary cursor-not-allowed px-3 text-rose-600" title="Phòng hiện không thể đặt">
+                      <app-icon name="lock" [size]="18" />
+                    </span>
                   }
                 </div>
               </div>
@@ -349,10 +353,11 @@ interface LabForm {
     </section>
   `,
 })
-export class LabsPage implements OnInit {
+export class LabsPage implements OnInit, OnDestroy {
   private readonly api = inject(SystemService)
   private readonly toast = inject(ToastService)
   protected readonly store = inject(AuthStore)
+  protected readonly isAvailableLabStatus = isAvailableLabStatus
   protected readonly labs = signal<LabRoomResponse[]>([])
   protected readonly managers = signal<UserManagementResponse[]>([])
   protected readonly loading = signal(true)
@@ -366,18 +371,23 @@ export class LabsPage implements OnInit {
   protected minimumCapacity: number | null = null
   protected form: LabForm = this.emptyForm()
   private loadVersion = 0
+  private refreshSubscription?: Subscription
 
   ngOnInit(): void {
     this.load()
     if (this.store.isAdmin()) this.loadManagers()
+    this.refreshSubscription = interval(30_000).subscribe(() => this.load(false))
   }
-  protected load(): void {
+  ngOnDestroy(): void {
+    this.refreshSubscription?.unsubscribe()
+  }
+  protected load(showLoading = true): void {
     const version = ++this.loadVersion
-    this.loading.set(true)
+    if (showLoading) this.loading.set(true)
     this.api
       .searchLabs({
         keyword: this.keyword || undefined,
-        status: this.store.isRequester() ? 1 : this.status || undefined,
+        status: this.store.isRequester() ? undefined : this.status || undefined,
         minimumCapacity: this.minimumCapacity ?? undefined,
         pageNumber: this.page(),
         pageSize: 12,
@@ -390,9 +400,7 @@ export class LabsPage implements OnInit {
       .subscribe({
         next: (result) => {
           if (version !== this.loadVersion) return
-          const visibleItems = this.store.isRequester()
-            ? result.items.filter((item) => isAvailableLabStatus(item.status))
-            : result.items
+          const visibleItems = result.items
           this.labs.set(visibleItems)
           this.hydrateImages(visibleItems, version)
           this.totalPages.set(result.totalPages || 1)

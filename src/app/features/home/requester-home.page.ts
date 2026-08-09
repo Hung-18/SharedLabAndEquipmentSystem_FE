@@ -12,7 +12,7 @@ import { WorkspaceService } from '../../core/api/workspace.service'
 import { AuthStore } from '../../core/auth/auth.store'
 import { IconComponent } from '../../shared/ui/icon'
 import { ToastService } from '../../shared/ui/toast.service'
-import { normalizeUserStatus } from '../../shared/utils/presentation'
+import { normalizeUserStatus, stripTechnicalIds } from '../../shared/utils/presentation'
 
 @Component({
   selector: 'app-requester-home-page',
@@ -312,14 +312,14 @@ import { normalizeUserStatus } from '../../shared/utils/presentation'
                     <div class="min-w-0 flex-1">
                       <div class="flex items-start gap-3">
                         <p class="min-w-0 flex-1 font-semibold text-slate-900">
-                          {{ notification.title }}
+                          {{ stripTechnicalIds(notification.title) }}
                         </p>
                         @if (!notification.isRead) {
                           <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500"></span>
                         }
                       </div>
                       <p class="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">
-                        {{ notification.message }}
+                        {{ stripTechnicalIds(notification.message) }}
                       </p>
                       <p class="mt-2 text-[11px] text-slate-400">
                         {{ notification.createdAt | date: 'HH:mm, dd/MM/yyyy' }}
@@ -392,6 +392,7 @@ import { normalizeUserStatus } from '../../shared/utils/presentation'
 export class RequesterHomePage implements OnInit {
   private readonly workspace = inject(WorkspaceService)
   protected readonly store = inject(AuthStore)
+  protected readonly stripTechnicalIds = stripTechnicalIds
   private readonly toast = inject(ToastService)
   protected readonly today = new Date()
   protected readonly loading = signal(true)

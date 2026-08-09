@@ -1,5 +1,5 @@
 import { DatePipe, NgClass } from '@angular/common'
-import { Component, OnInit, inject, signal } from '@angular/core'
+import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
 import { catchError, forkJoin, of } from 'rxjs'
@@ -59,15 +59,19 @@ import {
           [title]="lab()!.labName"
           [subtitle]="lab()!.roomCode + ' · ' + lab()!.location"
         >
-          @if (store.isRequester()) {
+          @if (store.isRequester() && isAvailableLabStatus(lab()!.status)) {
             <a
               [routerLink]="['/app/bookings/new']"
               [queryParams]="{ labId: lab()!.labId }"
               class="btn-primary"
               ><app-icon name="calendar-plus" [size]="17" /> Đặt cả phòng</a
             >
+          } @else if (store.isRequester()) {
+            <span class="btn-secondary cursor-not-allowed text-rose-600">
+              <app-icon name="lock" [size]="17" /> Không thể đặt
+            </span>
           }
-          @if (store.isManager()) {
+          @if (store.isManager() && lab()!.managerId === store.user()?.userId) {
             <a
               routerLink="/app/management/maintenances/new"
               [queryParams]="{ labId: lab()!.labId }"
@@ -156,7 +160,7 @@ import {
         </div>
 
         <div class="flex gap-2 overflow-x-auto rounded-2xl bg-white p-1.5 shadow-sm">
-          @for (item of tabs; track item.key) {
+          @for (item of visibleTabs(); track item.key) {
             <button
               type="button"
               class="shrink-0 rounded-xl px-4 py-2.5 text-xs font-black"
@@ -373,6 +377,7 @@ export class LabDetailPage implements OnInit {
   private readonly router = inject(Router)
   private readonly toast = inject(ToastService)
   protected readonly store = inject(AuthStore)
+  protected readonly isAvailableLabStatus = isAvailableLabStatus
   protected readonly isInactiveLabStatus = isInactiveLabStatus
   protected readonly lab = signal<LabRoomDetailResponse | null>(null)
   protected readonly equipments = signal<EquipmentResponse[]>([])
@@ -388,6 +393,9 @@ export class LabDetailPage implements OnInit {
     { key: 'schedule' as const, label: 'Lịch tài nguyên', count: 0 },
     { key: 'maintenance' as const, label: 'Bảo trì', count: 0 },
   ]
+  protected readonly visibleTabs = computed(() =>
+    this.store.isRequester() ? this.tabs.filter((item) => item.key !== 'maintenance') : this.tabs,
+  )
   protected editForm = {
     labName: '',
     location: '',
@@ -526,6 +534,7 @@ export class LabDetailPage implements OnInit {
     })
   }
   protected openEvent(event: CalendarEventResponse): void {
+    if (this.store.isRequester() && event.eventType === 'Maintenance') return
     void this.router.navigate(
       event.eventType === 'Maintenance'
         ? ['/app/management/maintenances', event.sourceId]
@@ -536,20 +545,15 @@ export class LabDetailPage implements OnInit {
     if (showSkeleton) this.loading.set(true)
     this.api.lab(this.id).subscribe({
       next: (lab) => {
-        if (this.store.isRequester() && !isAvailableLabStatus(lab.status)) {
-          this.loading.set(false)
-          this.lab.set(null)
-          this.toast.info('Phòng lab này đã ngừng hoạt động và không còn nhận booking mới.')
-          void this.router.navigate(['/app/labs'], { replaceUrl: true })
-          return
-        }
         this.lab.set(lab)
         const from = new Date()
         const to = new Date()
         to.setDate(to.getDate() + 30)
         forkJoin({
           equipments: this.api.equipmentsByLab(this.id).pipe(catchError(() => of([]))),
-          maintenances: this.api.maintenancesByLab(this.id).pipe(catchError(() => of([]))),
+          maintenances: this.store.isRequester()
+            ? of([] as MaintenanceResponse[])
+            : this.api.maintenancesByLab(this.id).pipe(catchError(() => of([]))),
           events: this.api
             .calendar(from.toISOString(), to.toISOString(), this.id)
             .pipe(catchError(() => of([]))),
@@ -559,7 +563,11 @@ export class LabDetailPage implements OnInit {
             : equipments
           this.equipments.set(visibleEquipments)
           this.maintenances.set(maintenances)
-          this.events.set(events)
+          this.events.set(
+            this.store.isRequester()
+              ? events.filter((event) => event.eventType !== 'Maintenance')
+              : events,
+          )
           this.tabs[0].count = visibleEquipments.length
           this.tabs[1].count = events.length
           this.tabs[2].count = maintenances.length

@@ -2,9 +2,10 @@ import { NgClass } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router, RouterLink } from '@angular/router'
-import { forkJoin } from 'rxjs'
+import { forkJoin, map } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type { EquipmentResponse, LabRoomResponse } from '../../core/api/system.models'
+import { AuthStore } from '../../core/auth/auth.store'
 import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
@@ -358,6 +359,7 @@ export class MaintenanceFormPage implements OnInit {
   private readonly route = inject(ActivatedRoute)
   private readonly router = inject(Router)
   private readonly toast = inject(ToastService)
+  private readonly store = inject(AuthStore)
 
   protected readonly labs = signal<LabRoomResponse[]>([])
   protected readonly equipments = signal<EquipmentResponse[]>([])
@@ -404,10 +406,22 @@ export class MaintenanceFormPage implements OnInit {
     this.editing.set(Boolean(this.id))
     if (this.editing()) this.timeMode = 'custom'
 
-    forkJoin({ labs: this.api.labs(), equipments: this.api.equipments() }).subscribe(
+    const currentUserId = this.store.user()?.userId
+    const labsRequest =
+      this.store.isManager() && currentUserId
+        ? this.api
+            .searchLabs({ managerId: currentUserId, pageNumber: 1, pageSize: 100 })
+            .pipe(map((response) => response.items))
+        : this.api.labs()
+
+    forkJoin({ labs: labsRequest, equipments: this.api.equipments() }).subscribe(
       ({ labs, equipments }) => {
+        const managedLabIds = new Set(labs.map((lab) => lab.labId))
+        const visibleEquipments = this.store.isManager()
+          ? equipments.filter((equipment) => managedLabIds.has(equipment.labId))
+          : equipments
         this.labs.set(labs)
-        this.equipments.set(equipments)
+        this.equipments.set(visibleEquipments)
 
         if (!this.id) {
           const query = this.route.snapshot.queryParamMap
@@ -417,7 +431,7 @@ export class MaintenanceFormPage implements OnInit {
             this.resourceType = 'equipment'
             this.equipmentId = equipmentId
             this.equipmentLabId =
-              equipments.find((item) => item.equipmentId === equipmentId)?.labId ?? null
+              visibleEquipments.find((item) => item.equipmentId === equipmentId)?.labId ?? null
           } else if (labId > 0) {
             this.resourceType = 'lab'
             this.labId = labId
@@ -431,7 +445,7 @@ export class MaintenanceFormPage implements OnInit {
             this.labId = item.labId
             this.equipmentId = item.equipmentId
             this.equipmentLabId =
-              equipments.find((equipment) => equipment.equipmentId === item.equipmentId)?.labId ??
+              visibleEquipments.find((equipment) => equipment.equipmentId === item.equipmentId)?.labId ??
               null
             this.startTime = toLocalDateTimeInput(item.startTime)
             this.endTime = toLocalDateTimeInput(item.endTime)

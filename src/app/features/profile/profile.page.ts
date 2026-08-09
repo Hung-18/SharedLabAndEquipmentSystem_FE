@@ -52,11 +52,13 @@ import { normalizeUserStatus } from '../../shared/utils/presentation'
                 </span>
               </div>
 
-              <div class="mt-6 grid grid-cols-2 gap-3 border-t border-slate-100 pt-6">
-                <div class="rounded-2xl bg-slate-50 p-4">
-                  <p class="text-2xl font-bold text-slate-950">{{ user.penaltyPoints }}</p>
-                  <p class="mt-1 text-[11px] font-medium text-slate-400">Điểm phạt</p>
-                </div>
+              <div class="mt-6 grid gap-3 border-t border-slate-100 pt-6" [class.grid-cols-2]="user.roleName === 'Requester'">
+                @if (user.roleName === 'Requester') {
+                  <div class="rounded-2xl bg-slate-50 p-4">
+                    <p class="text-2xl font-bold text-slate-950">{{ user.penaltyPoints }}</p>
+                    <p class="mt-1 text-[11px] font-medium text-slate-400">Điểm phạt</p>
+                  </div>
+                }
                 <div class="rounded-2xl bg-slate-50 p-4">
                   <p
                     class="text-sm font-bold"
@@ -131,6 +133,7 @@ import { normalizeUserStatus } from '../../shared/utils/presentation'
             </article>
 
             <div class="grid gap-6 lg:grid-cols-2">
+              @if (user.roleName === 'Requester') {
               <article class="card-surface p-5 sm:p-6">
                 <div class="flex items-center gap-3">
                   <div
@@ -179,6 +182,7 @@ import { normalizeUserStatus } from '../../shared/utils/presentation'
                   </div>
                 </div>
               </article>
+              }
 
               <article class="card-surface p-5 sm:p-6">
                 <div class="flex items-center gap-3">
@@ -276,12 +280,15 @@ export class ProfilePage {
     departmentName: string
   }): { label: string; value: string; icon: string }[] {
     const items = [
-      { label: 'Mã người dùng', value: `#${user.userId}`, icon: 'user' },
       { label: 'Họ và tên', value: user.fullName, icon: 'user' },
       { label: 'Tên đăng nhập', value: user.username, icon: 'shield' },
       { label: 'Email', value: user.email, icon: 'mail' },
       { label: 'Vai trò', value: this.roleLabel(user.roleName), icon: 'shield' },
     ]
+
+    if (user.roleName === 'Admin') {
+      items.unshift({ label: 'Mã người dùng', value: `#${user.userId}`, icon: 'user' })
+    }
 
     if (user.roleName !== 'Admin') {
       items.push({
