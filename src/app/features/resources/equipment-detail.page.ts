@@ -65,15 +65,19 @@ import {
             (lab()?.labName || 'Phòng #' + item()!.labId)
           "
         >
-          @if (store.isRequester()) {
+          @if (store.isRequester() && canBook()) {
             <a
               routerLink="/app/bookings/new"
               [queryParams]="{ labId: item()!.labId, equipmentId: item()!.equipmentId }"
               class="btn-primary"
               ><app-icon name="calendar-plus" [size]="17" /> Đặt phòng với thiết bị này</a
             >
+          } @else if (store.isRequester()) {
+            <span class="btn-secondary cursor-not-allowed text-rose-600">
+              <app-icon name="lock" [size]="17" /> Không thể đặt
+            </span>
           }
-          @if (store.isManager()) {
+          @if (store.isManager() && lab()?.managerId === store.user()?.userId) {
             <a
               routerLink="/app/management/maintenances/new"
               [queryParams]="{ equipmentId: item()!.equipmentId }"
@@ -152,7 +156,9 @@ import {
             <header class="flex items-center justify-between border-b border-slate-100 px-5 py-5">
               <div>
                 <h2 class="font-black text-slate-950">Lịch 30 ngày tới</h2>
-                <p class="mt-1 text-xs text-slate-400">Booking và bảo trì của thiết bị</p>
+                <p class="mt-1 text-xs text-slate-400">
+                  {{ store.isRequester() ? 'Lịch đặt của thiết bị' : 'Booking và bảo trì của thiết bị' }}
+                </p>
               </div>
               <a
                 routerLink="/app/calendar"
@@ -205,7 +211,8 @@ import {
               </div>
             }
           </article>
-          <article class="card-surface overflow-hidden">
+          @if (!store.isRequester()) {
+            <article class="card-surface overflow-hidden">
             <header class="border-b border-slate-100 px-5 py-5">
               <h2 class="font-black text-slate-950">Lịch sử bảo trì</h2>
               <p class="mt-1 text-xs text-slate-400">Các lịch bảo trì gắn với thiết bị</p>
@@ -242,7 +249,8 @@ import {
                 }
               </div>
             }
-          </article>
+            </article>
+          }
         </div>
 
         <app-modal
@@ -379,34 +387,26 @@ export class EquipmentDetailPage implements OnInit {
     if (showSkeleton) this.loading.set(true)
     this.api.equipment(this.id).subscribe({
       next: (item) => {
-        if (this.store.isRequester() && !isAvailableEquipmentStatus(item.status)) {
-          this.loading.set(false)
-          this.item.set(null)
-          this.toast.info('Thiết bị này không còn sẵn sàng và không nhận booking mới.')
-          void this.router.navigate(['/app/equipments'], { replaceUrl: true })
-          return
-        }
         this.item.set(item)
         const from = new Date()
         const to = new Date()
         to.setDate(to.getDate() + 30)
         forkJoin({
           lab: this.api.lab(item.labId).pipe(catchError(() => of(null))),
-          maintenances: this.api.maintenancesByEquipment(this.id).pipe(catchError(() => of([]))),
+          maintenances: this.store.isRequester()
+            ? of([] as MaintenanceResponse[])
+            : this.api.maintenancesByEquipment(this.id).pipe(catchError(() => of([]))),
           events: this.api
             .calendar(from.toISOString(), to.toISOString(), undefined, this.id)
             .pipe(catchError(() => of([]))),
         }).subscribe(({ lab, maintenances, events }) => {
-          if (this.store.isRequester() && lab && !isAvailableLabStatus(lab.status)) {
-            this.loading.set(false)
-            this.item.set(null)
-            this.toast.info('Phòng chứa thiết bị đã ngừng hoạt động nên tài nguyên không còn nhận booking mới.')
-            void this.router.navigate(['/app/equipments'], { replaceUrl: true })
-            return
-          }
           this.lab.set(lab)
           this.maintenances.set(maintenances)
-          this.events.set(events)
+          this.events.set(
+            this.store.isRequester()
+              ? events.filter((event) => event.eventType !== 'Maintenance')
+              : events,
+          )
           this.loading.set(false)
         })
       },
@@ -434,10 +434,21 @@ export class EquipmentDetailPage implements OnInit {
     })
   }
   protected openEvent(event: CalendarEventResponse): void {
+    if (this.store.isRequester() && event.eventType === 'Maintenance') return
     void this.router.navigate(
       event.eventType === 'Maintenance'
         ? ['/app/management/maintenances', event.sourceId]
         : ['/app/bookings', event.sourceId],
+    )
+  }
+  protected canBook(): boolean {
+    const equipment = this.item()
+    const lab = this.lab()
+    return Boolean(
+      equipment &&
+        lab &&
+        isAvailableEquipmentStatus(equipment.status) &&
+        isAvailableLabStatus(lab.status),
     )
   }
 }

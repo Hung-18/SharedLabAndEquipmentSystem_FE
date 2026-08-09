@@ -5,7 +5,6 @@ import { SystemService } from '../../core/api/system.service'
 import type { AuditLogResponse, UserManagementResponse } from '../../core/api/system.models'
 import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
-import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
 import { toDateInput } from '../../shared/utils/presentation'
@@ -18,7 +17,6 @@ import { toDateInput } from '../../shared/utils/presentation'
     FormsModule,
     PageHeaderComponent,
     IconComponent,
-    ModalComponent,
     DataStateComponent,
   ],
   template: `
@@ -130,7 +128,6 @@ import { toDateInput } from '../../shared/utils/presentation'
                   <th>Hành động</th>
                   <th>Đối tượng</th>
                   <th>IP Address</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -163,14 +160,6 @@ import { toDateInput } from '../../shared/utils/presentation'
                       <p class="mt-1 text-xs text-slate-400">#{{ log.entityId }}</p>
                     </td>
                     <td class="font-mono text-xs">{{ log.ipAddress || '—' }}</td>
-                    <td class="text-right">
-                      <button
-                        class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-black text-violet-600 hover:border-violet-200 hover:bg-violet-50"
-                        (click)="openDetail(log)"
-                      >
-                        Xem thay đổi
-                      </button>
-                    </td>
                   </tr>
                 }
               </tbody>
@@ -200,74 +189,6 @@ import { toDateInput } from '../../shared/utils/presentation'
         </div>
       }
 
-      <app-modal
-        [open]="selected() !== null"
-        title="Chi tiết thay đổi"
-        [subtitle]="selectedSubtitle()"
-        width="980px"
-        (close)="selected.set(null)"
-      >
-        @if (selected(); as log) {
-          <div class="space-y-5">
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div class="rounded-2xl bg-slate-50 p-4">
-                <p class="text-[10px] font-bold tracking-[.15em] text-slate-400 uppercase">
-                  Audit ID
-                </p>
-                <p class="mt-2 font-black text-slate-800">#{{ log.auditLogId }}</p>
-              </div>
-              <div class="rounded-2xl bg-slate-50 p-4">
-                <p class="text-[10px] font-bold tracking-[.15em] text-slate-400 uppercase">
-                  Hành động
-                </p>
-                <p class="mt-2 font-black text-slate-800">{{ actionLabel(log.actionType) }}</p>
-              </div>
-              <div class="rounded-2xl bg-slate-50 p-4">
-                <p class="text-[10px] font-bold tracking-[.15em] text-slate-400 uppercase">
-                  Đối tượng
-                </p>
-                <p class="mt-2 font-black text-slate-800">
-                  {{ log.entityName }} #{{ log.entityId }}
-                </p>
-              </div>
-              <div class="rounded-2xl bg-slate-50 p-4">
-                <p class="text-[10px] font-bold tracking-[.15em] text-slate-400 uppercase">
-                  IP Address
-                </p>
-                <p class="mt-2 font-mono text-sm font-black text-slate-800">
-                  {{ log.ipAddress || '—' }}
-                </p>
-              </div>
-            </div>
-            <div class="grid gap-5 lg:grid-cols-2">
-              <article class="overflow-hidden rounded-[24px] border border-rose-100">
-                <header class="flex items-center justify-between bg-rose-50 px-5 py-4">
-                  <h3 class="font-black text-rose-900">Giá trị cũ</h3>
-                  <span
-                    class="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-rose-600"
-                    >OLD</span
-                  >
-                </header>
-                <pre
-                  class="max-h-[420px] overflow-auto bg-slate-950 p-5 text-xs leading-6 break-words whitespace-pre-wrap text-rose-100"
-                  >{{ pretty(log.oldValue) }}</pre>
-              </article>
-              <article class="overflow-hidden rounded-[24px] border border-emerald-100">
-                <header class="flex items-center justify-between bg-emerald-50 px-5 py-4">
-                  <h3 class="font-black text-emerald-900">Giá trị mới</h3>
-                  <span
-                    class="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-emerald-600"
-                    >NEW</span
-                  >
-                </header>
-                <pre
-                  class="max-h-[420px] overflow-auto bg-slate-950 p-5 text-xs leading-6 break-words whitespace-pre-wrap text-emerald-100"
-                  >{{ pretty(log.newValue) }}</pre>
-              </article>
-            </div>
-          </div>
-        }
-      </app-modal>
     </section>
   `,
 })
@@ -276,7 +197,6 @@ export class AuditLogsPage implements OnInit {
   private readonly toast = inject(ToastService)
   protected readonly logs = signal<AuditLogResponse[]>([])
   protected readonly users = signal<UserManagementResponse[]>([])
-  protected readonly selected = signal<AuditLogResponse | null>(null)
   protected readonly loading = signal(true)
   protected readonly page = signal(1)
   protected readonly totalPages = signal(0)
@@ -339,26 +259,6 @@ export class AuditLogsPage implements OnInit {
     if (page < 1 || page > this.totalPages()) return
     this.page.set(page)
     this.load()
-  }
-  protected openDetail(log: AuditLogResponse): void {
-    this.api.auditLog(log.auditLogId).subscribe({
-      next: (item) => this.selected.set(item),
-      error: () => this.toast.error('Không tải được chi tiết audit log'),
-    })
-  }
-  protected selectedSubtitle(): string {
-    const log = this.selected()
-    return log
-      ? `${log.userName || 'Chưa xác định người dùng'} · ${new Date(log.createdAt).toLocaleString('vi-VN')}`
-      : ''
-  }
-  protected pretty(value: string | null): string {
-    if (!value) return 'Không có dữ liệu'
-    try {
-      return JSON.stringify(JSON.parse(value), null, 2)
-    } catch {
-      return value
-    }
   }
   protected actionLabel(action: string): string {
     return (

@@ -23,6 +23,7 @@ export interface LabRoomDetailResponse extends LabRoomResponse {
   imageUrl: string | null
   usageGuideline: string | null
   managerName: string | null
+  managerId: number
 }
 
 export interface EquipmentResponse {
@@ -198,6 +199,13 @@ export interface UserManagementResponse {
   penaltyPoints: number
   restrictionUntil: string | null
   status: ApiEnum
+  managedLabRooms: ManagedLabRoomSummaryResponse[]
+}
+
+export interface ManagedLabRoomSummaryResponse {
+  labId: number
+  labName: string
+  roomCode: string
 }
 
 export interface UserPenaltyResponse {

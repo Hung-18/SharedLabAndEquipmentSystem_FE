@@ -9,6 +9,7 @@ import { ApiError } from '../../core/http/api-error'
 import { IconComponent } from '../../shared/ui/icon'
 import { ToastService } from '../../shared/ui/toast.service'
 import { isNotificationVisibleForRole } from '../../shared/utils/notification-visibility'
+import { stripTechnicalIds } from '../../shared/utils/presentation'
 
 type NotificationTab = 'all' | 'unread'
 
@@ -329,7 +330,6 @@ type NotificationTab = 'all' | 'unread'
             <p class="text-xs font-bold tracking-[0.15em] text-indigo-500 uppercase">
               Chi tiết thông báo
             </p>
-            <p class="mt-1 text-sm text-slate-400">#{{ notification.notificationId }}</p>
           </div>
           <button
             type="button"
@@ -542,10 +542,7 @@ export class NotificationsPage implements OnInit {
   }
 
   protected displayNotificationText(value: string): string {
-    if (!this.store.isRequester()) return value
-    return value.replace(/\bbooking\s*#(?:BK-)?\d+\b/gi, (match) =>
-      match.startsWith('B') ? 'Booking' : 'booking',
-    )
+    return stripTechnicalIds(value)
   }
 
   protected typeLabel(type: string): string {

@@ -150,6 +150,7 @@ import { ToastService } from '../../shared/ui/toast.service'
                   <th>Người dùng</th>
                   <th>Vai trò</th>
                   <th>Khoa/phòng ban</th>
+                  <th>Phòng quản lý</th>
                   <th>Điểm phạt</th>
                   <th>Trạng thái</th>
                   <th>Hạn chế đến</th>
@@ -181,18 +182,19 @@ import { ToastService } from '../../shared/ui/toast.service'
                       >
                     </td>
                     <td>{{ user.roleName === 'Admin' ? '—' : user.departmentName }}</td>
+                    <td>{{ managedLabSummary(user) }}</td>
                     <td>
                       <span
                         class="font-black"
-                        [class.text-rose-600]="user.penaltyPoints > 0"
-                        [class.text-slate-700]="user.penaltyPoints === 0"
-                        >{{ user.penaltyPoints }}</span
+                        [class.text-rose-600]="user.roleName === 'Requester' && user.penaltyPoints > 0"
+                        [class.text-slate-700]="user.roleName === 'Requester' && user.penaltyPoints === 0"
+                        >{{ user.roleName === 'Requester' ? user.penaltyPoints : '—' }}</span
                       >
                     </td>
                     <td><app-status-badge [value]="user.status" domain="user" /></td>
                     <td>
                       {{
-                        user.restrictionUntil
+                        user.roleName === 'Requester' && user.restrictionUntil
                           ? (user.restrictionUntil | date: 'dd/MM/yyyy HH:mm')
                           : '—'
                       }}
@@ -260,7 +262,17 @@ export class UsersPage implements OnInit {
   }
 
   protected pagePenaltyPoints(): number {
-    return this.users().reduce((sum, user) => sum + user.penaltyPoints, 0)
+    return this.users().reduce(
+      (sum, user) => sum + (user.roleName === 'Requester' ? user.penaltyPoints : 0),
+      0,
+    )
+  }
+  protected managedLabSummary(user: UserManagementResponse): string {
+    if (user.roleName !== 'LabManager') return '—'
+    const labs = user.managedLabRooms ?? []
+    if (labs.length === 0) return 'Chưa phân công'
+    if (labs.length <= 2) return labs.map((lab) => lab.labName).join(', ')
+    return `${labs[0].labName}, ${labs[1].labName} +${labs.length - 2} phòng`
   }
   protected applyFilters(): void {
     this.page.set(1)

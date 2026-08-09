@@ -178,6 +178,7 @@ export const routes: Routes = [
       },
       {
         path: 'management/maintenances/:id',
+        canActivate: [roleGuard(['Admin', 'LabManager'])],
         title: 'Chi tiết bảo trì',
         loadComponent: () =>
           import('./features/management/maintenance-detail.page').then(
@@ -186,6 +187,7 @@ export const routes: Routes = [
       },
       {
         path: 'management/maintenances',
+        canActivate: [roleGuard(['Admin', 'LabManager'])],
         title: 'Lịch bảo trì',
         loadComponent: () =>
           import('./features/management/maintenances.page').then((m) => m.MaintenancesPage),

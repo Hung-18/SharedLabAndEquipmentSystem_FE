@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, RouterLink } from '@angular/router'
-import { catchError, forkJoin, of } from 'rxjs'
+import { catchError, forkJoin, of, switchMap } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type {
   DepartmentResponse,
@@ -118,15 +118,39 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                   </div>
                   <div class="rounded-2xl bg-white/[.07] p-4">
                     <p class="text-[10px] font-bold tracking-[.15em] text-white/40 uppercase">
-                      Điểm phạt
+                      {{ current.roleName === 'Requester' ? 'Điểm phạt' : current.roleName === 'LabManager' ? 'Phòng quản lý' : 'Giới hạn booking' }}
                     </p>
-                    <p class="mt-2 text-2xl font-black text-rose-300">
-                      {{ current.penaltyPoints }}
+                    <p class="mt-2 text-2xl font-black" [class.text-rose-300]="current.roleName === 'Requester'">
+                      {{ current.roleName === 'Requester' ? current.penaltyPoints : current.roleName === 'LabManager' ? (current.managedLabRooms?.length ?? 0) : '—' }}
                     </p>
                   </div>
                 </div>
               </div>
             </article>
+
+            @if (current.roleName === 'LabManager') {
+              <article class="card-surface overflow-hidden">
+                <header class="border-b border-slate-100 px-6 py-5">
+                  <h2 class="font-black text-slate-950">Phòng đang quản lý</h2>
+                  <p class="mt-1 text-xs text-slate-400">Phạm vi dựa trên LabRoom.ManagerId</p>
+                </header>
+                @if ((current.managedLabRooms?.length ?? 0) === 0) {
+                  <p class="p-6 text-sm text-slate-500">Chưa được phân công quản lý phòng lab nào.</p>
+                } @else {
+                  <div class="divide-y divide-slate-100">
+                    @for (lab of current.managedLabRooms; track lab.labId) {
+                      <a [routerLink]="['/app/labs', lab.labId]" class="flex items-center justify-between gap-3 px-6 py-4 hover:bg-slate-50">
+                        <div>
+                          <p class="font-black text-slate-800">{{ lab.labName }}</p>
+                          <p class="mt-1 text-xs text-slate-400">{{ lab.roomCode }}</p>
+                        </div>
+                        <app-icon name="arrow-right" [size]="16" />
+                      </a>
+                    }
+                  </div>
+                }
+              </article>
+            }
 
             <article class="card-surface p-6">
               <div class="flex items-center justify-between">
@@ -210,9 +234,9 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                   <p class="text-xs font-bold text-slate-400">Hạn chế đến</p>
                   <p class="mt-2 font-black text-slate-800">
                     {{
-                      current.restrictionUntil
+                      current.roleName === 'Requester' && current.restrictionUntil
                         ? (current.restrictionUntil | date: 'dd/MM/yyyy HH:mm')
-                        : 'Không áp dụng'
+                        : '—'
                     }}
                   </p>
                 </div>
@@ -239,14 +263,18 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                 >
                   <app-icon name="check" [size]="20" />
                   <p class="mt-3 text-sm font-black text-emerald-800">Kích hoạt</p></button
-                ><button
+                >
+                @if (current.roleName === 'Requester') {
+                <button
                   class="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-left transition hover:-translate-y-0.5"
                   [disabled]="isCurrentAccount()"
                   (click)="openStatus(3)"
                 >
                   <app-icon name="clock" [size]="20" />
-                  <p class="mt-3 text-sm font-black text-amber-800">Hạn chế</p></button
-                ><button
+                  <p class="mt-3 text-sm font-black text-amber-800">Hạn chế</p>
+                </button>
+                }
+                <button
                   class="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-left transition hover:-translate-y-0.5"
                   [disabled]="isCurrentAccount()"
                   (click)="openAction('lock')"
@@ -264,6 +292,7 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
               </div>
             </article>
 
+            @if (current.roleName === 'Requester') {
             <article class="card-surface overflow-hidden">
               <header class="flex items-center justify-between border-b border-slate-100 px-6 py-5">
                 <div>
@@ -312,6 +341,7 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                 </div>
               }
             </article>
+            }
           </div>
         </div>
       }
@@ -428,7 +458,9 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
             ><select class="input-shell" [(ngModel)]="statusValue">
               <option [ngValue]="1">Đang hoạt động</option>
               <option [ngValue]="2">Ngừng hoạt động</option>
-              <option [ngValue]="3">Bị hạn chế đặt lịch</option>
+              @if (user()?.roleName === 'Requester') {
+                <option [ngValue]="3">Bị hạn chế đặt lịch</option>
+              }
               <option [ngValue]="4">Bị khóa</option>
             </select>
           </div>
@@ -643,19 +675,31 @@ export class UserDetailPage implements OnInit {
       return
     }
     if (showLoading) this.loading.set(true)
-    forkJoin({
-      user: this.api.user(this.userId),
-      penalty: this.api
-        .userPenalty(this.userId)
-        .pipe(catchError(() => of(null as UserPenaltyResponse | null))),
-      summary: this.api
-        .violationSummary(this.userId)
-        .pipe(catchError(() => of(null as UserViolationSummaryResponse | null))),
-      departments: this.api
-        .departments(true)
-        .pipe(catchError(() => of([] as DepartmentResponse[]))),
-      roles: this.api.roles().pipe(catchError(() => of([] as RoleResponse[]))),
-    }).subscribe({
+    this.api
+      .user(this.userId)
+      .pipe(
+        switchMap((user) => {
+          const requesterOnly = user.roleName === 'Requester'
+          return forkJoin({
+            user: of(user),
+            penalty: requesterOnly
+              ? this.api
+                  .userPenalty(this.userId)
+                  .pipe(catchError(() => of(null as UserPenaltyResponse | null)))
+              : of(null as UserPenaltyResponse | null),
+            summary: requesterOnly
+              ? this.api
+                  .violationSummary(this.userId)
+                  .pipe(catchError(() => of(null as UserViolationSummaryResponse | null)))
+              : of(null as UserViolationSummaryResponse | null),
+            departments: this.api
+              .departments(true)
+              .pipe(catchError(() => of([] as DepartmentResponse[]))),
+            roles: this.api.roles().pipe(catchError(() => of([] as RoleResponse[]))),
+          })
+        }),
+      )
+      .subscribe({
       next: (response) => {
         this.user.set(response.user)
         this.penalty.set(response.penalty)

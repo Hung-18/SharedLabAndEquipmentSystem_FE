@@ -2,6 +2,7 @@ import { DatePipe, NgClass } from '@angular/common'
 import { Component, OnInit, computed, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
+import { forkJoin, map } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type {
   EquipmentResponse,
@@ -254,8 +255,25 @@ export class MaintenancesPage implements OnInit {
       .sort((a, b) => +new Date(b.startTime) - +new Date(a.startTime))
   }
   ngOnInit(): void {
-    this.api.labs().subscribe((x) => this.labs.set(x))
-    this.api.equipments().subscribe((x) => this.equipments.set(x))
+    const currentUserId = this.store.user()?.userId
+    const labsRequest =
+      this.store.isManager() && currentUserId
+        ? this.api
+            .searchLabs({ managerId: currentUserId, pageNumber: 1, pageSize: 100 })
+            .pipe(map((response) => response.items))
+        : this.api.labs()
+
+    forkJoin({ labs: labsRequest, equipments: this.api.equipments() }).subscribe(
+      ({ labs, equipments }) => {
+        const managedLabIds = new Set(labs.map((lab) => lab.labId))
+        this.labs.set(labs)
+        this.equipments.set(
+          this.store.isManager()
+            ? equipments.filter((equipment) => managedLabIds.has(equipment.labId))
+            : equipments,
+        )
+      },
+    )
     this.load()
   }
   protected load(): void {
