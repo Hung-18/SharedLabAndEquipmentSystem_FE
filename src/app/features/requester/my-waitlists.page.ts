@@ -31,7 +31,7 @@ import { ToastService } from '../../shared/ui/toast.service'
     <section class="space-y-6">
       <app-page-header
         title="Hàng chờ của tôi"
-        subtitle="Theo dõi vị trí, thời gian giữ chỗ và tạo booking ngay khi nhận được thông báo."
+        subtitle="Hàng chờ giữ ưu tiên cho phòng. Khi đến lượt, bạn chọn lại thiết bị còn khả dụng rồi tạo booking."
         ><a routerLink="/app/bookings/new" class="btn-primary"
           ><app-icon name="plus" [size]="17" /> Tạo booking</a
         ></app-page-header
@@ -121,7 +121,8 @@ import { ToastService } from '../../shared/ui/toast.service'
                     <p class="text-xs font-black text-emerald-800">Thời gian giữ chỗ còn lại</p>
                     <p class="mt-2 text-2xl font-black text-emerald-700">{{ countdown(item) }}</p>
                     <p class="mt-1 text-[11px] text-emerald-700/70">
-                      Vị trí được giữ tối đa 30 phút kể từ {{ item.notifiedAt | date: 'HH:mm:ss' }}.
+                      Phòng được giữ ưu tiên tối đa 30 phút kể từ {{ item.notifiedAt | date: 'HH:mm:ss' }}.
+                      Thiết bị không được giữ và sẽ chọn lại khi tạo booking.
                     </p>
                   </div>
                 }
@@ -211,7 +212,6 @@ export class MyWaitlistsPage implements OnInit, OnDestroy {
     void this.router.navigate(['/app/bookings/new'], {
       queryParams: {
         labId: item.labId,
-        equipmentId: item.equipmentId,
         start: item.requestedStart,
         end: item.requestedEnd,
         waitlistId: item.waitlistId,

@@ -77,6 +77,10 @@ export interface MaintenancePayload {
   recurrenceEndDate: string | null
 }
 
+export interface CreateMaintenancePayload extends MaintenancePayload {
+  startImmediately: boolean
+}
+
 @Injectable({ providedIn: 'root' })
 export class SystemService {
   private readonly http = inject(HttpClient)
@@ -262,7 +266,7 @@ export class SystemService {
     return this.http.get<MaintenanceResponse[]>(`${this.base}/Maintenances/equipment/${id}`)
   }
 
-  createMaintenance(payload: MaintenancePayload): Observable<MaintenanceDetailResponse> {
+  createMaintenance(payload: CreateMaintenancePayload): Observable<MaintenanceDetailResponse> {
     return this.http.post<MaintenanceDetailResponse>(`${this.base}/Maintenances`, payload)
   }
 

@@ -385,7 +385,7 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
                       <button
                         type="button"
                         class="btn-secondary shrink-0"
-                        [disabled]="joiningWaitlist() || selectedEquipmentCount() > 0 || !validTime()"
+                        [disabled]="joiningWaitlist() || !validTime()"
                         (click)="joinWaitlist()"
                       >
                         <app-icon name="hourglass" [size]="16" />
@@ -395,8 +395,8 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
                   </div>
                   @if (!available() && selectedEquipmentCount() > 0) {
                     <p class="mt-3 text-xs leading-5 opacity-75">
-                      Hàng chờ hiện chỉ hỗ trợ một tài nguyên. Booking có thiết bị đi kèm chưa thể
-                      tham gia hàng chờ; hãy bỏ chọn thiết bị hoặc chọn slot khác.
+                      Hàng chờ chỉ giữ quyền ưu tiên cho <strong>phòng</strong>. Các thiết bị đang chọn
+                      sẽ không được giữ; khi đến lượt, bạn chọn lại thiết bị còn khả dụng rồi tạo booking.
                     </p>
                   }
                 </div>
@@ -1151,20 +1151,9 @@ export class BookingFormPage implements OnInit {
             )
             void this.router.navigate(['/app/bookings', booking.bookingId])
           }
-          if (!this.sourceWaitlistId) {
-            finish()
-            return
-          }
-          this.api.markWaitlistBooked(this.sourceWaitlistId).subscribe({
-            next: finish,
-            error: () => {
-              this.toast.info(
-                'Booking đã tạo nhưng hàng chờ chưa cập nhật',
-                'Bạn có thể kiểm tra lại tại màn hình Hàng chờ của tôi.',
-              )
-              finish()
-            },
-          })
+          // Backend mới tự chuyển lượt Notified tương ứng sang Booked trong cùng transaction
+          // khi booking được tạo thành công. FE không gọi mark-booked lần hai để tránh cập nhật trùng.
+          finish()
         },
         error: (error: unknown) => {
           this.submitting.set(false)
@@ -1179,8 +1168,8 @@ export class BookingFormPage implements OnInit {
 
   protected joinWaitlist(): void {
     const room = this.selectedRoom()
-    if (!room || this.selectedEquipmentCount() > 0 || !this.validTime()) {
-      this.toast.info('Hàng chờ chỉ hỗ trợ booking gồm một phòng và không kèm thiết bị')
+    if (!room || !this.validTime()) {
+      this.toast.info('Hãy chọn phòng và khung giờ hợp lệ trước khi tham gia hàng chờ')
       return
     }
     this.joiningWaitlist.set(true)
@@ -1195,8 +1184,10 @@ export class BookingFormPage implements OnInit {
         next: (entry) => {
           this.joiningWaitlist.set(false)
           this.toast.success(
-            'Đã tham gia hàng chờ',
-            `Vị trí hiện tại của bạn: ${entry.queuePosition}.`,
+            'Đã tham gia hàng chờ của phòng',
+            this.selectedEquipmentCount() > 0
+              ? `Vị trí hiện tại: ${entry.queuePosition}. Thiết bị không được giữ và sẽ chọn lại khi đến lượt.`
+              : `Vị trí hiện tại của bạn: ${entry.queuePosition}.`,
           )
         },
         error: () => {

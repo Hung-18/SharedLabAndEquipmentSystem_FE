@@ -2,6 +2,7 @@ import { HttpBackend, HttpClient, HttpErrorResponse, HttpInterceptorFn } from '@
 import { inject } from '@angular/core'
 import { Router } from '@angular/router'
 import { Observable, catchError, finalize, shareReplay, switchMap, tap, throwError } from 'rxjs'
+import { AuthStore } from '../auth/auth.store'
 import { TokenStorage } from '../auth/token-storage'
 import type { AuthTokens } from '../auth/auth.types'
 import { env } from '../config/env'
@@ -13,6 +14,7 @@ let refreshInFlight$: Observable<AuthTokens> | null = null
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router)
   const tokens = inject(TokenStorage)
+  const authStore = inject(AuthStore)
   const http = new HttpClient(inject(HttpBackend))
 
   return next(req).pipe(
@@ -40,16 +42,26 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             next(req.clone({ setHeaders: { Authorization: `Bearer ${fresh.accessToken}` } })),
           ),
           catchError((refreshError: HttpErrorResponse) => {
-            clearSession(tokens)
-            void router.navigate(['/login'], { queryParams: { reason: 'session-expired' } })
+            // Only end the local session when the backend actually rejects the refresh token.
+            // Network/5xx failures are temporary and must not log the user out.
+            if (isRefreshTokenRejected(refreshError)) {
+              clearSession(tokens, authStore)
+              void router.navigate(['/login'], {
+                replaceUrl: true,
+                queryParams: { reason: 'session-invalidated' },
+              })
+            }
             return throwError(() => normalize(refreshError))
           }),
         )
       }
 
       if (error.status === 401 && !isAuthEndpoint) {
-        clearSession(tokens)
-        void router.navigate(['/login'], { queryParams: { reason: 'session-expired' } })
+        clearSession(tokens, authStore)
+        void router.navigate(['/login'], {
+          replaceUrl: true,
+          queryParams: { reason: 'session-expired' },
+        })
       }
 
       return throwError(() => normalize(error))
@@ -57,7 +69,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   )
 }
 
-function clearSession(tokens: TokenStorage): void {
+function isRefreshTokenRejected(error: HttpErrorResponse): boolean {
+  return error.status === 400 || error.status === 401 || error.status === 403
+}
+
+function clearSession(tokens: TokenStorage, authStore: AuthStore): void {
+  // Clear both persisted tokens and the reactive user state so the old header/user
+  // does not remain visible while redirecting to the login page.
+  authStore.clearLocalSession()
   tokens.clear()
   localStorage.removeItem(USER_KEY)
   sessionStorage.removeItem(USER_KEY)

@@ -164,14 +164,14 @@ export const routes: Routes = [
       },
       {
         path: 'management/maintenances/new',
-        canActivate: [roleGuard(['LabManager'])],
+        canActivate: [roleGuard(['Admin', 'LabManager'])],
         title: 'Tạo lịch bảo trì',
         loadComponent: () =>
           import('./features/management/maintenance-form.page').then((m) => m.MaintenanceFormPage),
       },
       {
         path: 'management/maintenances/:id/edit',
-        canActivate: [roleGuard(['LabManager'])],
+        canActivate: [roleGuard(['Admin', 'LabManager'])],
         title: 'Sửa lịch bảo trì',
         loadComponent: () =>
           import('./features/management/maintenance-form.page').then((m) => m.MaintenanceFormPage),
