@@ -131,6 +131,10 @@ export class SystemService {
     return this.http.put<void>(`${this.base}/LabRooms/${id}/manager`, { managerId })
   }
 
+  activateLab(id: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/LabRooms/${id}/activate`, {})
+  }
+
   deleteLab(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/LabRooms/${id}`)
   }
@@ -174,6 +178,10 @@ export class SystemService {
     },
   ): Observable<void> {
     return this.http.put<void>(`${this.base}/Equipments/${id}`, payload)
+  }
+
+  activateEquipment(id: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/Equipments/${id}/activate`, {})
   }
 
   deleteEquipment(id: number): Observable<void> {

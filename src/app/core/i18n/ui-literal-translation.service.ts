@@ -411,13 +411,11 @@ const UI_EN_OVERRIDES: Readonly<Record<string, string>> = {
   'Đang kích hoạt...': 'Reactivating...',
   'Kích hoạt lại': 'Reactivate',
   'Kích hoạt lại phòng lab này?': 'Reactivate this laboratory?',
-  'Đã kích hoạt lại phòng lab. Bây giờ có thể chỉnh sửa.':
-    'The laboratory has been reactivated and can now be edited.',
-  'Không thể kích hoạt lại phòng bằng phiên bản hiện tại.':
-    'This laboratory cannot be reactivated in the current version.',
-  'Đã gửi yêu cầu kích hoạt nhưng không tải lại được trạng thái phòng lab':
-    'The reactivation request was sent, but the laboratory status could not be refreshed.',
+  'Kích hoạt lại thiết bị này?': 'Reactivate this equipment?',
+  'Đã kích hoạt lại phòng lab': 'Laboratory reactivated',
+  'Đã kích hoạt lại thiết bị': 'Equipment reactivated',
   'Không thể kích hoạt lại phòng lab': 'Unable to reactivate the laboratory',
+  'Không thể kích hoạt lại thiết bị': 'Unable to reactivate the equipment',
   'Trang này chỉ dành cho một số vai trò nhất định. Hệ thống đã bảo vệ nội dung và không hiển thị bất kỳ thông tin kỹ thuật nào.':
     'This page is available only to specific roles. Its content is protected.',
   'Đường dẫn bạn đang mở không tồn tại, đã được di chuyển hoặc không còn khả dụng trong hệ thống.':
@@ -701,6 +699,9 @@ function translateLiteral(value: string): string {
 
 function translateDynamic(value: string): string | null {
   let match: RegExpMatchArray | null
+  if ((match = value.match(/^Trạng thái hiện tại:\s*(.+?)\.\s*Liên hệ quản trị viên hoặc chờ hết thời gian hạn chế\.$/))) {
+    return `Current status: ${match[1]}. Contact an administrator or wait until the restriction expires.`
+  }
   if ((match = value.match(/^(.+),\s+lặp hằng ngày từ\s+(.+)\s+đến\s+(.+)\.$/))) {
     return `${match[1]}, repeats daily from ${match[2]} to ${match[3]}.`
   }
