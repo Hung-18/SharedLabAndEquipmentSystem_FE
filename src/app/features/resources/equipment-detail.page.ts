@@ -303,9 +303,15 @@ import {
                     <app-icon name="trash" [size]="16" /> Ngừng sử dụng
                   </button>
                 } @else {
-                  <span class="inline-flex h-10 items-center rounded-xl bg-slate-100 px-3 text-xs font-black text-slate-500">
-                    Thiết bị đã ngừng sử dụng
-                  </span>
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    [disabled]="saving()"
+                    (click)="reactivate()"
+                  >
+                    <app-icon name="refresh" [size]="16" />
+                    {{ saving() ? 'Đang kích hoạt...' : 'Kích hoạt lại' }}
+                  </button>
                 }
               </div>
               <div class="flex gap-2">
@@ -356,9 +362,13 @@ export class EquipmentDetailPage implements OnInit {
     }
     this.editOpen.set(true)
     if (!this.labs().length)
-      this.api
-        .labs()
-        .subscribe((items) => this.labs.set(items.filter((lab) => !isInactiveLabStatus(lab.status))))
+      this.api.labs().subscribe((items) =>
+        this.labs.set(
+          items.filter(
+            (lab) => lab.labId === item.labId || !isInactiveLabStatus(lab.status),
+          ),
+        ),
+      )
   }
   protected save(): void {
     this.saving.set(true)
@@ -383,6 +393,27 @@ export class EquipmentDetailPage implements OnInit {
         },
       })
   }
+
+  protected reactivate(): void {
+    const equipment = this.item()
+    if (!equipment || !isRetiredEquipmentStatus(equipment.status)) return
+    if (!confirm('Kích hoạt lại thiết bị này?')) return
+
+    this.saving.set(true)
+    this.api.activateEquipment(this.id).subscribe({
+      next: () => {
+        this.saving.set(false)
+        this.editOpen.set(false)
+        this.toast.success('Đã kích hoạt lại thiết bị')
+        this.load(false)
+      },
+      error: (error) => {
+        this.saving.set(false)
+        this.toast.error(apiErrorMessage(error, 'Không thể kích hoạt lại thiết bị'))
+      },
+    })
+  }
+
   private load(showSkeleton = true): void {
     if (showSkeleton) this.loading.set(true)
     this.api.equipment(this.id).subscribe({

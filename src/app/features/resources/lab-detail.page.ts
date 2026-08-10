@@ -479,42 +479,19 @@ export class LabDetailPage implements OnInit {
     if (!lab || !isInactiveLabStatus(lab.status)) return
     if (!confirm('Kích hoạt lại phòng lab này?')) return
 
-    const payload = {
-      labName: lab.labName,
-      location: lab.location,
-      capacity: lab.capacity,
-      description: lab.description ?? null,
-      imageUrl: lab.imageUrl ?? null,
-      usageGuideline: lab.usageGuideline ?? null,
-      status: 1,
-    }
-
     this.saving.set(true)
-    this.api.updateLab(this.id, payload).subscribe({
-        next: () => {
-          this.api.lab(this.id).subscribe({
-            next: (updated) => {
-              this.saving.set(false)
-              this.lab.set(updated)
-              if (isAvailableLabStatus(updated.status)) {
-                this.toast.success('Đã kích hoạt lại phòng lab. Bây giờ có thể chỉnh sửa.')
-              } else {
-                this.toast.error(
-                  'Không thể kích hoạt lại phòng bằng phiên bản hiện tại.',
-                )
-              }
-            },
-            error: () => {
-              this.saving.set(false)
-              this.toast.error('Đã gửi yêu cầu kích hoạt nhưng không tải lại được trạng thái phòng lab')
-            },
-          })
-        },
-        error: (error) => {
-          this.saving.set(false)
-          this.toast.error(apiErrorMessage(error, 'Không thể kích hoạt lại phòng lab'))
-        },
-      })
+    this.api.activateLab(this.id).subscribe({
+      next: () => {
+        this.saving.set(false)
+        this.editOpen.set(false)
+        this.toast.success('Đã kích hoạt lại phòng lab')
+        this.load(false)
+      },
+      error: (error) => {
+        this.saving.set(false)
+        this.toast.error(apiErrorMessage(error, 'Không thể kích hoạt lại phòng lab'))
+      },
+    })
   }
 
   protected remove(): void {
