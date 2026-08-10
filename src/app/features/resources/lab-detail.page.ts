@@ -311,9 +311,8 @@ import {
               />
             </div>
             <div>
-              <label class="field-label">Đổi quản lý phòng thí nghiệm</label
+              <label class="field-label">Quản lý phòng thí nghiệm</label
               ><select class="input-shell" [(ngModel)]="managerId" name="managerId">
-                <option [ngValue]="null">Giữ nguyên</option>
                 @for (manager of managers(); track manager.userId) {
                   <option [ngValue]="manager.userId">{{ manager.fullName }}</option>
                 }
@@ -422,7 +421,7 @@ export class LabDetailPage implements OnInit {
       imageUrl: lab.imageUrl ?? '',
       usageGuideline: lab.usageGuideline ?? '',
     }
-    this.managerId = null
+    this.managerId = lab.managerId || null
     this.editOpen.set(true)
     if (!this.managers().length)
       this.api.users({ roleName: 'LabManager', pageSize: 100 }).subscribe({
@@ -458,7 +457,7 @@ export class LabDetailPage implements OnInit {
       })
       .subscribe({
         next: () => {
-          if (this.managerId) {
+          if (this.managerId && this.managerId !== this.lab()?.managerId) {
             this.api.changeLabManager(this.id, this.managerId).subscribe({
               next: () => this.finishSave(),
               error: () => {
