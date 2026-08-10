@@ -6,6 +6,7 @@ import { catchError, forkJoin, of } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
 import type {
   BookingDetailResponse,
+  EquipmentResponse,
   UsageLogResponse,
   ViolationResponse,
 } from '../../core/api/system.models'
@@ -152,7 +153,8 @@ import { apiErrorMessage } from '../../core/http/api-error'
                 <div>
                   <h2 class="text-lg font-black text-slate-950">Phòng và thiết bị trong booking</h2>
                   <p class="mt-1 text-xs text-slate-400">
-                    Check-in một lần cho toàn bộ booking; check-out sẽ trả toàn bộ phòng và thiết bị.
+                    Check-in một lần cho toàn bộ booking; check-out sẽ trả toàn bộ phòng và thiết
+                    bị.
                   </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -415,13 +417,27 @@ import { apiErrorMessage } from '../../core/http/api-error'
               </select>
             </div>
             <div>
-              <label class="field-label">Thiết bị bị ảnh hưởng (ID)</label
-              ><input
+              <label class="field-label">Thiết bị ảnh hưởng</label
+              ><select
                 class="input-shell"
-                type="number"
                 [(ngModel)]="affectedEquipmentId"
-                placeholder="Để trống nếu không xác định"
-              />
+                [disabled]="incidentEquipmentsLoading()"
+              >
+                <option [ngValue]="null">
+                  {{
+                    incidentEquipmentRequired()
+                      ? incidentEquipments().length
+                        ? 'Chọn thiết bị'
+                        : 'Không có thiết bị'
+                      : 'Không xác định'
+                  }}
+                </option>
+                @for (equipment of incidentEquipments(); track equipment.equipmentId) {
+                  <option [ngValue]="equipment.equipmentId">
+                    {{ equipment.equipmentName }}
+                  </option>
+                }
+              </select>
             </div>
             <div>
               <label class="field-label">Mô tả chi tiết</label
@@ -431,7 +447,11 @@ import { apiErrorMessage } from '../../core/http/api-error'
               <button class="btn-secondary" (click)="incidentOpen.set(false)">Hủy</button
               ><button
                 class="btn-primary"
-                [disabled]="!incidentDescription.trim()"
+                [disabled]="
+                  !incidentDescription.trim() ||
+                  incidentEquipmentsLoading() ||
+                  (incidentEquipmentRequired() && !affectedEquipmentId)
+                "
                 (click)="reportIncident()"
               >
                 Gửi báo cáo
@@ -452,6 +472,8 @@ export class BookingDetailPage implements OnInit {
   protected readonly booking = signal<BookingDetailResponse | null>(null)
   protected readonly logs = signal<UsageLogResponse[]>([])
   protected readonly violations = signal<ViolationResponse[]>([])
+  protected readonly incidentEquipments = signal<EquipmentResponse[]>([])
+  protected readonly incidentEquipmentsLoading = signal(false)
   protected readonly loading = signal(true)
   protected readonly acting = signal(false)
   protected readonly rejectOpen = signal(false)
@@ -496,11 +518,7 @@ export class BookingDetailPage implements OnInit {
 
   protected canCancel(): boolean {
     const item = this.booking()
-    if (
-      !item ||
-      !['Pending', 'Approved'].includes(item.status) ||
-      !this.isOwnerRequester()
-    ) {
+    if (!item || !['Pending', 'Approved'].includes(item.status) || !this.isOwnerRequester()) {
       return false
     }
     if (item.status === 'Pending') return true
@@ -549,6 +567,10 @@ export class BookingDetailPage implements OnInit {
 
   protected canReportIncident(log: UsageLogResponse): boolean {
     return this.isOwnerRequester() && !log.actualCheckout
+  }
+
+  protected incidentEquipmentRequired(): boolean {
+    return this.incidentStatus === 2 || this.incidentStatus === 4
   }
 
   protected canComplete(): boolean {
@@ -701,13 +723,53 @@ export class BookingDetailPage implements OnInit {
     this.incidentStatus = 2
     this.incidentDescription = ''
     this.affectedEquipmentId = null
+    this.incidentEquipments.set([])
+    this.incidentEquipmentsLoading.set(false)
     this.incidentOpen.set(true)
+
+    const bookingItem = this.booking()?.items.find(
+      (item) => item.bookingItemId === log.bookingItemId,
+    )
+    if (!bookingItem) return
+
+    if (bookingItem.equipmentId) {
+      this.affectedEquipmentId = bookingItem.equipmentId
+      this.incidentEquipments.set([
+        {
+          equipmentId: bookingItem.equipmentId,
+          labId: bookingItem.labId ?? 0,
+          equipmentName: bookingItem.equipmentName ?? 'Thiết bị',
+          status: '',
+        },
+      ])
+      return
+    }
+
+    if (!bookingItem.labId) return
+    const requestedLogId = log.logId
+    this.incidentEquipmentsLoading.set(true)
+    this.api.equipmentsByLab(bookingItem.labId).subscribe({
+      next: (equipments) => {
+        if (this.incidentLogId !== requestedLogId) return
+        this.incidentEquipments.set(equipments)
+        this.incidentEquipmentsLoading.set(false)
+      },
+      error: (error: unknown) => {
+        if (this.incidentLogId !== requestedLogId) return
+        this.incidentEquipmentsLoading.set(false)
+        this.toast.error('Không tải được thiết bị', apiErrorMessage(error))
+      },
+    })
   }
   protected reportIncident(): void {
     const log = this.logs().find((item) => item.logId === this.incidentLogId)
     if (!log || !this.canReportIncident(log)) {
       this.incidentOpen.set(false)
       this.toast.info('Bạn không có quyền báo sự cố cho booking này')
+      return
+    }
+    if (this.incidentEquipmentRequired() && !this.affectedEquipmentId) {
+      this.toast.info('Chọn thiết bị')
       return
     }
     this.api

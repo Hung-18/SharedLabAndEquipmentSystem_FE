@@ -2,7 +2,7 @@ import { DatePipe, NgClass } from '@angular/common'
 import { Component, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { SystemService } from '../../core/api/system.service'
-import type { UsageLogResponse } from '../../core/api/system.models'
+import type { EquipmentResponse, UsageLogResponse } from '../../core/api/system.models'
 import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
 import { ModalComponent } from '../../shared/ui/modal'
@@ -106,7 +106,7 @@ import { labelOf, toIso } from '../../shared/utils/presentation'
               <div class="flex items-center justify-between text-xs">
                 <span class="text-slate-400">Thiết bị ảnh hưởng</span
                 ><strong class="text-slate-700">{{
-                  item.affectedEquipmentId ? '#' + item.affectedEquipmentId : 'Không xác định'
+                  equipmentName(item.affectedEquipmentId)
                 }}</strong>
               </div>
               <div class="mt-3 flex items-center justify-between text-xs">
@@ -169,6 +169,7 @@ export class IncidentsPage implements OnInit {
   private readonly api = inject(SystemService)
   private readonly toast = inject(ToastService)
   protected readonly items = signal<UsageLogResponse[]>([])
+  protected readonly equipments = signal<EquipmentResponse[]>([])
   protected readonly loading = signal(true)
   protected readonly reviewOpen = signal(false)
   protected readonly selected = signal<UsageLogResponse | null>(null)
@@ -187,7 +188,15 @@ export class IncidentsPage implements OnInit {
     start.setDate(start.getDate() - 30)
     this.from = start.toISOString().slice(0, 10)
     this.to = now.toISOString().slice(0, 10)
+    this.loadEquipments()
     this.load()
+  }
+  protected equipmentName(equipmentId: number | null): string {
+    if (!equipmentId) return 'Không xác định'
+    return (
+      this.equipments().find((equipment) => equipment.equipmentId === equipmentId)?.equipmentName ??
+      'Không xác định'
+    )
   }
   protected count(status: string): number {
     return this.items().filter((x) => x.incidentReviewStatus === status).length
@@ -225,6 +234,12 @@ export class IncidentsPage implements OnInit {
         this.loading.set(false)
         this.toast.error('Không tải được danh sách sự cố')
       },
+    })
+  }
+  private loadEquipments(): void {
+    this.api.equipments().subscribe({
+      next: (equipments) => this.equipments.set(equipments),
+      error: () => this.equipments.set([]),
     })
   }
 }

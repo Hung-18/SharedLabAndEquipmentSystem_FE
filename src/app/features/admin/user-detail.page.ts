@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, RouterLink } from '@angular/router'
 import { catchError, forkJoin, of, switchMap } from 'rxjs'
 import { SystemService } from '../../core/api/system.service'
+import { apiErrorMessage } from '../../core/http/api-error'
 import type {
   DepartmentResponse,
   RoleResponse,
@@ -18,7 +19,12 @@ import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
-import { labelOf, normalizeUserStatus, toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
+import {
+  labelOf,
+  normalizeUserStatus,
+  toIso,
+  toLocalDateTimeInput,
+} from '../../shared/utils/presentation'
 
 type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
 
@@ -117,10 +123,25 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                   </div>
                   <div class="rounded-2xl bg-white/[.07] p-4">
                     <p class="text-[10px] font-bold tracking-[.15em] text-white/40 uppercase">
-                      {{ current.roleName === 'Requester' ? 'Điểm phạt' : current.roleName === 'LabManager' ? 'Phòng quản lý' : 'Giới hạn booking' }}
+                      {{
+                        current.roleName === 'Requester'
+                          ? 'Điểm phạt'
+                          : current.roleName === 'LabManager'
+                            ? 'Phòng quản lý'
+                            : 'Giới hạn booking'
+                      }}
                     </p>
-                    <p class="mt-2 text-2xl font-black" [class.text-rose-300]="current.roleName === 'Requester'">
-                      {{ current.roleName === 'Requester' ? current.penaltyPoints : current.roleName === 'LabManager' ? (current.managedLabRooms?.length ?? 0) : '—' }}
+                    <p
+                      class="mt-2 text-2xl font-black"
+                      [class.text-rose-300]="current.roleName === 'Requester'"
+                    >
+                      {{
+                        current.roleName === 'Requester'
+                          ? current.penaltyPoints
+                          : current.roleName === 'LabManager'
+                            ? (current.managedLabRooms?.length ?? 0)
+                            : '—'
+                      }}
                     </p>
                   </div>
                 </div>
@@ -134,11 +155,16 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                   <p class="mt-1 text-xs text-slate-400">Phạm vi dựa trên LabRoom.ManagerId</p>
                 </header>
                 @if ((current.managedLabRooms?.length ?? 0) === 0) {
-                  <p class="p-6 text-sm text-slate-500">Chưa được phân công quản lý phòng lab nào.</p>
+                  <p class="p-6 text-sm text-slate-500">
+                    Chưa được phân công quản lý phòng lab nào.
+                  </p>
                 } @else {
                   <div class="divide-y divide-slate-100">
                     @for (lab of current.managedLabRooms; track lab.labId) {
-                      <a [routerLink]="['/app/labs', lab.labId]" class="flex items-center justify-between gap-3 px-6 py-4 hover:bg-slate-50">
+                      <a
+                        [routerLink]="['/app/labs', lab.labId]"
+                        class="flex items-center justify-between gap-3 px-6 py-4 hover:bg-slate-50"
+                      >
                         <div>
                           <p class="font-black text-slate-800">{{ lab.labName }}</p>
                           <p class="mt-1 text-xs text-slate-400">{{ lab.roomCode }}</p>
@@ -182,10 +208,7 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                     <p class="text-xs font-bold text-slate-400">Khoa/phòng ban</p>
                     <div class="mt-2 flex items-center justify-between gap-3">
                       <p class="font-black text-slate-800">{{ current.departmentName }}</p>
-                      <button
-                        class="text-xs font-black text-violet-600"
-                        (click)="openDepartment()"
-                      >
+                      <button class="text-xs font-black text-violet-600" (click)="openDepartment()">
                         Thay đổi
                       </button>
                     </div>
@@ -261,17 +284,17 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
                   (click)="openAction('activate')"
                 >
                   <app-icon name="check" [size]="20" />
-                  <p class="mt-3 text-sm font-black text-emerald-800">Kích hoạt</p></button
-                >
-                @if (current.roleName === 'Requester') {
-                <button
-                  class="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-left transition hover:-translate-y-0.5"
-                  [disabled]="isCurrentAccount()"
-                  (click)="openStatus(3)"
-                >
-                  <app-icon name="clock" [size]="20" />
-                  <p class="mt-3 text-sm font-black text-amber-800">Hạn chế</p>
+                  <p class="mt-3 text-sm font-black text-emerald-800">Kích hoạt</p>
                 </button>
+                @if (current.roleName === 'Requester') {
+                  <button
+                    class="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-left transition hover:-translate-y-0.5"
+                    [disabled]="isCurrentAccount()"
+                    (click)="openStatus(3)"
+                  >
+                    <app-icon name="clock" [size]="20" />
+                    <p class="mt-3 text-sm font-black text-amber-800">Hạn chế</p>
+                  </button>
                 }
                 <button
                   class="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-left transition hover:-translate-y-0.5"
@@ -292,54 +315,57 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
             </article>
 
             @if (current.roleName === 'Requester') {
-            <article class="card-surface overflow-hidden">
-              <header class="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-                <div>
-                  <h2 class="font-black text-slate-950">Vi phạm và điểm phạt</h2>
-                  <p class="mt-1 text-xs text-slate-400">Tổng hợp các vi phạm đang hiệu lực</p>
-                </div>
-                <div class="text-right">
-                  <p class="text-2xl font-black text-rose-600">
-                    {{ summary()?.activePenaltyPoints ?? penalty()?.penaltyPoints ?? 0 }}
-                  </p>
-                  <p class="text-[10px] font-bold tracking-[.14em] text-slate-400 uppercase">
-                    điểm active
-                  </p>
-                </div>
-              </header>
-              @if (!summary() || summary()!.activeViolations.length === 0) {
-                <div class="p-6">
-                  <app-data-state
-                    icon="shield"
-                    title="Không có vi phạm đang hiệu lực"
-                    message="Tài khoản hiện không có bản ghi vi phạm Active."
-                  />
-                </div>
-              } @else {
-                <div class="divide-y divide-slate-100">
-                  @for (violation of summary()!.activeViolations; track violation.violationId) {
-                    <div class="flex flex-wrap items-center gap-4 px-6 py-4">
-                      <span
-                        class="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-rose-600"
-                        ><app-icon name="alert" [size]="18"
-                      /></span>
-                      <div class="min-w-0 flex-1">
-                        <p class="font-black text-slate-800">
-                          {{ labelOf('violationType', violation.violationType) }}
-                        </p>
-                        <p class="mt-1 text-xs text-slate-400">
-                          Booking #{{ violation.bookingId }} ·
-                          {{ violation.loggedAt | date: 'dd/MM/yyyy HH:mm' }}
-                        </p>
+              <article class="card-surface overflow-hidden">
+                <header
+                  class="flex items-center justify-between border-b border-slate-100 px-6 py-5"
+                >
+                  <div>
+                    <h2 class="font-black text-slate-950">Vi phạm và điểm phạt</h2>
+                    <p class="mt-1 text-xs text-slate-400">Tổng hợp các vi phạm đang hiệu lực</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-2xl font-black text-rose-600">
+                      {{ summary()?.activePenaltyPoints ?? penalty()?.penaltyPoints ?? 0 }}
+                    </p>
+                    <p class="text-[10px] font-bold tracking-[.14em] text-slate-400 uppercase">
+                      điểm active
+                    </p>
+                  </div>
+                </header>
+                @if (!summary() || summary()!.activeViolations.length === 0) {
+                  <div class="p-6">
+                    <app-data-state
+                      icon="shield"
+                      title="Không có vi phạm đang hiệu lực"
+                      message="Tài khoản hiện không có bản ghi vi phạm Active."
+                    />
+                  </div>
+                } @else {
+                  <div class="divide-y divide-slate-100">
+                    @for (violation of summary()!.activeViolations; track violation.violationId) {
+                      <div class="flex flex-wrap items-center gap-4 px-6 py-4">
+                        <span
+                          class="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-rose-600"
+                          ><app-icon name="alert" [size]="18"
+                        /></span>
+                        <div class="min-w-0 flex-1">
+                          <p class="font-black text-slate-800">
+                            {{ labelOf('violationType', violation.violationType) }}
+                          </p>
+                          <p class="mt-1 text-xs text-slate-400">
+                            Booking #{{ violation.bookingId }} ·
+                            {{ violation.loggedAt | date: 'dd/MM/yyyy HH:mm' }}
+                          </p>
+                        </div>
+                        <span
+                          class="rounded-xl bg-rose-50 px-3 py-2 text-sm font-black text-rose-700"
+                          >+{{ violation.penaltyPointsAdded }}</span
+                        >
                       </div>
-                      <span class="rounded-xl bg-rose-50 px-3 py-2 text-sm font-black text-rose-700"
-                        >+{{ violation.penaltyPointsAdded }}</span
-                      >
-                    </div>
-                  }
-                </div>
-              }
-            </article>
+                    }
+                  </div>
+                }
+              </article>
             }
           </div>
         </div>
@@ -409,8 +435,8 @@ type ModalMode = 'profile' | 'role' | 'department' | 'status' | 'action' | null
           <div
             class="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-xs leading-5 text-amber-800"
           >
-            Không thể đổi vai trò của quản lý phòng thí nghiệm khi người này vẫn đang được phân công quản lý phòng
-            lab.
+            Không thể đổi vai trò của quản lý phòng thí nghiệm khi người này vẫn đang được phân công
+            quản lý phòng lab.
           </div>
           <div class="flex justify-end gap-2">
             <button class="btn-secondary" (click)="closeModal()">Hủy</button
@@ -661,9 +687,9 @@ export class UserDetailPage implements OnInit {
         this.toast.success(message)
         this.load(false)
       },
-      error: () => {
+      error: (error: unknown) => {
         this.saving.set(false)
-        this.toast.error('Không thể thực hiện thao tác')
+        this.toast.error(apiErrorMessage(error, 'Không thể thực hiện thao tác'))
       },
     })
   }
@@ -699,18 +725,18 @@ export class UserDetailPage implements OnInit {
         }),
       )
       .subscribe({
-      next: (response) => {
-        this.user.set(response.user)
-        this.penalty.set(response.penalty)
-        this.summary.set(response.summary)
-        this.departments.set(response.departments)
-        this.roles.set(response.roles)
-        this.loading.set(false)
-      },
-      error: () => {
-        this.loading.set(false)
-        this.toast.error('Không tải được chi tiết người dùng')
-      },
-    })
+        next: (response) => {
+          this.user.set(response.user)
+          this.penalty.set(response.penalty)
+          this.summary.set(response.summary)
+          this.departments.set(response.departments)
+          this.roles.set(response.roles)
+          this.loading.set(false)
+        },
+        error: () => {
+          this.loading.set(false)
+          this.toast.error('Không tải được chi tiết người dùng')
+        },
+      })
   }
 }
