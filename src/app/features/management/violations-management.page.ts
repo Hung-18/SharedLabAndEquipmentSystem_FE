@@ -8,9 +8,11 @@ import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
 import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
+import { PositiveIntegerDirective } from '../../shared/ui/positive-integer.directive'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf } from '../../shared/utils/presentation'
+import { searchIncludes } from '../../shared/utils/search'
 import { apiErrorMessage } from '../../core/http/api-error'
 
 @Component({
@@ -25,6 +27,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
     ModalComponent,
     StatusBadgeComponent,
     DataStateComponent,
+    PositiveIntegerDirective,
   ],
   template: `<section class="space-y-6">
     <app-page-header
@@ -49,6 +52,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
       <div>
         <label class="field-label">Tìm kiếm</label
         ><input
+          type="search"
           class="input-shell"
           [(ngModel)]="keyword"
           placeholder="Violation ID, tên người dùng, Booking ID..."
@@ -84,7 +88,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
       } @else if (filtered().length === 0) {
         <div class="p-6">
           <app-data-state
-            title="Không có vi phạm"
+            title="Không tìm thấy dữ liệu phù hợp"
             message="Không có bản ghi phù hợp với bộ lọc."
             icon="shield"
           />
@@ -187,6 +191,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
           ><input
             class="input-shell"
             type="number"
+            appPositiveInteger
             min="1"
             required
             [(ngModel)]="form.bookingId"
@@ -245,17 +250,18 @@ export class ViolationsManagementPage implements OnInit {
     { value: 5, key: 'UnauthorizedUse', label: 'Sử dụng trái phép' },
   ]
   protected filtered(): ViolationResponse[] {
-    const needle = this.keyword.trim()
     return this.items()
       .filter(
         (item) =>
           (!this.status || item.status === this.status) &&
           (!this.type || item.violationType === this.type) &&
-          (!needle ||
-            String(item.violationId).includes(needle) ||
-            String(item.userId).includes(needle) ||
-            (item.userName ?? '').toLowerCase().includes(needle.toLowerCase()) ||
-            String(item.bookingId).includes(needle)),
+          searchIncludes(
+            this.keyword,
+            item.violationId,
+            item.userId,
+            item.userName,
+            item.bookingId,
+          ),
       )
       .sort((a, b) => +new Date(b.loggedAt) - +new Date(a.loggedAt))
   }
@@ -279,7 +285,7 @@ export class ViolationsManagementPage implements OnInit {
 
   protected scheduleUserSearch(): void {
     if (this.userSearchTimer) clearTimeout(this.userSearchTimer)
-    this.userSearchTimer = setTimeout(() => this.loadUsers(), 250)
+    this.userSearchTimer = setTimeout(() => this.loadUsers(), 350)
   }
 
   private loadUsers(): void {

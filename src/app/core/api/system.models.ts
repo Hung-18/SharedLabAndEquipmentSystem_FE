@@ -26,6 +26,22 @@ export interface LabRoomDetailResponse extends LabRoomResponse {
   managerId: number
 }
 
+export interface EmergencyShutdownResponse {
+  labId: number
+  processedAt: string
+  cancelledBookingCount: number
+  emergencyEndedBookingCount: number
+  affectedBookingIds: number[]
+  disabledEquipmentIds: number[]
+}
+
+export interface EmergencyRestoreResponse {
+  labId: number
+  restoredAt: string
+  restoredEquipmentIds: number[]
+  stillUnavailableEquipmentIds: number[]
+}
+
 export interface EquipmentResponse {
   equipmentId: number
   labId: number

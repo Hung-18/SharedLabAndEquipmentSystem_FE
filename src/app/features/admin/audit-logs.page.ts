@@ -6,6 +6,7 @@ import type { AuditLogResponse, UserManagementResponse } from '../../core/api/sy
 import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
+import { PositiveIntegerDirective } from '../../shared/ui/positive-integer.directive'
 import { ToastService } from '../../shared/ui/toast.service'
 import { toDateInput } from '../../shared/utils/presentation'
 
@@ -18,6 +19,7 @@ import { toDateInput } from '../../shared/utils/presentation'
     PageHeaderComponent,
     IconComponent,
     DataStateComponent,
+    PositiveIntegerDirective,
   ],
   template: `
     <section class="space-y-6">
@@ -78,7 +80,13 @@ import { toDateInput } from '../../shared/utils/presentation'
         </div>
         <div>
           <label class="field-label">Entity ID</label
-          ><input class="input-shell" type="number" min="1" [(ngModel)]="entityId" />
+          ><input
+            class="input-shell"
+            type="number"
+            appPositiveInteger
+            min="1"
+            [(ngModel)]="entityId"
+          />
         </div>
         <div>
           <label class="field-label">Từ ngày</label
@@ -188,7 +196,6 @@ import { toDateInput } from '../../shared/utils/presentation'
           </div>
         </div>
       }
-
     </section>
   `,
 })

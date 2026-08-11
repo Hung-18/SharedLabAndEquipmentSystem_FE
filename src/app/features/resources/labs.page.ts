@@ -10,6 +10,7 @@ import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
 import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
+import { PositiveIntegerDirective } from '../../shared/ui/positive-integer.directive'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { SmartImageComponent } from '../../shared/ui/smart-image'
 import { ToastService } from '../../shared/ui/toast.service'
@@ -38,6 +39,7 @@ interface LabForm {
     StatusBadgeComponent,
     DataStateComponent,
     SmartImageComponent,
+    PositiveIntegerDirective,
   ],
   template: `
     <section class="space-y-6">
@@ -59,14 +61,27 @@ interface LabForm {
         <div>
           <label class="field-label">Tìm kiếm</label>
           <div class="relative">
-            <span class="pointer-events-none absolute top-3.5 left-4 text-slate-400"
+            <span
+              class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400"
               ><app-icon name="search" [size]="18" /></span
             ><input
-              class="input-shell pl-11"
+              type="search"
+              class="input-shell h-12 pr-11 pl-11"
               [(ngModel)]="keyword"
-              (keyup.enter)="load()"
+              (ngModelChange)="scheduleSearch()"
+              (keyup.enter)="runSearchNow()"
               placeholder="Tên phòng, mã phòng, vị trí..."
             />
+            @if (keyword) {
+              <button
+                type="button"
+                class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-700"
+                aria-label="Xóa từ khóa"
+                (click)="clearSearch()"
+              >
+                <app-icon name="x" [size]="16" />
+              </button>
+            }
           </div>
         </div>
         @if (!store.isRequester()) {
@@ -86,9 +101,10 @@ interface LabForm {
           ><input
             class="input-shell"
             type="number"
+            appPositiveInteger
             min="1"
             [(ngModel)]="minimumCapacity"
-            (change)="page.set(1); load()"
+            (ngModelChange)="scheduleSearch()"
           />
         </div>
         <div>
@@ -114,8 +130,8 @@ interface LabForm {
           </div>
         </div>
         <div class="flex items-end">
-          <button class="btn-primary w-full" type="button" (click)="load()">
-            <app-icon name="filter" [size]="17" /> Áp dụng
+          <button class="btn-primary h-12 w-full" type="button" (click)="runSearchNow()">
+            <app-icon name="refresh" [size]="17" /> Làm mới
           </button>
         </div>
       </div>
@@ -136,7 +152,7 @@ interface LabForm {
       } @else if (labs().length === 0) {
         <app-data-state
           icon="building"
-          title="Chưa tìm thấy phòng lab"
+          title="Không tìm thấy dữ liệu phù hợp"
           message="Không có phòng nào khớp bộ lọc hiện tại. Hãy thay đổi từ khóa hoặc trạng thái."
         />
       } @else if (view() === 'grid') {
@@ -196,7 +212,10 @@ interface LabForm {
                       ><app-icon name="calendar-plus" [size]="18"
                     /></a>
                   } @else if (store.isRequester()) {
-                    <span class="btn-secondary cursor-not-allowed px-3 text-rose-600" title="Phòng hiện không thể đặt">
+                    <span
+                      class="btn-secondary cursor-not-allowed px-3 text-rose-600"
+                      title="Phòng hiện không thể đặt"
+                    >
                       <app-icon name="lock" [size]="18" />
                     </span>
                   }
@@ -299,6 +318,7 @@ interface LabForm {
             ><input
               class="input-shell"
               type="number"
+              appPositiveInteger
               min="1"
               required
               [(ngModel)]="form.capacity"
@@ -372,6 +392,7 @@ export class LabsPage implements OnInit, OnDestroy {
   protected form: LabForm = this.emptyForm()
   private loadVersion = 0
   private refreshSubscription?: Subscription
+  private searchTimer?: ReturnType<typeof setTimeout>
 
   ngOnInit(): void {
     this.load()
@@ -380,6 +401,23 @@ export class LabsPage implements OnInit, OnDestroy {
   }
   ngOnDestroy(): void {
     this.refreshSubscription?.unsubscribe()
+    if (this.searchTimer) clearTimeout(this.searchTimer)
+  }
+  protected scheduleSearch(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer)
+    this.searchTimer = setTimeout(() => {
+      this.page.set(1)
+      this.load()
+    }, 400)
+  }
+  protected runSearchNow(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer)
+    this.page.set(1)
+    this.load()
+  }
+  protected clearSearch(): void {
+    this.keyword = ''
+    this.runSearchNow()
   }
   protected load(showLoading = true): void {
     const version = ++this.loadVersion
@@ -429,7 +467,9 @@ export class LabsPage implements OnInit, OnDestroy {
       Number(this.form.capacity) < 1 ||
       !this.form.managerId
     ) {
-      this.toast.info('Hãy nhập đầy đủ tên phòng, mã phòng, vị trí, sức chứa và người quản lý phòng thí nghiệm')
+      this.toast.info(
+        'Hãy nhập đầy đủ tên phòng, mã phòng, vị trí, sức chứa và người quản lý phòng thí nghiệm',
+      )
       return
     }
     this.saving.set(true)

@@ -8,6 +8,7 @@ import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
 import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
+import { PositiveIntegerDirective } from '../../shared/ui/positive-integer.directive'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf } from '../../shared/utils/presentation'
@@ -22,6 +23,7 @@ import { labelOf } from '../../shared/utils/presentation'
     ModalComponent,
     StatusBadgeComponent,
     DataStateComponent,
+    PositiveIntegerDirective,
   ],
   template: `
     <section class="space-y-6">
@@ -52,7 +54,8 @@ import { labelOf } from '../../shared/utils/presentation'
               PriorityLevel ↑ cao hơn khi con số ↓ nhỏ hơn
             </h2>
             <p class="mt-3 max-w-3xl text-sm leading-6 text-white/60">
-              Yêu cầu chờ duyệt được sắp theo mức ưu tiên từ cao đến thấp; nếu cùng mức ưu tiên, yêu cầu gửi sớm hơn sẽ được xét trước.
+              Yêu cầu chờ duyệt được sắp theo mức ưu tiên từ cao đến thấp; nếu cùng mức ưu tiên, yêu
+              cầu gửi sớm hơn sẽ được xét trước.
             </p>
           </div>
           <div
@@ -207,6 +210,7 @@ import { labelOf } from '../../shared/utils/presentation'
             ><input
               class="input-shell"
               type="number"
+              appPositiveInteger
               min="1"
               required
               [(ngModel)]="form.priorityLevel"

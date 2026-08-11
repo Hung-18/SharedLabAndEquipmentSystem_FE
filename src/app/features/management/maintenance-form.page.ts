@@ -8,6 +8,7 @@ import type { EquipmentResponse, LabRoomResponse } from '../../core/api/system.m
 import { AuthStore } from '../../core/auth/auth.store'
 import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
+import { PositiveIntegerDirective } from '../../shared/ui/positive-integer.directive'
 import { ToastService } from '../../shared/ui/toast.service'
 import { toDateInput, toIso, toLocalDateTimeInput } from '../../shared/utils/presentation'
 
@@ -31,7 +32,14 @@ interface ResolvedSchedule {
 
 @Component({
   selector: 'app-maintenance-form-page',
-  imports: [NgClass, FormsModule, RouterLink, PageHeaderComponent, IconComponent],
+  imports: [
+    NgClass,
+    FormsModule,
+    RouterLink,
+    PageHeaderComponent,
+    IconComponent,
+    PositiveIntegerDirective,
+  ],
   template: `<section class="space-y-6">
     <app-page-header
       [title]="editing() ? 'Chỉnh sửa lịch bảo trì' : 'Tạo lịch bảo trì'"
@@ -133,7 +141,8 @@ interface ResolvedSchedule {
               <span>
                 <strong class="text-sm text-rose-900">Bảo trì khẩn cấp — bắt đầu ngay</strong>
                 <span class="mt-1 block text-xs leading-5 text-rose-800/75">
-                  Tài nguyên chuyển sang trạng thái bảo trì ngay sau khi tạo. Không áp dụng lặp định kỳ.
+                  Tài nguyên chuyển sang trạng thái bảo trì ngay sau khi tạo. Không áp dụng lặp định
+                  kỳ.
                 </span>
               </span>
             </label>
@@ -145,12 +154,16 @@ interface ResolvedSchedule {
             <button
               type="button"
               class="rounded-2xl border p-4 text-left"
-              [ngClass]="timeMode === 'slots' ? 'border-violet-300 bg-violet-50' : 'border-slate-200'"
+              [ngClass]="
+                timeMode === 'slots' ? 'border-violet-300 bg-violet-50' : 'border-slate-200'
+              "
               (click)="setTimeMode('slots')"
               [disabled]="editing()"
             >
               <p class="font-black text-slate-900">Theo slot cố định</p>
-              <p class="mt-1 text-xs text-slate-500">07–09, 09–11, 13–15, 15–17; hỗ trợ nhiều ngày.</p>
+              <p class="mt-1 text-xs text-slate-500">
+                07–09, 09–11, 13–15, 15–17; hỗ trợ nhiều ngày.
+              </p>
             </button>
             <button
               type="button"
@@ -159,7 +172,9 @@ interface ResolvedSchedule {
               (click)="setTimeMode('custom')"
             >
               <p class="font-black text-slate-900">Thời gian tùy chỉnh</p>
-              <p class="mt-1 text-xs text-slate-500">Dùng cho khoảng liên tục hoặc lịch tuần/tháng.</p>
+              <p class="mt-1 text-xs text-slate-500">
+                Dùng cho khoảng liên tục hoặc lịch tuần/tháng.
+              </p>
             </button>
           </div>
         }
@@ -176,7 +191,8 @@ interface ResolvedSchedule {
               name="emergencyEndTime"
             />
             <p class="mt-2 text-xs text-slate-500">
-              Đây chỉ là thời gian dự kiến. Đến giờ hệ thống sẽ nhắc, nhưng không tự Complete; LabManager/Admin phải xác nhận hoàn thành.
+              Đây chỉ là thời gian dự kiến. Đến giờ hệ thống sẽ nhắc, nhưng không tự Complete;
+              LabManager/Admin phải xác nhận hoàn thành.
             </p>
           </div>
         } @else if (timeMode === 'slots') {
@@ -210,12 +226,18 @@ interface ResolvedSchedule {
             <div class="mt-5 flex items-center justify-between gap-3">
               <div>
                 <p class="text-sm font-black text-slate-900">Chọn slot mỗi ngày</p>
-                <p class="mt-1 text-xs text-slate-500">Có thể chọn 1–2 slot liên tiếp trong cùng một buổi.</p>
+                <p class="mt-1 text-xs text-slate-500">
+                  Có thể chọn 1–2 slot liên tiếp trong cùng một buổi.
+                </p>
               </div>
               <button
                 type="button"
                 class="rounded-xl border px-3 py-2 text-xs font-black"
-                [ngClass]="allDay ? 'border-violet-300 bg-violet-50 text-violet-700' : 'border-slate-200 text-slate-600'"
+                [ngClass]="
+                  allDay
+                    ? 'border-violet-300 bg-violet-50 text-violet-700'
+                    : 'border-slate-200 text-slate-600'
+                "
                 (click)="toggleAllDay()"
               >
                 Cả ngày 07:00–17:00
@@ -227,11 +249,19 @@ interface ResolvedSchedule {
                 <button
                   type="button"
                   class="rounded-2xl border p-4 text-left transition"
-                  [ngClass]="slotSelected(slot.id) && !allDay ? 'border-violet-400 bg-violet-600 text-white shadow-md shadow-violet-100' : allDay ? 'border-violet-200 bg-violet-50 text-violet-900' : 'border-slate-200 bg-white text-slate-900'"
+                  [ngClass]="
+                    slotSelected(slot.id) && !allDay
+                      ? 'border-violet-400 bg-violet-600 text-white shadow-md shadow-violet-100'
+                      : allDay
+                        ? 'border-violet-200 bg-violet-50 text-violet-900'
+                        : 'border-slate-200 bg-white text-slate-900'
+                  "
                   (click)="toggleSlot(slot)"
                   [disabled]="allDay"
                 >
-                  <p class="text-[10px] font-black tracking-[.14em] uppercase">Slot {{ slot.id }}</p>
+                  <p class="text-[10px] font-black tracking-[.14em] uppercase">
+                    Slot {{ slot.id }}
+                  </p>
                   <p class="mt-2 font-black">{{ slot.start }}–{{ slot.end }}</p>
                 </button>
               }
@@ -285,6 +315,7 @@ interface ResolvedSchedule {
                 <input
                   class="input-shell"
                   type="number"
+                  appPositiveInteger
                   min="1"
                   [(ngModel)]="recurrenceInterval"
                   name="recurrenceInterval"
@@ -325,11 +356,18 @@ interface ResolvedSchedule {
           <a routerLink="/app/management/maintenances" class="btn-secondary">Hủy</a>
           <button type="submit" class="btn-primary" [disabled]="saving() || !isFormValid()">
             <app-icon name="save" [size]="17" />
-            {{ saving() ? 'Đang lưu...' : editing() ? 'Lưu thay đổi' : startImmediately ? 'Bắt đầu bảo trì ngay' : 'Tạo lịch bảo trì' }}
+            {{
+              saving()
+                ? 'Đang lưu...'
+                : editing()
+                  ? 'Lưu thay đổi'
+                  : startImmediately
+                    ? 'Bắt đầu bảo trì ngay'
+                    : 'Tạo lịch bảo trì'
+            }}
           </button>
         </div>
       </form>
-
     </div>
   </section>`,
 })
@@ -417,8 +455,8 @@ export class MaintenanceFormPage implements OnInit {
             this.labId = item.labId
             this.equipmentId = item.equipmentId
             this.equipmentLabId =
-              visibleEquipments.find((equipment) => equipment.equipmentId === item.equipmentId)?.labId ??
-              null
+              visibleEquipments.find((equipment) => equipment.equipmentId === item.equipmentId)
+                ?.labId ?? null
             this.startTime = toLocalDateTimeInput(item.startTime)
             this.endTime = toLocalDateTimeInput(item.endTime)
             this.cost = item.maintenanceCost
@@ -508,7 +546,11 @@ export class MaintenanceFormPage implements OnInit {
   }
 
   protected isMultiDaySlotSchedule(): boolean {
-    return this.timeMode === 'slots' && Boolean(this.slotStartDate && this.slotEndDate) && this.slotEndDate > this.slotStartDate
+    return (
+      this.timeMode === 'slots' &&
+      Boolean(this.slotStartDate && this.slotEndDate) &&
+      this.slotEndDate > this.slotStartDate
+    )
   }
 
   protected slotScheduleSummary(): string {
@@ -615,7 +657,8 @@ export class MaintenanceFormPage implements OnInit {
   }
 
   private resolveSlotSchedule(): ResolvedSchedule | null {
-    if (!this.slotStartDate || !this.slotEndDate || this.slotEndDate < this.slotStartDate) return null
+    if (!this.slotStartDate || !this.slotEndDate || this.slotEndDate < this.slotStartDate)
+      return null
 
     let startClock = '07:00'
     let endClock = '17:00'
@@ -634,7 +677,12 @@ export class MaintenanceFormPage implements OnInit {
     const firstEndLocal = `${this.slotStartDate}T${endClock}`
     const firstStart = +new Date(firstStartLocal)
     const firstEnd = +new Date(firstEndLocal)
-    if (!Number.isFinite(firstStart) || !Number.isFinite(firstEnd) || firstStart <= Date.now() || firstStart >= firstEnd) {
+    if (
+      !Number.isFinite(firstStart) ||
+      !Number.isFinite(firstEnd) ||
+      firstStart <= Date.now() ||
+      firstStart >= firstEnd
+    ) {
       return null
     }
 
@@ -672,9 +720,7 @@ export class MaintenanceFormPage implements OnInit {
       recurrenceType: this.recurrenceType,
       recurrenceInterval: this.recurrenceType === 0 ? 1 : Number(this.recurrenceInterval),
       recurrenceEndDate:
-        this.recurrenceType === 0 || !this.recurrenceEndDate
-          ? null
-          : toIso(this.recurrenceEndDate),
+        this.recurrenceType === 0 || !this.recurrenceEndDate ? null : toIso(this.recurrenceEndDate),
     }
   }
 }

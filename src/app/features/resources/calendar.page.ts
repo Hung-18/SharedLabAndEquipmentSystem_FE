@@ -51,10 +51,7 @@ interface CalendarDay {
         subtitle="Theo dõi lịch đặt và bảo trì theo ngày, tuần, tháng hoặc dạng danh sách."
       >
         @if (store.isRequester()) {
-          <a
-            routerLink="/app/bookings/new"
-            [queryParams]="{ labId: labId, equipmentId: equipmentId }"
-            class="btn-primary"
+          <a routerLink="/app/bookings/new" [queryParams]="{ labId: labId }" class="btn-primary"
             ><app-icon name="plus" [size]="17" /> Tạo lịch đặt</a
           >
         }
@@ -68,7 +65,14 @@ interface CalendarDay {
         }
       </app-page-header>
 
-      <div class="filter-bar lg:grid-cols-[1fr_1fr_1fr_auto]">
+      <div
+        class="filter-bar"
+        [ngClass]="
+          store.isRequester()
+            ? 'lg:grid-cols-[minmax(0,1fr)_auto]'
+            : 'lg:grid-cols-[1fr_1fr_1fr_auto]'
+        "
+      >
         <div>
           <label class="field-label">Phòng thí nghiệm</label
           ><select class="input-shell" [(ngModel)]="labId" (ngModelChange)="onLabChange()">
@@ -78,16 +82,16 @@ interface CalendarDay {
             }
           </select>
         </div>
-        <div>
-          <label class="field-label">Thiết bị</label
-          ><select class="input-shell" [(ngModel)]="equipmentId" (ngModelChange)="load()">
-            <option [ngValue]="null">Tất cả thiết bị</option>
-            @for (item of filteredEquipments(); track item.equipmentId) {
-              <option [ngValue]="item.equipmentId">{{ item.equipmentName }}</option>
-            }
-          </select>
-        </div>
         @if (!store.isRequester()) {
+          <div>
+            <label class="field-label">Thiết bị</label
+            ><select class="input-shell" [(ngModel)]="equipmentId" (ngModelChange)="load()">
+              <option [ngValue]="null">Tất cả thiết bị</option>
+              @for (item of filteredEquipments(); track item.equipmentId) {
+                <option [ngValue]="item.equipmentId">{{ item.equipmentName }}</option>
+              }
+            </select>
+          </div>
           <div>
             <label class="field-label">Loại sự kiện</label>
             <select class="input-shell" [(ngModel)]="eventType">
@@ -95,11 +99,6 @@ interface CalendarDay {
               <option value="Booking">Lịch đặt</option>
               <option value="Maintenance">Bảo trì</option>
             </select>
-          </div>
-        } @else {
-          <div>
-            <label class="field-label">Loại sự kiện</label>
-            <div class="input-shell flex items-center text-sm text-slate-600">Lịch đặt</div>
           </div>
         }
         <div class="flex items-end gap-2">
@@ -130,9 +129,7 @@ interface CalendarDay {
                 type="button"
                 class="rounded-xl px-4 py-2 text-xs font-extrabold"
                 [ngClass]="
-                  view() === option.value
-                    ? 'bg-white text-violet-700 shadow-sm'
-                    : 'text-slate-500'
+                  view() === option.value ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500'
                 "
                 (click)="setView(option.value)"
               >
@@ -173,7 +170,8 @@ interface CalendarDay {
                     class="flex h-7 w-7 items-center justify-center rounded-full text-xs font-black"
                     [ngClass]="isToday(day.date) ? 'bg-violet-600 text-white' : 'text-slate-600'"
                     (click)="openDay(day.date)"
-                    >{{ day.date.getDate() }}</button
+                  >
+                    {{ day.date.getDate() }}</button
                   ><span class="text-[10px] font-bold text-slate-300">{{
                     day.events.length || ''
                   }}</span>
@@ -416,7 +414,9 @@ export class CalendarPage implements OnInit {
 
     forkJoin({
       labs: this.api.labs().pipe(catchError(() => of([] as LabRoomResponse[]))),
-      equipments: this.api.equipments().pipe(catchError(() => of([] as EquipmentResponse[]))),
+      equipments: this.store.isRequester()
+        ? of([] as EquipmentResponse[])
+        : this.api.equipments().pipe(catchError(() => of([] as EquipmentResponse[]))),
     }).subscribe(({ labs, equipments }) => {
       const visibleLabs = this.store.isRequester()
         ? labs.filter((lab) => isAvailableLabStatus(lab.status))
@@ -435,7 +435,7 @@ export class CalendarPage implements OnInit {
           this.equipmentId = null
         }
       }
-      if (!visibleLabs.length || !visibleEquipments.length) {
+      if (!visibleLabs.length || (!this.store.isRequester() && !visibleEquipments.length)) {
         this.toast.info('Một phần danh mục tài nguyên chưa tải được, lịch vẫn tiếp tục hoạt động.')
       }
       this.load()
@@ -454,11 +454,7 @@ export class CalendarPage implements OnInit {
       )
       .subscribe({
         next: (items) => {
-          this.events.set(
-            this.store.isRequester()
-              ? items.filter((item) => item.eventType !== 'Maintenance')
-              : items,
-          )
+          this.events.set(items)
           this.loading.set(false)
         },
         error: () => {

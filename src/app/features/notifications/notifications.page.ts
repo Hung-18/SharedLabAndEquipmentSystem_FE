@@ -10,6 +10,7 @@ import { IconComponent } from '../../shared/ui/icon'
 import { ToastService } from '../../shared/ui/toast.service'
 import { isNotificationVisibleForRole } from '../../shared/utils/notification-visibility'
 import { stripTechnicalIds } from '../../shared/utils/presentation'
+import { searchIncludes } from '../../shared/utils/search'
 
 type NotificationTab = 'all' | 'unread'
 
@@ -138,7 +139,7 @@ type NotificationTab = 'all' | 'unread'
               >
                 <app-icon name="bell" [size]="34" />
               </div>
-              <h2 class="mt-6 text-lg font-bold text-slate-800">Không tìm thấy thông báo</h2>
+              <h2 class="mt-6 text-lg font-bold text-slate-800">Không tìm thấy dữ liệu phù hợp</h2>
               <p class="mt-2 max-w-sm text-sm leading-6 text-slate-400">
                 Thử đổi tab, loại thông báo hoặc từ khóa tìm kiếm.
               </p>
@@ -437,10 +438,10 @@ export class NotificationsPage implements OnInit {
     [...new Set(this.notifications().map((item) => item.notificationType))].sort(),
   )
   protected filteredNotifications(): NotificationResponse[] {
-    const query = this.searchText.trim().toLowerCase()
+    const query = this.searchText.trim()
     return this.notifications().filter((item) => {
       const matchesType = this.typeFilter === 'all' || item.notificationType === this.typeFilter
-      const matchesQuery = !query || `${item.title} ${item.message}`.toLowerCase().includes(query)
+      const matchesQuery = searchIncludes(`${item.title} ${item.message}`, query)
       return matchesType && matchesQuery
     })
   }

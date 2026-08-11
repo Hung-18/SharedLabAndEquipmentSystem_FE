@@ -518,12 +518,16 @@ export class BookingDetailPage implements OnInit {
 
   protected canCancel(): boolean {
     const item = this.booking()
-    if (!item || !['Pending', 'Approved'].includes(item.status) || !this.isOwnerRequester()) {
+    if (
+      !item ||
+      !['Pending', 'Approved'].includes(item.status) ||
+      !this.isOwnerRequester() ||
+      this.acting()
+    ) {
       return false
     }
-    if (item.status === 'Pending') return true
-    const hasActiveUsage = this.logs().some((log) => !log.actualCheckout)
-    return Date.now() < +new Date(item.startTime) && !hasActiveUsage
+    const hasCheckedIn = this.logs().length > 0
+    return Date.now() < +new Date(item.startTime) - 15 * 60_000 && !hasCheckedIn
   }
   protected canCheckInBooking(): boolean {
     const item = this.booking()

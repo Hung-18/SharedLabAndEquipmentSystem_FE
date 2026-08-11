@@ -24,6 +24,8 @@ const maps: Record<string, Record<string, string>> = {
     Cancelled: 'Đã hủy',
     Completed: 'Hoàn thành',
     NoShow: 'Không đến',
+    EmergencyCancelled: 'Hủy khẩn cấp',
+    EmergencyEnded: 'Kết thúc khẩn cấp',
   },
   lab: {
     Available: 'Có thể sử dụng',
@@ -118,6 +120,8 @@ export function toneOf(domain: string, value: ApiEnum | null | undefined): strin
       Cancelled: 'rose',
       Completed: 'emerald',
       NoShow: 'rose',
+      EmergencyCancelled: 'rose',
+      EmergencyEnded: 'rose',
     },
     lab: { Available: 'emerald', Unavailable: 'rose', Maintenance: 'indigo', Inactive: 'rose' },
     equipment: {
@@ -164,22 +168,30 @@ export function normalizeUserStatus(value: ApiEnum | null | undefined): Normaliz
 }
 
 export function isAvailableLabStatus(value: ApiEnum | null | undefined): boolean {
-  const key = String(value ?? '').trim().toLowerCase()
+  const key = String(value ?? '')
+    .trim()
+    .toLowerCase()
   return key === '1' || key === 'available'
 }
 
 export function isInactiveLabStatus(value: ApiEnum | null | undefined): boolean {
-  const key = String(value ?? '').trim().toLowerCase()
+  const key = String(value ?? '')
+    .trim()
+    .toLowerCase()
   return key === '4' || key === 'inactive'
 }
 
 export function isAvailableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
-  const key = String(value ?? '').trim().toLowerCase()
+  const key = String(value ?? '')
+    .trim()
+    .toLowerCase()
   return key === '1' || key === 'available'
 }
 
 export function isRetiredEquipmentStatus(value: ApiEnum | null | undefined): boolean {
-  const key = String(value ?? '').trim().toLowerCase()
+  const key = String(value ?? '')
+    .trim()
+    .toLowerCase()
   return key === '5' || key === 'retired'
 }
 

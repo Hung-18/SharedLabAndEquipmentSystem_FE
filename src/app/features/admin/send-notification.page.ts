@@ -9,6 +9,7 @@ import { IconComponent } from '../../shared/ui/icon'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { ToastService } from '../../shared/ui/toast.service'
 import { ApiError, apiErrorMessage } from '../../core/http/api-error'
+import { searchIncludes } from '../../shared/utils/search'
 
 interface NotificationRecipient {
   userId: number
@@ -56,6 +57,7 @@ interface NotificationRecipient {
                 <span class="pointer-events-none absolute top-3.5 left-4 text-slate-400"
                   ><app-icon name="search" [size]="18" /></span
                 ><input
+                  type="search"
                   class="input-shell pl-11"
                   [(ngModel)]="userSearch"
                   name="userSearch"
@@ -119,7 +121,7 @@ interface NotificationRecipient {
                     </button>
                   } @empty {
                     <div class="px-3 py-8 text-center text-sm font-semibold text-slate-400">
-                      Không tìm thấy người dùng phù hợp.
+                      Không tìm thấy dữ liệu phù hợp
                     </div>
                   }
                 }
@@ -340,12 +342,8 @@ export class SendNotificationPage implements OnInit {
   }
 
   protected filteredUsers(): NotificationRecipient[] {
-    const query = this.userSearch.trim().toLowerCase()
     return this.users()
-      .filter(
-        (user) =>
-          !query || `${user.fullName} ${user.username} ${user.email}`.toLowerCase().includes(query),
-      )
+      .filter((user) => searchIncludes(this.userSearch, user.fullName, user.username, user.email))
       .slice(0, 20)
   }
 

@@ -14,6 +14,8 @@ import type {
   DepartmentUtilizationResponse,
   EquipmentDetailResponse,
   EquipmentResponse,
+  EmergencyRestoreResponse,
+  EmergencyShutdownResponse,
   LabRoomDetailResponse,
   LabRoomResponse,
   MaintenanceCostResponse,
@@ -137,6 +139,23 @@ export class SystemService {
 
   deleteLab(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/LabRooms/${id}`)
+  }
+
+  emergencyShutdownLab(id: number, description: string): Observable<EmergencyShutdownResponse> {
+    return this.http.post<EmergencyShutdownResponse>(
+      `${this.base}/LabRooms/${id}/emergency-shutdown`,
+      { description, confirmed: true },
+    )
+  }
+
+  restoreLabAfterEmergency(
+    id: number,
+    safeEquipmentIds: number[],
+  ): Observable<EmergencyRestoreResponse> {
+    return this.http.post<EmergencyRestoreResponse>(
+      `${this.base}/LabRooms/${id}/emergency-restore`,
+      { safeEquipmentIds, confirmed: true },
+    )
   }
 
   equipments(): Observable<EquipmentResponse[]> {

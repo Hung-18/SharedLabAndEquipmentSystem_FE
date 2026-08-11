@@ -5,7 +5,7 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core'
 import {
-  NoPreloading,
+  PreloadAllModules,
   provideRouter,
   withComponentInputBinding,
   withInMemoryScrolling,
@@ -21,6 +21,7 @@ import { routes } from './app.routes'
 import { env } from './core/config/env'
 import { authInterceptor } from './core/http/auth.interceptor'
 import { errorInterceptor } from './core/http/error.interceptor'
+import { mutationDedupInterceptor } from './core/http/mutation-dedup.interceptor'
 
 function resolveInitialLocale(): string {
   const stored = localStorage.getItem('app.locale')
@@ -37,13 +38,18 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withComponentInputBinding(),
-      withPreloading(NoPreloading),
+      withPreloading(PreloadAllModules),
       withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
     ),
-    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    provideHttpClient(
+      withInterceptors([authInterceptor, mutationDedupInterceptor, errorInterceptor]),
+    ),
     provideTranslateService({
       fallbackLang: env.defaultLocale,
-      loader: provideTranslateHttpLoader({ prefix: './i18n/', suffix: '.json?v=20260807-login-username-v2' }),
+      loader: provideTranslateHttpLoader({
+        prefix: './i18n/',
+        suffix: '.json?v=20260807-login-username-v2',
+      }),
     }),
     // Load the initial language before the app renders to avoid flashes.
     provideAppInitializer(() => {

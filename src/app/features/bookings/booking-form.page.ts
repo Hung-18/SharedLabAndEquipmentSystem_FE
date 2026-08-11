@@ -13,6 +13,7 @@ import type {
   LabRoomResponse,
   PriorityRuleResponse,
   SuggestedSlotResponse,
+  WaitlistResponse,
 } from '../../core/api/system.models'
 import { AuthStore } from '../../core/auth/auth.store'
 import { DataStateComponent } from '../../shared/ui/data-state'
@@ -52,7 +53,9 @@ interface SlotRangeSelection {
 }
 
 function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
-  const status = String(value ?? '').trim().toLowerCase()
+  const status = String(value ?? '')
+    .trim()
+    .toLowerCase()
   return ['1', '2', '3', 'available', 'inuse', 'maintenance'].includes(status)
 }
 
@@ -165,8 +168,8 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
                   <div class="flex items-start gap-3">
                     <span
                       class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm"
-                      ><app-icon name="building" [size]="19" /></span
-                    >
+                      ><app-icon name="building" [size]="19"
+                    /></span>
                     <div class="min-w-0 flex-1">
                       <p class="font-black text-violet-900">{{ room.name }}</p>
                       <p class="mt-1 text-xs text-violet-700/70">
@@ -237,8 +240,8 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
                                 ? 'border-cyan-500 bg-cyan-500 text-white'
                                 : 'border-slate-300 bg-white text-transparent'
                             "
-                            ><app-icon name="check" [size]="15" /></span
-                          >
+                            ><app-icon name="check" [size]="15"
+                          /></span>
                         </button>
                       }
                     </div>
@@ -265,7 +268,8 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
                 <div>
                   <h2 class="text-xl font-black text-slate-950">Chọn ngày và slot sử dụng</h2>
                   <p class="mt-1 text-sm text-slate-500">
-                    Chọn một hoặc hai slot liên tiếp trong cùng một buổi. Hệ thống tự tính giờ bắt đầu và kết thúc.
+                    Chọn một hoặc hai slot liên tiếp trong cùng một buổi. Hệ thống tự tính giờ bắt
+                    đầu và kết thúc.
                   </p>
                 </div>
               </div>
@@ -325,29 +329,36 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
               </div>
 
               @if (hasSelectedSlotRange()) {
-                <div class="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50 p-5 text-emerald-900">
+                <div
+                  class="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50 p-5 text-emerald-900"
+                >
                   <div class="flex items-start gap-3">
                     <span
                       class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm"
-                      ><app-icon name="check" [size]="19" /></span
-                    >
+                      ><app-icon name="check" [size]="19"
+                    /></span>
                     <div class="min-w-0 flex-1">
                       <p class="font-black">{{ selectedSlotSummary() }}</p>
                       <p class="mt-1 text-sm leading-6 text-emerald-800/80">
                         Tạo một booking duy nhất từ
                         <strong>{{ startTime | date: 'HH:mm dd/MM/yyyy' }}</strong> đến
-                        <strong>{{ endTime | date: 'HH:mm dd/MM/yyyy' }}</strong>.
+                        <strong>{{ endTime | date: 'HH:mm dd/MM/yyyy' }}</strong
+                        >.
                       </p>
                       <p class="mt-2 text-xs leading-5 text-emerald-800/70">
-                        Nhắc check-in lúc <strong>{{ checkInReminderTime() }}</strong> và nhắc check-out lúc
-                        <strong>{{ checkOutReminderTime() }}</strong>. Không gửi lại thông báo tại ranh giới giữa hai slot.
+                        Nhắc check-in lúc <strong>{{ checkInReminderTime() }}</strong> và nhắc
+                        check-out lúc <strong>{{ checkOutReminderTime() }}</strong
+                        >. Không gửi lại thông báo tại ranh giới giữa hai slot.
                       </p>
                     </div>
                   </div>
                 </div>
               } @else {
-                <div class="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                  Chưa chọn slot. Có thể chọn Slot 1 + 2 hoặc Slot 3 + 4 để tạo một khoảng thời gian liên tục.
+                <div
+                  class="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500"
+                >
+                  Chưa chọn slot. Có thể chọn Slot 1 + 2 hoặc Slot 3 + 4 để tạo một khoảng thời gian
+                  liên tục.
                 </div>
               }
 
@@ -385,18 +396,25 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
                       <button
                         type="button"
                         class="btn-secondary shrink-0"
-                        [disabled]="joiningWaitlist() || !validTime()"
+                        [disabled]="joiningWaitlist() || hasJoinedCurrentWaitlist() || !validTime()"
                         (click)="joinWaitlist()"
                       >
                         <app-icon name="hourglass" [size]="16" />
-                        {{ joiningWaitlist() ? 'Đang tham gia...' : 'Tham gia hàng chờ' }}
+                        {{
+                          joiningWaitlist()
+                            ? 'Đang tham gia...'
+                            : hasJoinedCurrentWaitlist()
+                              ? 'Đã tham gia hàng chờ'
+                              : 'Tham gia hàng chờ'
+                        }}
                       </button>
                     }
                   </div>
                   @if (!available() && selectedEquipmentCount() > 0) {
                     <p class="mt-3 text-xs leading-5 opacity-75">
-                      Hàng chờ chỉ giữ quyền ưu tiên cho <strong>phòng</strong>. Các thiết bị đang chọn
-                      sẽ không được giữ; khi đến lượt, bạn chọn lại thiết bị còn khả dụng rồi tạo booking.
+                      Hàng chờ chỉ giữ quyền ưu tiên cho <strong>phòng</strong>. Các thiết bị đang
+                      chọn sẽ không được giữ; khi đến lượt, bạn chọn lại thiết bị còn khả dụng rồi
+                      tạo booking.
                     </p>
                   }
                 </div>
@@ -645,6 +663,7 @@ export class BookingFormPage implements OnInit {
   protected readonly availabilityMessage = signal('')
   private readonly availabilityFingerprint = signal<string | null>(null)
   private readonly currentUserBookings = signal<BookingResponse[]>([])
+  private readonly currentUserWaitlists = signal<WaitlistResponse[]>([])
   protected readonly personalTimeConflict = signal(false)
   protected readonly timeSlots: readonly FixedBookingSlot[] = [
     { id: 1, start: '07:00', end: '09:00', period: 'morning' },
@@ -731,8 +750,12 @@ export class BookingFormPage implements OnInit {
       equipments: this.api.equipments(),
       rules: this.api.priorityRules(true),
       booking: this.bookingId > 0 ? this.api.booking(this.bookingId) : of(null),
+      waitlists:
+        !this.editing() && this.store.user()?.userId
+          ? this.api.waitlistsByUser(this.store.user()!.userId)
+          : of([] as WaitlistResponse[]),
     }).subscribe({
-      next: ({ labs, equipments, rules, booking }) => {
+      next: ({ labs, equipments, rules, booking, waitlists }) => {
         const availableLabs = labs.filter((lab) => isAvailableLabStatus(lab.status))
         const availableEquipments = equipments.filter((equipment) =>
           isBookableEquipmentStatus(equipment.status),
@@ -740,6 +763,7 @@ export class BookingFormPage implements OnInit {
         this.labs.set(booking ? labs : availableLabs)
         this.equipments.set(booking ? equipments : availableEquipments)
         this.rules.set(rules)
+        this.currentUserWaitlists.set(waitlists)
 
         if (booking) {
           this.initializeEdit(booking, equipments)
@@ -994,8 +1018,7 @@ export class BookingFormPage implements OnInit {
 
   protected availabilityIsCurrent(): boolean {
     return (
-      this.available() &&
-      this.availabilityFingerprint() === this.currentAvailabilityFingerprint()
+      this.available() && this.availabilityFingerprint() === this.currentAvailabilityFingerprint()
     )
   }
 
@@ -1016,7 +1039,11 @@ export class BookingFormPage implements OnInit {
     this.checking.set(true)
     const userId = this.store.user()?.userId
     forkJoin({
-      events: this.api.calendar(toIso(this.startTime), toIso(this.endTime), this.labId ?? undefined),
+      events: this.api.calendar(
+        toIso(this.startTime),
+        toIso(this.endTime),
+        this.labId ?? undefined,
+      ),
       userBookings: userId ? this.api.bookingsByUser(userId) : of([] as BookingResponse[]),
     }).subscribe({
       next: ({ events, userBookings }) => {
@@ -1027,17 +1054,12 @@ export class BookingFormPage implements OnInit {
             event.blocking &&
             new Date(event.startTime) < new Date(this.endTime) &&
             new Date(event.endTime) > new Date(this.startTime)
-          return (
-            overlapsTime &&
-            event.resources.some((resource) => resource.labId === this.labId)
-          )
+          return overlapsTime && event.resources.some((resource) => resource.labId === this.labId)
         })
         const blocking = userConflict || resourceConflict
         this.personalTimeConflict.set(userConflict)
         this.available.set(!blocking)
-        this.availabilityFingerprint.set(
-          blocking ? null : this.currentAvailabilityFingerprint(),
-        )
+        this.availabilityFingerprint.set(blocking ? null : this.currentAvailabilityFingerprint())
         this.availabilityMessage.set(
           userConflict
             ? 'Bạn đã có một booking khác trùng với khung giờ này.'
@@ -1131,10 +1153,7 @@ export class BookingFormPage implements OnInit {
         next: (booking) => {
           const finish = (): void => {
             this.submitting.set(false)
-            this.toast.success(
-              'Đã gửi yêu cầu đặt lịch',
-              'Yêu cầu của bạn đang chờ quản lý duyệt.',
-            )
+            this.toast.success('Đã gửi yêu cầu đặt lịch', 'Yêu cầu của bạn đang chờ quản lý duyệt.')
             void this.router.navigate(['/app/bookings', booking.bookingId])
           }
           // Backend mới tự chuyển lượt Notified tương ứng sang Booked trong cùng transaction
@@ -1158,6 +1177,7 @@ export class BookingFormPage implements OnInit {
       this.toast.info('Hãy chọn phòng và khung giờ hợp lệ trước khi tham gia hàng chờ')
       return
     }
+    if (this.hasJoinedCurrentWaitlist() || this.joiningWaitlist()) return
     this.joiningWaitlist.set(true)
     this.api
       .createWaitlist({
@@ -1169,6 +1189,7 @@ export class BookingFormPage implements OnInit {
       .subscribe({
         next: (entry) => {
           this.joiningWaitlist.set(false)
+          this.currentUserWaitlists.update((items) => [entry, ...items])
           this.toast.success(
             'Đã tham gia hàng chờ của phòng',
             this.selectedEquipmentCount() > 0
@@ -1181,6 +1202,22 @@ export class BookingFormPage implements OnInit {
           this.toast.error('Không thể tham gia hàng chờ')
         },
       })
+  }
+
+  protected hasJoinedCurrentWaitlist(): boolean {
+    const room = this.selectedRoom()
+    if (!room || !this.validTime()) return false
+    const start = new Date(toIso(this.startTime)).getTime()
+    const end = new Date(toIso(this.endTime)).getTime()
+    return this.currentUserWaitlists().some((entry) => {
+      const status = String(entry.status).toLowerCase()
+      return (
+        entry.labId === room.labId &&
+        ['waiting', 'notified', 'booked', '1', '2', '3'].includes(status) &&
+        new Date(entry.requestedStart).getTime() === start &&
+        new Date(entry.requestedEnd).getTime() === end
+      )
+    })
   }
   private loadSuggestions(): void {
     this.api
@@ -1284,9 +1321,7 @@ export class BookingFormPage implements OnInit {
           if (first.start === startClock && last.end === endClock) {
             return {
               date: toDateInput(start),
-              slotIds: periodSlots
-                .slice(firstIndex, lastIndex + 1)
-                .map((slot) => slot.id),
+              slotIds: periodSlots.slice(firstIndex, lastIndex + 1).map((slot) => slot.id),
             }
           }
         }
@@ -1319,13 +1354,12 @@ export class BookingFormPage implements OnInit {
     const end = new Date(this.endTime)
     return bookings.some((booking) => {
       if (booking.bookingId === this.bookingId) return false
-      const status = String(booking.status ?? '').trim().toLowerCase()
-      const blocksUser = status === 'pending' || status === 'approved' || status === '1' || status === '2'
-      return (
-        blocksUser &&
-        new Date(booking.startTime) < end &&
-        new Date(booking.endTime) > start
-      )
+      const status = String(booking.status ?? '')
+        .trim()
+        .toLowerCase()
+      const blocksUser =
+        status === 'pending' || status === 'approved' || status === '1' || status === '2'
+      return blocksUser && new Date(booking.startTime) < end && new Date(booking.endTime) > start
     })
   }
 
