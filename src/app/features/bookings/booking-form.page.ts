@@ -392,7 +392,7 @@ function isBookableEquipmentStatus(value: ApiEnum | null | undefined): boolean {
                       <app-icon [name]="available() ? 'check' : 'alert'" [size]="18" />
                       {{ availabilityMessage() }}
                     </p>
-                    @if (!available() && !personalTimeConflict()) {
+                    @if (canJoinWaitlist()) {
                       <button
                         type="button"
                         class="btn-secondary shrink-0"
@@ -665,6 +665,7 @@ export class BookingFormPage implements OnInit {
   private readonly currentUserBookings = signal<BookingResponse[]>([])
   private readonly currentUserWaitlists = signal<WaitlistResponse[]>([])
   protected readonly personalTimeConflict = signal(false)
+  protected readonly canJoinWaitlist = signal(false)
   protected readonly timeSlots: readonly FixedBookingSlot[] = [
     { id: 1, start: '07:00', end: '09:00', period: 'morning' },
     { id: 2, start: '09:00', end: '11:00', period: 'morning' },
@@ -1049,23 +1050,45 @@ export class BookingFormPage implements OnInit {
       next: ({ events, userBookings }) => {
         this.currentUserBookings.set(userBookings)
         const userConflict = this.hasCurrentUserBookingConflict(userBookings)
-        const resourceConflict = events.some((event) => {
-          const overlapsTime =
+        // API calendar đã được gọi với labId, nên mọi event trả về đều thuộc phòng
+        // đang chọn. Không lọc lại theo event.resources[].labId vì booking thiết bị
+        // có thể được serialize thiếu/sai kiểu labId dù event vẫn thuộc đúng phòng.
+        const blockingEvents = events.filter(
+          (event) =>
             event.blocking &&
             new Date(event.startTime) < new Date(this.endTime) &&
-            new Date(event.endTime) > new Date(this.startTime)
-          return overlapsTime && event.resources.some((resource) => resource.labId === this.labId)
+            new Date(event.endTime) > new Date(this.startTime),
+        )
+        const resourceConflict = blockingEvents.length > 0
+        const maintenanceConflict = blockingEvents.some((event) => {
+          const eventType = String(event.eventType ?? '')
+            .trim()
+            .toLowerCase()
+          return eventType === 'maintenance' || eventType === '2'
+        })
+        const approvedBookingConflict = blockingEvents.some((event) => {
+          const eventType = String(event.eventType ?? '')
+            .trim()
+            .toLowerCase()
+          return eventType === 'booking' || eventType === '1'
         })
         const blocking = userConflict || resourceConflict
         this.personalTimeConflict.set(userConflict)
+        this.canJoinWaitlist.set(
+          !userConflict && approvedBookingConflict && !maintenanceConflict,
+        )
         this.available.set(!blocking)
         this.availabilityFingerprint.set(blocking ? null : this.currentAvailabilityFingerprint())
         this.availabilityMessage.set(
           userConflict
             ? 'Bạn đã có một booking khác trùng với khung giờ này.'
-            : resourceConflict
-              ? 'Khung giờ đang có sự kiện chặn tài nguyên. Hãy xem các gợi ý bên dưới.'
-              : 'Khung giờ hiện chưa có sự kiện chặn tài nguyên và không trùng lịch cá nhân.',
+            : maintenanceConflict
+              ? 'Tài nguyên đang có lịch bảo trì trong khung giờ này.'
+              : approvedBookingConflict
+                ? 'Khung giờ đã được đặt. Bạn có thể tham gia hàng chờ.'
+                : resourceConflict
+                  ? 'Khung giờ đang có sự kiện chặn tài nguyên.'
+                  : 'Khung giờ hiện chưa có sự kiện chặn tài nguyên và không trùng lịch cá nhân.',
         )
         if (blocking) this.loadSuggestions()
         else this.checking.set(false)
@@ -1366,6 +1389,7 @@ export class BookingFormPage implements OnInit {
   private invalidateAvailability(): void {
     this.available.set(false)
     this.personalTimeConflict.set(false)
+    this.canJoinWaitlist.set(false)
     this.availabilityFingerprint.set(null)
     this.availabilityMessage.set('')
     this.suggestions.set([])
