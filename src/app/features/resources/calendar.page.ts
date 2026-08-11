@@ -373,6 +373,7 @@ export class CalendarPage implements OnInit {
 
   protected filteredEvents(): CalendarEventResponse[] {
     return this.events()
+      .filter((event) => this.eventMatchesSelectedResource(event))
       .filter((event) => !this.eventType || event.eventType === this.eventType)
       .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime))
   }
@@ -552,6 +553,36 @@ export class CalendarPage implements OnInit {
       const eventEnd = new Date(event.endTime).getTime()
       return eventStart < end && eventEnd > start
     })
+  }
+
+  private eventMatchesSelectedResource(event: CalendarEventResponse): boolean {
+    const resources = event.resources ?? []
+
+    if (this.equipmentId) {
+      const equipmentId = Number(this.equipmentId)
+      const selectedEquipment = this.equipments().find(
+        (item) => Number(item.equipmentId) === equipmentId,
+      )
+      const equipmentLabId = Number(selectedEquipment?.labId ?? this.labId)
+
+      return resources.some((resource) => {
+        const resourceType = String(resource.resourceType ?? '')
+          .trim()
+          .toLowerCase()
+        const isLabRoom = resourceType === 'labroom' || resourceType === '1'
+        return (
+          (!isLabRoom && Number(resource.resourceId) === equipmentId) ||
+          (isLabRoom && Number(resource.labId) === equipmentLabId)
+        )
+      })
+    }
+
+    if (this.labId) {
+      const selectedLabId = Number(this.labId)
+      return resources.some((resource) => Number(resource.labId) === selectedLabId)
+    }
+
+    return true
   }
 
   private periodRange(): [Date, Date] {

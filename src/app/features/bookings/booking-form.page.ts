@@ -9,6 +9,7 @@ import type {
   BookingDetailResponse,
   BookingItemRequest,
   BookingResponse,
+  CalendarEventResponse,
   EquipmentResponse,
   LabRoomResponse,
   PriorityRuleResponse,
@@ -1050,12 +1051,11 @@ export class BookingFormPage implements OnInit {
       next: ({ events, userBookings }) => {
         this.currentUserBookings.set(userBookings)
         const userConflict = this.hasCurrentUserBookingConflict(userBookings)
-        // API calendar đã được gọi với labId, nên mọi event trả về đều thuộc phòng
-        // đang chọn. Không lọc lại theo event.resources[].labId vì booking thiết bị
-        // có thể được serialize thiếu/sai kiểu labId dù event vẫn thuộc đúng phòng.
+        const selectedLabId = Number(this.labId)
         const blockingEvents = events.filter(
           (event) =>
             event.blocking &&
+            this.eventBelongsToLab(event, selectedLabId) &&
             new Date(event.startTime) < new Date(this.endTime) &&
             new Date(event.endTime) > new Date(this.startTime),
         )
@@ -1074,9 +1074,7 @@ export class BookingFormPage implements OnInit {
         })
         const blocking = userConflict || resourceConflict
         this.personalTimeConflict.set(userConflict)
-        this.canJoinWaitlist.set(
-          !userConflict && approvedBookingConflict && !maintenanceConflict,
-        )
+        this.canJoinWaitlist.set(!userConflict && approvedBookingConflict && !maintenanceConflict)
         this.available.set(!blocking)
         this.availabilityFingerprint.set(blocking ? null : this.currentAvailabilityFingerprint())
         this.availabilityMessage.set(
@@ -1410,5 +1408,10 @@ export class BookingFormPage implements OnInit {
       equipmentId: item.equipmentId,
       note: item.note || null,
     }))
+  }
+
+  private eventBelongsToLab(event: CalendarEventResponse, labId: number): boolean {
+    if (!Number.isFinite(labId) || labId <= 0) return false
+    return (event.resources ?? []).some((resource) => Number(resource.labId) === labId)
   }
 }
