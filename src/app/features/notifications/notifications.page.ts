@@ -441,7 +441,7 @@ export class NotificationsPage implements OnInit {
     const query = this.searchText.trim()
     return this.notifications().filter((item) => {
       const matchesType = this.typeFilter === 'all' || item.notificationType === this.typeFilter
-      const matchesQuery = searchIncludes(`${item.title} ${item.message}`, query)
+      const matchesQuery = searchIncludes(query, item.title, item.message)
       return matchesType && matchesQuery
     })
   }
