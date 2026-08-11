@@ -11,6 +11,7 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf } from '../../shared/utils/presentation'
+import { searchIncludes } from '../../shared/utils/search'
 
 @Component({
   selector: 'app-my-bookings-page',
@@ -79,6 +80,7 @@ import { labelOf } from '../../shared/utils/presentation'
             <span class="absolute top-3 left-3.5 text-slate-400"
               ><app-icon name="search" [size]="17" /></span
             ><input
+              type="search"
               class="input-shell h-11 pl-10"
               [(ngModel)]="keyword"
               placeholder="Tìm theo mục đích"
@@ -90,7 +92,7 @@ import { labelOf } from '../../shared/utils/presentation'
         } @else if (filtered().length === 0) {
           <div class="p-6">
             <app-data-state
-              title="Không có booking"
+              title="Không tìm thấy dữ liệu phù hợp"
               message="Chưa có booking nào phù hợp với bộ lọc hiện tại."
               icon="calendar"
               ><a routerLink="/app/bookings/new" class="btn-primary mt-5"
@@ -168,15 +170,15 @@ export class MyBookingsPage implements OnInit {
     { value: 'Cancelled', label: 'Đã hủy' },
     { value: 'Completed', label: 'Hoàn thành' },
     { value: 'NoShow', label: 'Không đến' },
+    { value: 'EmergencyCancelled', label: 'Hủy khẩn cấp' },
+    { value: 'EmergencyEnded', label: 'Kết thúc khẩn cấp' },
   ]
   protected filtered(): BookingResponse[] {
-    const needle = this.keyword.trim().toLowerCase()
     return [...this.bookings()]
       .filter(
         (item) =>
           (!this.status || item.status === this.status) &&
-          (!needle ||
-            labelOf('purpose', item.purposeType).toLowerCase().includes(needle)),
+          searchIncludes(this.keyword, labelOf('purpose', item.purposeType)),
       )
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
   }

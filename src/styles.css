@@ -9,6 +9,30 @@
   --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
+button.api-action-pending {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+button.api-action-pending::after {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-left: 0.45rem;
+  content: '';
+  display: inline-block;
+  vertical-align: -0.1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 9999px;
+  animation: api-button-spin 0.7s linear infinite;
+}
+
+@keyframes api-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 :root {
   color-scheme: light;
   font-family: var(--font-sans);

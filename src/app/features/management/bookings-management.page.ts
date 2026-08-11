@@ -11,6 +11,7 @@ import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
 import { labelOf, toDateInput } from '../../shared/utils/presentation'
+import { searchIncludes } from '../../shared/utils/search'
 
 type BookingManagementView = BookingResponse & { userName: string }
 
@@ -54,6 +55,7 @@ type BookingManagementView = BookingResponse & { userName: string }
         <div>
           <label class="field-label">Tìm kiếm</label
           ><input
+            type="search"
             class="input-shell"
             [(ngModel)]="keyword"
             placeholder="Mã booking, tên người đặt, mục đích..."
@@ -97,7 +99,7 @@ type BookingManagementView = BookingResponse & { userName: string }
         } @else if (filtered().length === 0) {
           <div class="p-6">
             <app-data-state
-              title="Không có booking"
+              title="Không tìm thấy dữ liệu phù hợp"
               message="Không có bản ghi nào khớp bộ lọc hiện tại."
               icon="calendar"
             />
@@ -209,9 +211,10 @@ export class BookingsManagementPage implements OnInit {
     { value: 'Cancelled', label: 'Đã hủy' },
     { value: 'Completed', label: 'Hoàn thành' },
     { value: 'NoShow', label: 'Không đến' },
+    { value: 'EmergencyCancelled', label: 'Hủy khẩn cấp' },
+    { value: 'EmergencyEnded', label: 'Kết thúc khẩn cấp' },
   ]
   protected filtered(): BookingManagementView[] {
-    const needle = this.keyword.trim().toLowerCase()
     return [...this.items()]
       .filter((item) => {
         const date = toDateInput(new Date(item.startTime))
@@ -219,10 +222,12 @@ export class BookingsManagementPage implements OnInit {
           (!this.status || item.status === this.status) &&
           (!this.from || date >= this.from) &&
           (!this.to || date <= this.to) &&
-          (!needle ||
-            String(item.bookingId).includes(needle) ||
-            item.userName.toLowerCase().includes(needle) ||
-            labelOf('purpose', item.purposeType).toLowerCase().includes(needle))
+          searchIncludes(
+            this.keyword,
+            item.bookingId,
+            item.userName,
+            labelOf('purpose', item.purposeType),
+          )
         )
       })
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))

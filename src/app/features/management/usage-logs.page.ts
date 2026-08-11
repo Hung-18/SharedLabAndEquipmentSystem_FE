@@ -53,7 +53,7 @@ import { labelOf, toDateInput, toIso, toLocalDateTimeInput } from '../../shared/
     <div class="filter-bar md:grid-cols-2 xl:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
       <div>
         <label class="field-label">Tìm theo Log / BookingItem</label
-        ><input class="input-shell" [(ngModel)]="keyword" placeholder="VD: 1024" />
+        ><input type="search" class="input-shell" [(ngModel)]="keyword" placeholder="VD: 1024" />
       </div>
       <div>
         <label class="field-label">Trạng thái sử dụng</label
@@ -97,7 +97,7 @@ import { labelOf, toDateInput, toIso, toLocalDateTimeInput } from '../../shared/
       } @else if (filtered().length === 0) {
         <div class="p-6">
           <app-data-state
-            title="Không có nhật ký sử dụng"
+            title="Không tìm thấy dữ liệu phù hợp"
             message="Chưa có dữ liệu check-in/check-out phù hợp."
             icon="activity"
           />

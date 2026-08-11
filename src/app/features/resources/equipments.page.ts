@@ -53,14 +53,27 @@ import {
         <div>
           <label class="field-label">Tìm thiết bị</label>
           <div class="relative">
-            <span class="pointer-events-none absolute top-3.5 left-4 text-slate-400"
+            <span
+              class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400"
               ><app-icon name="search" [size]="18" /></span
             ><input
-              class="input-shell pl-11"
+              type="search"
+              class="input-shell h-12 pr-11 pl-11"
               [(ngModel)]="keyword"
-              (keyup.enter)="load()"
+              (ngModelChange)="scheduleSearch()"
+              (keyup.enter)="runSearchNow()"
               placeholder="Tên thiết bị, model..."
             />
+            @if (keyword) {
+              <button
+                type="button"
+                class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-700"
+                aria-label="Xóa từ khóa"
+                (click)="clearSearch()"
+              >
+                <app-icon name="x" [size]="16" />
+              </button>
+            }
           </div>
         </div>
         <div>
@@ -104,7 +117,7 @@ import {
         </div>
       } @else if (items().length === 0) {
         <app-data-state
-          title="Không có thiết bị phù hợp"
+          title="Không tìm thấy dữ liệu phù hợp"
           message="Hãy thử đổi từ khóa, phòng lab hoặc trạng thái thiết bị."
           icon="microscope"
         />
@@ -160,7 +173,10 @@ import {
                       ><app-icon name="calendar-plus" [size]="18"
                     /></a>
                   } @else if (store.isRequester()) {
-                    <span class="btn-secondary cursor-not-allowed px-3 text-rose-600" title="Thiết bị hiện không thể đặt">
+                    <span
+                      class="btn-secondary cursor-not-allowed px-3 text-rose-600"
+                      title="Thiết bị hiện không thể đặt"
+                    >
                       <app-icon name="lock" [size]="18" />
                     </span>
                   }
@@ -286,6 +302,7 @@ export class EquipmentsPage implements OnInit, OnDestroy {
   )
   private loadVersion = 0
   private refreshSubscription?: Subscription
+  private searchTimer?: ReturnType<typeof setTimeout>
 
   ngOnInit(): void {
     this.load()
@@ -297,6 +314,20 @@ export class EquipmentsPage implements OnInit, OnDestroy {
   }
   ngOnDestroy(): void {
     this.refreshSubscription?.unsubscribe()
+    if (this.searchTimer) clearTimeout(this.searchTimer)
+  }
+  protected scheduleSearch(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer)
+    this.searchTimer = setTimeout(() => this.runSearchNow(), 400)
+  }
+  protected runSearchNow(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer)
+    this.page.set(1)
+    this.load()
+  }
+  protected clearSearch(): void {
+    this.keyword = ''
+    this.runSearchNow()
   }
   protected load(showLoading = true): void {
     const version = ++this.loadVersion
@@ -335,7 +366,9 @@ export class EquipmentsPage implements OnInit, OnDestroy {
   }
   protected canBook(item: EquipmentResponse): boolean {
     const lab = this.labs().find((candidate) => candidate.labId === item.labId)
-    return isAvailableEquipmentStatus(item.status) && Boolean(lab && isAvailableLabStatus(lab.status))
+    return (
+      isAvailableEquipmentStatus(item.status) && Boolean(lab && isAvailableLabStatus(lab.status))
+    )
   }
   private hydrateImages(items: EquipmentResponse[], version: number): void {
     for (const item of items) {

@@ -79,19 +79,32 @@ import { ToastService } from '../../shared/ui/toast.service'
         <div>
           <label class="field-label">Tìm kiếm</label>
           <div class="relative">
-            <span class="pointer-events-none absolute top-3.5 left-4 text-slate-400"
+            <span
+              class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400"
               ><app-icon name="search" [size]="18" /></span
             ><input
-              class="input-shell pl-11"
+              type="search"
+              class="input-shell h-12 pr-11 pl-11"
               [(ngModel)]="keyword"
+              (ngModelChange)="scheduleSearch()"
               (keyup.enter)="applyFilters()"
               placeholder="Họ tên, username hoặc email..."
             />
+            @if (keyword) {
+              <button
+                type="button"
+                class="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-700"
+                aria-label="Xóa từ khóa"
+                (click)="clearSearch()"
+              >
+                <app-icon name="x" [size]="16" />
+              </button>
+            }
           </div>
         </div>
         <div>
           <label class="field-label">Vai trò</label
-          ><select class="input-shell" [(ngModel)]="roleName">
+          ><select class="input-shell" [(ngModel)]="roleName" (ngModelChange)="applyFilters()">
             <option value="">Tất cả</option>
             <option value="Admin">Admin</option>
             <option value="LabManager">Quản lý phòng thí nghiệm</option>
@@ -100,7 +113,7 @@ import { ToastService } from '../../shared/ui/toast.service'
         </div>
         <div>
           <label class="field-label">Khoa/phòng ban</label
-          ><select class="input-shell" [(ngModel)]="departmentId">
+          ><select class="input-shell" [(ngModel)]="departmentId" (ngModelChange)="applyFilters()">
             <option [ngValue]="null">Tất cả</option>
             @for (department of departments(); track department.departmentId) {
               <option [ngValue]="department.departmentId">{{ department.departmentName }}</option>
@@ -109,7 +122,7 @@ import { ToastService } from '../../shared/ui/toast.service'
         </div>
         <div>
           <label class="field-label">Trạng thái</label
-          ><select class="input-shell" [(ngModel)]="status">
+          ><select class="input-shell" [(ngModel)]="status" (ngModelChange)="applyFilters()">
             <option [ngValue]="null">Tất cả</option>
             <option [ngValue]="1">Đang hoạt động</option>
             <option [ngValue]="2">Ngừng hoạt động</option>
@@ -119,7 +132,7 @@ import { ToastService } from '../../shared/ui/toast.service'
         </div>
         <div class="flex items-end">
           <button type="button" class="btn-primary w-full" (click)="applyFilters()">
-            <app-icon name="filter" [size]="17" /> Áp dụng
+            <app-icon name="refresh" [size]="17" /> Làm mới
           </button>
         </div>
       </div>
@@ -135,7 +148,7 @@ import { ToastService } from '../../shared/ui/toast.service'
       } @else if (users().length === 0) {
         <app-data-state
           icon="users"
-          title="Không tìm thấy người dùng"
+          title="Không tìm thấy dữ liệu phù hợp"
           message="Không có tài khoản nào phù hợp với bộ lọc hiện tại."
           ><a routerLink="/app/admin/users/new" class="btn-primary mt-5"
             >Tạo tài khoản đầu tiên</a
@@ -186,8 +199,12 @@ import { ToastService } from '../../shared/ui/toast.service'
                     <td>
                       <span
                         class="font-black"
-                        [class.text-rose-600]="user.roleName === 'Requester' && user.penaltyPoints > 0"
-                        [class.text-slate-700]="user.roleName === 'Requester' && user.penaltyPoints === 0"
+                        [class.text-rose-600]="
+                          user.roleName === 'Requester' && user.penaltyPoints > 0
+                        "
+                        [class.text-slate-700]="
+                          user.roleName === 'Requester' && user.penaltyPoints === 0
+                        "
                         >{{ user.roleName === 'Requester' ? user.penaltyPoints : '—' }}</span
                       >
                     </td>
@@ -252,6 +269,7 @@ export class UsersPage implements OnInit {
   protected roleName = ''
   protected departmentId: number | null = null
   protected status: number | null = null
+  private searchTimer?: ReturnType<typeof setTimeout>
 
   ngOnInit(): void {
     this.api.departments(false).subscribe({
@@ -275,8 +293,17 @@ export class UsersPage implements OnInit {
     return `${labs[0].labName}, ${labs[1].labName} +${labs.length - 2} phòng`
   }
   protected applyFilters(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer)
     this.page.set(1)
     this.load()
+  }
+  protected scheduleSearch(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer)
+    this.searchTimer = setTimeout(() => this.applyFilters(), 400)
+  }
+  protected clearSearch(): void {
+    this.keyword = ''
+    this.applyFilters()
   }
   protected goPage(page: number): void {
     if (page < 1 || page > this.totalPages()) return

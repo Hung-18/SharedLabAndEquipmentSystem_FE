@@ -10,6 +10,7 @@ import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { ToastService } from '../../shared/ui/toast.service'
+import { searchIncludes } from '../../shared/utils/search'
 
 @Component({
   selector: 'app-departments-page',
@@ -57,6 +58,7 @@ import { ToastService } from '../../shared/ui/toast.service'
             <span class="pointer-events-none absolute top-3.5 left-4 text-slate-400"
               ><app-icon name="search" [size]="18" /></span
             ><input
+              type="search"
               class="input-shell pl-11"
               [(ngModel)]="keyword"
               placeholder="Tên hoặc mô tả đơn vị..."
@@ -87,7 +89,7 @@ import { ToastService } from '../../shared/ui/toast.service'
       } @else if (filtered().length === 0) {
         <app-data-state
           icon="building"
-          title="Chưa có khoa/phòng ban phù hợp"
+          title="Không tìm thấy dữ liệu phù hợp"
           message="Tạo đơn vị mới hoặc thay đổi từ khóa tìm kiếm."
         />
       } @else {
@@ -228,14 +230,11 @@ export class DepartmentsPage implements OnInit {
     () => this.departments().filter((item) => this.isActive(item.status)).length,
   )
   protected filtered(): DepartmentResponse[] {
-    const keyword = this.keyword.trim().toLowerCase()
     return this.departments().filter((item) => {
       const statusMatches =
         this.statusFilter === 'all' ||
         (this.statusFilter === 'active' ? this.isActive(item.status) : !this.isActive(item.status))
-      const keywordMatches =
-        !keyword ||
-        `${item.departmentName} ${item.description ?? ''}`.toLowerCase().includes(keyword)
+      const keywordMatches = searchIncludes(this.keyword, item.departmentName, item.description)
       return statusMatches && keywordMatches
     })
   }

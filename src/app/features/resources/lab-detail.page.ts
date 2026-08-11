@@ -17,6 +17,7 @@ import { DataStateComponent } from '../../shared/ui/data-state'
 import { IconComponent } from '../../shared/ui/icon'
 import { ModalComponent } from '../../shared/ui/modal'
 import { PageHeaderComponent } from '../../shared/ui/page-header'
+import { PositiveIntegerDirective } from '../../shared/ui/positive-integer.directive'
 import { StatusBadgeComponent } from '../../shared/ui/status-badge'
 import { SmartImageComponent } from '../../shared/ui/smart-image'
 import { ToastService } from '../../shared/ui/toast.service'
@@ -39,6 +40,7 @@ import {
     StatusBadgeComponent,
     DataStateComponent,
     SmartImageComponent,
+    PositiveIntegerDirective,
   ],
   template: `
     <section class="space-y-6">
@@ -78,11 +80,24 @@ import {
               class="btn-secondary"
               ><app-icon name="wrench" [size]="17" /> Lên lịch bảo trì</a
             >
+            <button
+              type="button"
+              class="btn-secondary btn-danger"
+              [disabled]="emergencySaving()"
+              (click)="openEmergency()"
+            >
+              <app-icon name="alert" [size]="17" /> Hủy khẩn cấp cháy/nổ
+            </button>
           }
           @if (store.isAdmin()) {
             <button class="btn-secondary" (click)="openEdit()">
               <app-icon name="edit" [size]="17" /> Chỉnh sửa
             </button>
+            @if (isUnavailableLab()) {
+              <button type="button" class="btn-primary" (click)="openEmergencyRestore()">
+                <app-icon name="shield" [size]="17" /> Kiểm tra & mở lại
+              </button>
+            }
           }
         </app-page-header>
 
@@ -146,7 +161,8 @@ import {
               <p class="text-xs font-black text-slate-700">Hướng dẫn sử dụng</p>
               <p class="mt-2 text-sm leading-6 whitespace-pre-line text-slate-500">
                 {{
-                  lab()!.usageGuideline || 'Liên hệ quản lý phòng thí nghiệm để được hướng dẫn trước khi sử dụng.'
+                  lab()!.usageGuideline ||
+                    'Liên hệ quản lý phòng thí nghiệm để được hướng dẫn trước khi sử dụng.'
                 }}
               </p>
             </div>
@@ -304,6 +320,7 @@ import {
               ><input
                 class="input-shell"
                 type="number"
+                appPositiveInteger
                 min="1"
                 [(ngModel)]="editForm.capacity"
                 name="capacity"
@@ -366,6 +383,105 @@ import {
             </div>
           </form>
         </app-modal>
+
+        <app-modal
+          [open]="emergencyOpen()"
+          title="Hủy khẩn cấp do cháy/nổ"
+          subtitle="Thao tác sẽ khóa phòng, thiết bị và hủy/kết thúc toàn bộ booking liên quan. Manager không thể tự mở lại."
+          (close)="emergencyOpen.set(false)"
+        >
+          <form class="space-y-4" (ngSubmit)="submitEmergency()">
+            <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+              Mỗi Requester sẽ nhận email/thông báo riêng và không bị tính điểm phạt. Toàn bộ Admin
+              sẽ nhận cảnh báo tổng hợp.
+            </div>
+            <div>
+              <label class="field-label">Mô tả sự cố *</label>
+              <textarea
+                class="textarea-shell min-h-32"
+                name="emergencyDescription"
+                [(ngModel)]="emergencyDescription"
+                maxlength="2000"
+                placeholder="Nêu vị trí cháy/nổ, mức độ, tình trạng hiện tại..."
+                required
+              ></textarea>
+            </div>
+            <label
+              class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700"
+            >
+              <input
+                class="mt-1"
+                type="checkbox"
+                name="emergencyConfirmed"
+                [(ngModel)]="emergencyConfirmed"
+              />
+              <span>Tôi xác nhận đây là sự cố khẩn cấp thực tế và đồng ý khóa toàn bộ phòng.</span>
+            </label>
+            <div class="flex justify-end gap-2">
+              <button type="button" class="btn-secondary" (click)="emergencyOpen.set(false)">
+                Hủy
+              </button>
+              <button
+                class="btn-primary bg-rose-600 hover:bg-rose-700"
+                [disabled]="
+                  emergencySaving() || !emergencyConfirmed || !emergencyDescription.trim()
+                "
+              >
+                {{ emergencySaving() ? 'Đang xử lý...' : 'Xác nhận hủy khẩn cấp' }}
+              </button>
+            </div>
+          </form>
+        </app-modal>
+
+        <app-modal
+          [open]="restoreOpen()"
+          title="Kiểm tra và mở lại sau sự cố"
+          subtitle="Chỉ tích những thiết bị đã được kiểm tra an toàn. Thiết bị không tích sẽ tiếp tục Ngừng hoạt động/Bảo trì."
+          (close)="restoreOpen.set(false)"
+        >
+          <form class="space-y-4" (ngSubmit)="submitEmergencyRestore()">
+            <div class="max-h-72 space-y-2 overflow-auto rounded-2xl border border-slate-200 p-3">
+              @for (equipment of equipments(); track equipment.equipmentId) {
+                <label class="flex items-center gap-3 rounded-xl p-3 hover:bg-slate-50">
+                  <input
+                    type="checkbox"
+                    [checked]="isSafeEquipmentSelected(equipment.equipmentId)"
+                    (change)="
+                      toggleSafeEquipment(equipment.equipmentId, $any($event.target).checked)
+                    "
+                  />
+                  <span class="min-w-0 flex-1">
+                    <strong class="block truncate text-sm text-slate-900">{{
+                      equipment.equipmentName
+                    }}</strong>
+                    <span class="text-xs text-slate-500">Hiện tại: {{ equipment.status }}</span>
+                  </span>
+                </label>
+              } @empty {
+                <p class="p-3 text-sm text-slate-500">Phòng không có thiết bị.</p>
+              }
+            </div>
+            <label
+              class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700"
+            >
+              <input
+                class="mt-1"
+                type="checkbox"
+                name="restoreConfirmed"
+                [(ngModel)]="restoreConfirmed"
+              />
+              <span>Tôi xác nhận phòng đã an toàn và từng thiết bị được tích đã qua kiểm tra.</span>
+            </label>
+            <div class="flex justify-end gap-2">
+              <button type="button" class="btn-secondary" (click)="restoreOpen.set(false)">
+                Hủy
+              </button>
+              <button class="btn-primary" [disabled]="emergencySaving() || !restoreConfirmed">
+                {{ emergencySaving() ? 'Đang mở lại...' : 'Mở lại tài nguyên an toàn' }}
+              </button>
+            </div>
+          </form>
+        </app-modal>
       }
     </section>
   `,
@@ -386,6 +502,10 @@ export class LabDetailPage implements OnInit {
   protected readonly loading = signal(true)
   protected readonly saving = signal(false)
   protected readonly editOpen = signal(false)
+  protected readonly emergencyOpen = signal(false)
+  protected readonly restoreOpen = signal(false)
+  protected readonly emergencySaving = signal(false)
+  protected readonly safeEquipmentIds = signal<number[]>([])
   protected readonly tab = signal<'equipment' | 'schedule' | 'maintenance'>('equipment')
   protected readonly tabs = [
     { key: 'equipment' as const, label: 'Thiết bị', count: 0 },
@@ -404,6 +524,9 @@ export class LabDetailPage implements OnInit {
     usageGuideline: '',
   }
   protected managerId: number | null = null
+  protected emergencyDescription = ''
+  protected emergencyConfirmed = false
+  protected restoreConfirmed = false
   private id = 0
 
   ngOnInit(): void {
@@ -432,8 +555,77 @@ export class LabDetailPage implements OnInit {
                 manager.status === 1 || manager.status === '1' || manager.status === 'Active',
             ),
           ),
-        error: () => this.toast.error('Không tải được danh sách quản lý phòng thí nghiệm đang hoạt động'),
+        error: () =>
+          this.toast.error('Không tải được danh sách quản lý phòng thí nghiệm đang hoạt động'),
       })
+  }
+
+  protected isUnavailableLab(): boolean {
+    const status = String(this.lab()?.status ?? '').toLowerCase()
+    return status === '2' || status === 'unavailable'
+  }
+
+  protected openEmergency(): void {
+    this.emergencyDescription = ''
+    this.emergencyConfirmed = false
+    this.emergencyOpen.set(true)
+  }
+
+  protected submitEmergency(): void {
+    const description = this.emergencyDescription.trim()
+    if (!description || !this.emergencyConfirmed || this.emergencySaving()) return
+    this.emergencySaving.set(true)
+    this.api.emergencyShutdownLab(this.id, description).subscribe({
+      next: (result) => {
+        this.emergencySaving.set(false)
+        this.emergencyOpen.set(false)
+        this.toast.success(
+          'Đã xử lý hủy khẩn cấp',
+          `${result.affectedBookingIds.length} booking đã được xử lý; ${result.disabledEquipmentIds.length} thiết bị đã bị khóa.`,
+        )
+        this.load(false)
+      },
+      error: (error) => {
+        this.emergencySaving.set(false)
+        this.toast.error(apiErrorMessage(error, 'Không thể xử lý hủy khẩn cấp'))
+      },
+    })
+  }
+
+  protected openEmergencyRestore(): void {
+    this.safeEquipmentIds.set([])
+    this.restoreConfirmed = false
+    this.restoreOpen.set(true)
+  }
+
+  protected isSafeEquipmentSelected(id: number): boolean {
+    return this.safeEquipmentIds().includes(id)
+  }
+
+  protected toggleSafeEquipment(id: number, checked: boolean): void {
+    this.safeEquipmentIds.update((current) =>
+      checked ? [...new Set([...current, id])] : current.filter((item) => item !== id),
+    )
+  }
+
+  protected submitEmergencyRestore(): void {
+    if (!this.restoreConfirmed || this.emergencySaving()) return
+    this.emergencySaving.set(true)
+    this.api.restoreLabAfterEmergency(this.id, this.safeEquipmentIds()).subscribe({
+      next: (result) => {
+        this.emergencySaving.set(false)
+        this.restoreOpen.set(false)
+        this.toast.success(
+          'Đã mở lại phòng',
+          `${result.restoredEquipmentIds.length} thiết bị được mở lại; ${result.stillUnavailableEquipmentIds.length} thiết bị vẫn bị khóa.`,
+        )
+        this.load(false)
+      },
+      error: (error) => {
+        this.emergencySaving.set(false)
+        this.toast.error(apiErrorMessage(error, 'Không thể mở lại phòng sau sự cố'))
+      },
+    })
   }
   protected save(): void {
     if (
