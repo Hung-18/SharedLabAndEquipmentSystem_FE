@@ -51,7 +51,10 @@ interface CalendarDay {
         subtitle="Theo dõi lịch đặt và bảo trì theo ngày, tuần, tháng hoặc dạng danh sách."
       >
         @if (store.isRequester()) {
-          <a routerLink="/app/bookings/new" [queryParams]="{ labId: labId }" class="btn-primary"
+          <a
+            routerLink="/app/bookings/new"
+            [queryParams]="{ labId: labId, equipmentId: equipmentId }"
+            class="btn-primary"
             ><app-icon name="plus" [size]="17" /> Tạo lịch đặt</a
           >
         }
@@ -65,14 +68,7 @@ interface CalendarDay {
         }
       </app-page-header>
 
-      <div
-        class="filter-bar"
-        [ngClass]="
-          store.isRequester()
-            ? 'lg:grid-cols-[minmax(0,1fr)_auto]'
-            : 'lg:grid-cols-[1fr_1fr_1fr_auto]'
-        "
-      >
+      <div class="filter-bar lg:grid-cols-[1fr_1fr_1fr_auto]">
         <div>
           <label class="field-label">Phòng thí nghiệm</label
           ><select class="input-shell" [(ngModel)]="labId" (ngModelChange)="onLabChange()">
@@ -82,25 +78,27 @@ interface CalendarDay {
             }
           </select>
         </div>
-        @if (!store.isRequester()) {
-          <div>
-            <label class="field-label">Thiết bị</label
-            ><select class="input-shell" [(ngModel)]="equipmentId" (ngModelChange)="load()">
-              <option [ngValue]="null">Tất cả thiết bị</option>
-              @for (item of filteredEquipments(); track item.equipmentId) {
-                <option [ngValue]="item.equipmentId">{{ item.equipmentName }}</option>
-              }
-            </select>
-          </div>
-          <div>
-            <label class="field-label">Loại sự kiện</label>
-            <select class="input-shell" [(ngModel)]="eventType">
-              <option value="">Lịch đặt và bảo trì</option>
-              <option value="Booking">Lịch đặt</option>
-              <option value="Maintenance">Bảo trì</option>
-            </select>
-          </div>
-        }
+        <div>
+          <label class="field-label">Thiết bị</label
+          ><select
+            class="input-shell"
+            [(ngModel)]="equipmentId"
+            (ngModelChange)="onEquipmentChange()"
+          >
+            <option [ngValue]="null">Tất cả thiết bị</option>
+            @for (item of filteredEquipments(); track item.equipmentId) {
+              <option [ngValue]="item.equipmentId">{{ item.equipmentName }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Loại sự kiện</label>
+          <select class="input-shell" [(ngModel)]="eventType">
+            <option value="">Lịch đặt và bảo trì</option>
+            <option value="Booking">Lịch đặt</option>
+            <option value="Maintenance">Không khả dụng</option>
+          </select>
+        </div>
         <div class="flex items-end gap-2">
           <button class="btn-secondary" type="button" (click)="shift(-1)">
             <app-icon name="chevron-left" [size]="17" /></button
@@ -414,9 +412,7 @@ export class CalendarPage implements OnInit {
 
     forkJoin({
       labs: this.api.labs().pipe(catchError(() => of([] as LabRoomResponse[]))),
-      equipments: this.store.isRequester()
-        ? of([] as EquipmentResponse[])
-        : this.api.equipments().pipe(catchError(() => of([] as EquipmentResponse[]))),
+      equipments: this.api.equipments().pipe(catchError(() => of([] as EquipmentResponse[]))),
     }).subscribe(({ labs, equipments }) => {
       const visibleLabs = this.store.isRequester()
         ? labs.filter((lab) => isAvailableLabStatus(lab.status))
@@ -435,7 +431,7 @@ export class CalendarPage implements OnInit {
           this.equipmentId = null
         }
       }
-      if (!visibleLabs.length || (!this.store.isRequester() && !visibleEquipments.length)) {
+      if (!visibleLabs.length || !visibleEquipments.length) {
         this.toast.info('Một phần danh mục tài nguyên chưa tải được, lịch vẫn tiếp tục hoạt động.')
       }
       this.load()
@@ -449,7 +445,7 @@ export class CalendarPage implements OnInit {
       .calendar(
         from.toISOString(),
         to.toISOString(),
-        this.labId ?? undefined,
+        this.equipmentId ? undefined : (this.labId ?? undefined),
         this.equipmentId ?? undefined,
       )
       .subscribe({
@@ -473,6 +469,14 @@ export class CalendarPage implements OnInit {
 
   protected onLabChange(): void {
     this.equipmentId = null
+    this.load()
+  }
+
+  protected onEquipmentChange(): void {
+    if (this.equipmentId) {
+      const equipment = this.equipments().find((item) => item.equipmentId === this.equipmentId)
+      this.labId = equipment?.labId ?? this.labId
+    }
     this.load()
   }
 
@@ -504,7 +508,10 @@ export class CalendarPage implements OnInit {
   }
 
   protected eventKey(event: CalendarEventResponse): string {
-    return `${event.eventType}-${event.sourceId}-${event.startTime}`
+    const resourceKey = event.resources
+      .map((item) => `${item.resourceType}-${item.resourceId}`)
+      .join('_')
+    return `${event.eventType}-${event.sourceId}-${event.startTime}-${resourceKey}`
   }
 
   protected eventClass(event: CalendarEventResponse): string {
@@ -522,7 +529,14 @@ export class CalendarPage implements OnInit {
   }
 
   protected openEvent(event: CalendarEventResponse): void {
-    if (this.store.isRequester() && event.eventType === 'Maintenance') return
+    if (
+      this.store.isRequester() &&
+      (event.eventType === 'Maintenance' ||
+        event.sourceId <= 0 ||
+        event.userId !== this.store.user()?.userId)
+    ) {
+      return
+    }
     void this.router.navigate(
       event.eventType === 'Maintenance'
         ? ['/app/management/maintenances', event.sourceId]
