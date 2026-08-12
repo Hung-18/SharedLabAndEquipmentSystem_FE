@@ -1,5 +1,5 @@
 import { DatePipe, NgClass } from '@angular/common'
-import { Component, OnInit, inject, signal } from '@angular/core'
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { RouterLink } from '@angular/router'
 import { SystemService } from '../../core/api/system.service'
@@ -166,25 +166,79 @@ import { apiErrorMessage } from '../../core/http/api-error'
       title="Tạo vi phạm thủ công"
       subtitle="Điểm phạt được tính tự động theo loại vi phạm."
       (close)="createOpen.set(false)"
-      ><form class="grid gap-4" (ngSubmit)="create()">
+      ><form class="grid gap-4" novalidate (ngSubmit)="create()">
         <div>
           <label class="field-label">Tìm người dùng</label>
-          <input
-            class="input-shell mb-3"
-            [(ngModel)]="userSearch"
-            name="userSearch"
-            placeholder="Tên, username hoặc email..."
-            (ngModelChange)="scheduleUserSearch()"
-          />
-          <label class="field-label">Người dùng *</label
-          ><select class="input-shell" required [(ngModel)]="form.userId" name="userId">
-            <option [ngValue]="null">
-              {{ usersLoading() ? 'Đang tải...' : 'Chọn người dùng' }}
-            </option>
-            @for (user of users(); track user.userId) {
-              <option [ngValue]="user.userId">{{ user.fullName }} · {{ user.email }}</option>
+          <div class="relative">
+            <input
+              class="input-shell"
+              autocomplete="off"
+              [(ngModel)]="userSearch"
+              name="userSearch"
+              placeholder="Nhập ít nhất 2 ký tự..."
+              (focus)="openUserResults()"
+              (blur)="closeUserResults()"
+              (ngModelChange)="onUserSearchChange()"
+            />
+            @if (userResultsOpen()) {
+              <div
+                class="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+              >
+                @if (usersLoading()) {
+                  <p class="px-3 py-2 text-sm text-slate-500">Đang tìm người dùng...</p>
+                } @else if (userSearch.trim().length < 2) {
+                  <p class="px-3 py-2 text-sm text-slate-500">Nhập ít nhất 2 ký tự để tìm kiếm.</p>
+                } @else if (userSearchError()) {
+                  <p class="px-3 py-2 text-sm font-semibold text-rose-600">
+                    {{ userSearchError() }}
+                  </p>
+                } @else if (users().length === 0) {
+                  <p class="px-3 py-2 text-sm text-slate-500">Không tìm thấy người dùng.</p>
+                } @else {
+                  @for (user of users(); track user.userId) {
+                    <button
+                      type="button"
+                      class="block w-full rounded-xl px-3 py-2 text-left transition hover:bg-violet-50"
+                      (mousedown)="$event.preventDefault()"
+                      (click)="selectUser(user)"
+                    >
+                      <span class="block font-black text-slate-900">{{ user.fullName }}</span>
+                      <span class="block text-xs text-slate-500">
+                        {{ user.username }} · {{ user.email }}
+                      </span>
+                    </button>
+                  }
+                }
+              </div>
             }
-          </select>
+          </div>
+
+          @if (selectedUser(); as user) {
+            <div class="mt-3 rounded-2xl border border-violet-200 bg-violet-50 p-3">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-xs font-bold tracking-wide text-violet-600 uppercase">
+                    Người dùng đã chọn
+                  </p>
+                  <p class="mt-1 font-black text-slate-900">{{ user.fullName }}</p>
+                  <p class="text-xs text-slate-600">{{ user.username }} · {{ user.email }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white"
+                  title="Bỏ chọn"
+                  (click)="clearSelectedUser()"
+                >
+                  <app-icon name="x" [size]="15" />
+                </button>
+              </div>
+            </div>
+          }
+          @if (userValidationError()) {
+            <p class="mt-1.5 text-sm font-semibold text-rose-600">
+              {{ userValidationError() }}
+            </p>
+          }
         </div>
         <div>
           <label class="field-label">Booking ID *</label
@@ -196,7 +250,13 @@ import { apiErrorMessage } from '../../core/http/api-error'
             required
             [(ngModel)]="form.bookingId"
             name="bookingId"
+            (ngModelChange)="bookingValidationError.set('')"
           />
+          @if (bookingValidationError()) {
+            <p class="mt-1.5 text-sm font-semibold text-rose-600">
+              {{ bookingValidationError() }}
+            </p>
+          }
         </div>
         <div>
           <label class="field-label">Loại vi phạm *</label
@@ -208,7 +268,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" class="btn-secondary" (click)="createOpen.set(false)">Hủy</button
-          ><button class="btn-primary" [disabled]="saving()">
+          ><button type="submit" class="btn-primary" [disabled]="saving()">
             {{ saving() ? 'Đang tạo...' : 'Tạo vi phạm' }}
           </button>
         </div>
@@ -216,7 +276,7 @@ import { apiErrorMessage } from '../../core/http/api-error'
     >
   </section>`,
 })
-export class ViolationsManagementPage implements OnInit {
+export class ViolationsManagementPage implements OnInit, OnDestroy {
   private readonly api = inject(SystemService)
   private readonly toast = inject(ToastService)
   protected readonly items = signal<ViolationResponse[]>([])
@@ -225,11 +285,17 @@ export class ViolationsManagementPage implements OnInit {
   protected readonly saving = signal(false)
   protected readonly createOpen = signal(false)
   protected readonly usersLoading = signal(false)
+  protected readonly userResultsOpen = signal(false)
+  protected readonly selectedUser = signal<UserManagementResponse | null>(null)
+  protected readonly userSearchError = signal('')
+  protected readonly userValidationError = signal('')
+  protected readonly bookingValidationError = signal('')
   protected keyword = ''
   protected status = ''
   protected type = ''
   protected userSearch = ''
   private userSearchTimer: ReturnType<typeof setTimeout> | null = null
+  private userSearchRequestId = 0
   protected form = {
     userId: null as number | null,
     bookingId: null as number | null,
@@ -268,6 +334,10 @@ export class ViolationsManagementPage implements OnInit {
   ngOnInit(): void {
     this.load()
   }
+  ngOnDestroy(): void {
+    if (this.userSearchTimer) clearTimeout(this.userSearchTimer)
+    this.userSearchRequestId++
+  }
   protected count(status: string): number {
     return status ? this.items().filter((x) => x.status === status).length : this.items().length
   }
@@ -279,47 +349,105 @@ export class ViolationsManagementPage implements OnInit {
   protected openCreate(): void {
     this.form = { userId: null, bookingId: null, violationType: 1 }
     this.userSearch = ''
+    this.users.set([])
+    this.selectedUser.set(null)
+    this.userResultsOpen.set(false)
+    this.userSearchError.set('')
+    this.userValidationError.set('')
+    this.bookingValidationError.set('')
     this.createOpen.set(true)
-    this.loadUsers()
   }
 
-  protected scheduleUserSearch(): void {
+  protected onUserSearchChange(): void {
+    this.form.userId = null
+    this.selectedUser.set(null)
+    this.userValidationError.set('')
+    this.userSearchError.set('')
+    this.users.set([])
+    this.userResultsOpen.set(true)
+
     if (this.userSearchTimer) clearTimeout(this.userSearchTimer)
+    if (this.userSearch.trim().length < 2) {
+      this.usersLoading.set(false)
+      this.userSearchRequestId++
+      return
+    }
+
     this.userSearchTimer = setTimeout(() => this.loadUsers(), 350)
   }
 
+  protected openUserResults(): void {
+    if (!this.selectedUser()) this.userResultsOpen.set(true)
+  }
+
+  protected closeUserResults(): void {
+    window.setTimeout(() => this.userResultsOpen.set(false), 150)
+  }
+
+  protected selectUser(user: UserManagementResponse): void {
+    this.form.userId = user.userId
+    this.selectedUser.set(user)
+    this.userSearch = user.fullName
+    this.userResultsOpen.set(false)
+    this.userValidationError.set('')
+    this.bookingValidationError.set('')
+  }
+
+  protected clearSelectedUser(): void {
+    this.form.userId = null
+    this.selectedUser.set(null)
+    this.userSearch = ''
+    this.users.set([])
+    this.userResultsOpen.set(true)
+    this.userValidationError.set('Hãy tìm và chọn người dùng từ danh sách gợi ý.')
+  }
+
   private loadUsers(): void {
+    const keyword = this.userSearch.trim()
+    if (keyword.length < 2) return
+
+    const requestId = ++this.userSearchRequestId
     this.usersLoading.set(true)
     this.api
       .users({
-        keyword: this.userSearch.trim() || undefined,
+        keyword,
+        roleName: 'Requester',
         pageNumber: 1,
-        pageSize: 50,
+        pageSize: 20,
       })
       .subscribe({
         next: (response) => {
+          if (requestId !== this.userSearchRequestId) return
           this.users.set(response.items)
           this.usersLoading.set(false)
         },
-        error: (error: unknown) => {
+        error: () => {
+          if (requestId !== this.userSearchRequestId) return
+          this.users.set([])
           this.usersLoading.set(false)
-          this.toast.error('Không tải được người dùng', apiErrorMessage(error))
+          this.userSearchError.set('Không tải được danh sách người dùng. Vui lòng thử lại.')
         },
       })
   }
   protected create(): void {
-    if (!this.form.userId || !this.form.bookingId) {
-      this.toast.info('Hãy chọn người dùng và nhập Booking ID')
-      return
-    }
+    if (this.saving()) return
+
+    this.userValidationError.set(
+      this.form.userId ? '' : 'Hãy tìm và chọn người dùng từ danh sách gợi ý.',
+    )
+    this.bookingValidationError.set(
+      this.form.bookingId && this.form.bookingId > 0 ? '' : 'Hãy nhập Booking ID hợp lệ.',
+    )
+    if (this.userValidationError() || this.bookingValidationError()) return
+
     this.saving.set(true)
-    const userId = this.form.userId
-    const bookingId = this.form.bookingId
+    const userId = this.form.userId!
+    const bookingId = this.form.bookingId!
     this.api.booking(bookingId).subscribe({
       next: (booking) => {
         if (booking.userId !== userId) {
           this.saving.set(false)
-          this.toast.info('Booking không thuộc người dùng đã chọn')
+          this.bookingValidationError.set('Booking này không thuộc người dùng đã chọn.')
           return
         }
         this.api
